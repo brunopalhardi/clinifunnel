@@ -28,6 +28,9 @@ model Clinic {
   clinicorpUser       String?
   clinicorpToken      String?
   clinicorpBusinessId String?
+  // Toggles de integração
+  clinicorpAutoCreatePatient Boolean @default(false)
+  clinicorpWebhookEnabled    Boolean @default(true)
   pipelineId       String?
   stageAgendamento String?
   createdAt        DateTime    @default(now())

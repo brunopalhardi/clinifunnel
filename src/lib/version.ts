@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.7.0";
+export const APP_VERSION = "0.8.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.8.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Toggles de integracao: receber webhooks Clinicorp (on/off) e criar pacientes automaticamente (off por padrao)",
+      "Worker create-patient respeita flag clinicorpAutoCreatePatient",
+      "Webhook Clinicorp respeita flag clinicorpWebhookEnabled",
+      "Componente Switch adicionado ao UI kit",
+      "Secao 'Controles de Integracao' na pagina de settings",
+    ],
+  },
   {
     version: "0.7.0",
     date: "2026-04-03",

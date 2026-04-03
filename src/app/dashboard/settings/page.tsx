@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useClinic } from "@/hooks/use-clinic";
 
 interface ClinicSettings {
@@ -19,6 +20,8 @@ interface ClinicSettings {
   clinicorpUser: string;
   clinicorpToken: string;
   clinicorpBusinessId: string;
+  clinicorpAutoCreatePatient: boolean;
+  clinicorpWebhookEnabled: boolean;
   hasKommo: boolean;
   hasClinicorp: boolean;
 }
@@ -251,6 +254,56 @@ export default function SettingsPage() {
             {clinicorpStatus === "error" && (
               <span className="text-sm text-red-600">Erro ao salvar</span>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Controles de Integracao</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Receber webhooks do Clinicorp</Label>
+              <p className="text-xs text-muted-foreground">
+                Processar eventos de procedimentos e agendamentos recebidos do Clinicorp
+              </p>
+            </div>
+            <Switch
+              checked={settings.clinicorpWebhookEnabled}
+              onCheckedChange={(checked) => {
+                setSettings({ ...settings, clinicorpWebhookEnabled: checked });
+                fetch(`/api/clinics/${clinic.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ clinicorpWebhookEnabled: checked }),
+                });
+              }}
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Criar pacientes automaticamente no Clinicorp</Label>
+              <p className="text-xs text-muted-foreground">
+                Quando um lead atinge o stage &quot;Agendado&quot; no Kommo, criar o paciente
+                automaticamente no Clinicorp. Desative para apenas observar sem escrever no CRM.
+              </p>
+            </div>
+            <Switch
+              checked={settings.clinicorpAutoCreatePatient}
+              onCheckedChange={(checked) => {
+                setSettings({ ...settings, clinicorpAutoCreatePatient: checked });
+                fetch(`/api/clinics/${clinic.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ clinicorpAutoCreatePatient: checked }),
+                });
+              }}
+            />
           </div>
         </CardContent>
       </Card>

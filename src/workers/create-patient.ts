@@ -38,11 +38,18 @@ export const createPatientWorker = new Worker(
       return;
     }
 
-    // 2. If clinic has Clinicorp configured, create patient there
+    // 2. If clinic has Clinicorp configured AND auto-create enabled
     const { clinic } = lead;
     if (!clinic.clinicorpUser || !clinic.clinicorpToken) {
       console.log(
         `[create-patient] Clinic ${clinic.name} has no Clinicorp config, skipping`
+      );
+      return;
+    }
+
+    if (!clinic.clinicorpAutoCreatePatient) {
+      console.log(
+        `[create-patient] Clinic ${clinic.name} has auto-create disabled, skipping Clinicorp`
       );
       return;
     }

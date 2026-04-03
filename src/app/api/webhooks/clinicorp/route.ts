@@ -50,6 +50,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (!clinic.clinicorpWebhookEnabled) {
+      await prisma.webhookLog.update({
+        where: { id: logEntry.id },
+        data: { status: "processed", error: "Webhook processing disabled" },
+      });
+      return NextResponse.json({ ok: true });
+    }
+
     // Extract event type — Clinicorp may use different field names
     const eventType = (
       payload.event ??
