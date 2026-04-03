@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createPatientWorker } from "./create-patient";
 
 console.log("[workers] Starting OdontoFunil workers...");
