@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = "0.4.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,30 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.4.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Settings backend funcional (GET/PUT /api/clinics/[id])",
+      "POST /api/clinics para criar nova clinica",
+      "Pagina de configuracoes com formularios Kommo e Clinicorp (Basic Auth)",
+      "Tokens mascarados no GET, proteção contra sobrescrita com valor mascarado",
+      "Badges de status de integração e webhook URLs dinâmicas",
+    ],
+  },
+  {
+    version: "0.3.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Dashboard conectado a dados reais (KPIs, funil, leads, campanhas, procedimentos)",
+      "API /api/metrics com metricas agregadas do funil",
+      "API /api/procedures com listagem e filtros",
+      "API /api/clinics para listagem de clinicas",
+      "Hook useClinic para resolver clinica ativa",
+    ],
+  },
   {
     version: "0.2.0",
     date: "2026-04-03",
