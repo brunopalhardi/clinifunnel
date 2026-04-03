@@ -31,10 +31,7 @@ export class KommoClient {
   }
 
   async getLead(leadId: number): Promise<KommoLead> {
-    const data = await this.request<{ _embedded: { leads: KommoLead[] } }>(
-      `/leads/${leadId}?with=contacts`
-    );
-    return data._embedded.leads[0];
+    return this.request<KommoLead>(`/leads/${leadId}?with=contacts`);
   }
 
   async getPipelines(): Promise<KommoPipeline[]> {
