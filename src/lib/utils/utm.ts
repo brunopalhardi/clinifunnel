@@ -31,5 +31,5 @@ export function utmsToNote(data: UTMData): string {
   if (data.utmCampaign) parts.push(`Campaign: ${data.utmCampaign}`);
   if (data.utmContent) parts.push(`Content: ${data.utmContent}`);
   if (data.utmTerm) parts.push(`Term: ${data.utmTerm}`);
-  return `[OdontoFunil UTMs] ${parts.join(" | ")}`;
+  return `[CliniFunnel UTMs] ${parts.join(" | ")}`;
 }

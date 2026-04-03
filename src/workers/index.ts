@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { createPatientWorker } from "./create-patient";
 
-console.log("[workers] Starting OdontoFunil workers...");
+console.log("[workers] Starting CliniFunnel workers...");
 console.log("[workers] create-patient worker ready");
 
 // Graceful shutdown

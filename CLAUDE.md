@@ -1,4 +1,4 @@
-# CLAUDE.md — OdontoFunil
+# CLAUDE.md — CliniFunnel
 
 ## Stack
 - **Framework**: Next.js 14 (App Router) + TypeScript (strict)

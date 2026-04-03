@@ -3,7 +3,7 @@ version: "3.8"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: odontofunil-postgres
+    container_name: clinifunnel-postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -16,7 +16,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: odontofunil-redis
+    container_name: clinifunnel-redis
     restart: unless-stopped
     ports:
       - "6379:6379"

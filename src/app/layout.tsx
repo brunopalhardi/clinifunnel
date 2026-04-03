@@ -14,9 +14,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "OdontoFunil",
+  title: "CliniFunnel",
   description:
-    "Funil de vendas completo para clinicas odontologicas: do clique ao procedimento",
+    "Funil de vendas completo para clínicas: do clique ao procedimento",
 };
 
 export default function RootLayout({
