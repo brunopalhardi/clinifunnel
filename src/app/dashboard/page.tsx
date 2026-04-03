@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { FunnelChart } from "@/components/dashboard/funnel-chart";
+import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
 import { FunnelMetrics } from "@/types";
 
@@ -21,16 +22,24 @@ export default function DashboardPage() {
   const { clinic, loading: clinicLoading } = useClinic();
   const [metrics, setMetrics] = useState<FunnelMetrics>(emptyMetrics);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
 
-  useEffect(() => {
+  const fetchMetrics = useCallback(() => {
     if (!clinic) return;
     setLoading(true);
-    fetch(`/api/metrics?clinicId=${clinic.id}`)
+    const params = new URLSearchParams({ clinicId: clinic.id });
+    if (dateRange.from) params.set("from", dateRange.from);
+    if (dateRange.to) params.set("to", dateRange.to);
+    fetch(`/api/metrics?${params}`)
       .then((res) => res.json())
       .then((json) => setMetrics(json.data ?? emptyMetrics))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [clinic]);
+  }, [clinic, dateRange]);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   if (clinicLoading) {
     return <p className="text-muted-foreground">Carregando...</p>;
@@ -52,6 +61,7 @@ export default function DashboardPage() {
           <span className="text-sm text-muted-foreground">Atualizando...</span>
         )}
       </div>
+      <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
       <KpiCards metrics={metrics} />
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

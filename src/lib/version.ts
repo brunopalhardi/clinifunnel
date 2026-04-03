@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.0";
+export const APP_VERSION = "0.7.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.7.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Botao Sincronizar funcional (dispara match-leads + sync-clinicorp)",
+      "Filtros de data em todas as paginas do dashboard (presets 7/30/90 dias + custom)",
+      "Home page redireciona para /dashboard",
+      "API /api/sync implementada",
+    ],
+  },
   {
     version: "0.6.0",
     date: "2026-04-03",
