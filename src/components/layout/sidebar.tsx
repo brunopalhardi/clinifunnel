@@ -5,16 +5,21 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Visao Geral", icon: "📊" },
-  { href: "/dashboard/leads", label: "Leads", icon: "👤" },
-  { href: "/dashboard/campaigns", label: "Campanhas", icon: "📢" },
-  { href: "/dashboard/procedures", label: "Procedimentos", icon: "🦷" },
-  { href: "/dashboard/logs", label: "Webhook Logs", icon: "📋" },
-  { href: "/dashboard/settings", label: "Configuracoes", icon: "⚙️" },
+  { href: "/dashboard", label: "Visao Geral" },
+  { href: "/dashboard/leads", label: "Leads" },
+  { href: "/dashboard/funil", label: "Funil" },
+  { href: "/dashboard/campaigns", label: "Campanhas" },
+  { href: "/dashboard/procedures", label: "Procedimentos" },
+  { href: "/dashboard/settings", label: "Configuracoes" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    href === "/dashboard"
+      ? pathname === "/dashboard"
+      : pathname.startsWith(href);
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
@@ -26,15 +31,15 @@ export function Sidebar() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={true}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-              pathname === item.href
+              isActive(item.href)
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
+            {item.label}
           </Link>
         ))}
       </nav>
