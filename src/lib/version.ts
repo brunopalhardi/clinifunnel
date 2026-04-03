@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.8.0";
+export const APP_VERSION = "0.9.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.9.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Pagina Webhook Logs no dashboard com filtro por origem e visualizacao de payload JSON",
+      "API /api/webhook-logs com filtros (source, status, limit)",
+      "Link no sidebar para Webhook Logs",
+      "Versao atualizada no sidebar",
+    ],
+  },
   {
     version: "0.8.0",
     date: "2026-04-03",

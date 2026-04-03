@@ -9,6 +9,7 @@ const navItems = [
   { href: "/dashboard/leads", label: "Leads", icon: "👤" },
   { href: "/dashboard/campaigns", label: "Campanhas", icon: "📢" },
   { href: "/dashboard/procedures", label: "Procedimentos", icon: "🦷" },
+  { href: "/dashboard/logs", label: "Webhook Logs", icon: "📋" },
   { href: "/dashboard/settings", label: "Configuracoes", icon: "⚙️" },
 ];
 
@@ -38,7 +39,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t p-4">
-        <p className="text-xs text-muted-foreground">CliniFunnel v0.2.0</p>
+        <p className="text-xs text-muted-foreground">CliniFunnel v0.9.0</p>
       </div>
     </aside>
   );
