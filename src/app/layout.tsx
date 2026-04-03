@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -14,9 +15,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "OdontoFunil",
+  title: "CliniFunnel",
   description:
-    "Funil de vendas completo para clinicas odontologicas: do clique ao procedimento",
+    "Funil de vendas completo para clínicas: do clique ao procedimento",
 };
 
 export default function RootLayout({
@@ -29,7 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

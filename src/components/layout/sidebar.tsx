@@ -9,6 +9,7 @@ const navItems = [
   { href: "/dashboard/leads", label: "Leads", icon: "👤" },
   { href: "/dashboard/campaigns", label: "Campanhas", icon: "📢" },
   { href: "/dashboard/procedures", label: "Procedimentos", icon: "🦷" },
+  { href: "/dashboard/logs", label: "Webhook Logs", icon: "📋" },
   { href: "/dashboard/settings", label: "Configuracoes", icon: "⚙️" },
 ];
 
@@ -18,7 +19,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center border-b px-6">
-        <h1 className="text-xl font-bold">OdontoFunil</h1>
+        <h1 className="text-xl font-bold">CliniFunnel</h1>
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navItems.map((item) => (
@@ -38,7 +39,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t p-4">
-        <p className="text-xs text-muted-foreground">OdontoFunil v0.1.0</p>
+        <p className="text-xs text-muted-foreground">CliniFunnel v0.9.0</p>
       </div>
     </aside>
   );

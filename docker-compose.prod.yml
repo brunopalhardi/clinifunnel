@@ -3,7 +3,7 @@ version: "3.8"
 services:
   web:
     build: .
-    container_name: odontofunil-web
+    container_name: clinifunnel-web
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -13,34 +13,34 @@ services:
       - postgres
       - redis
     networks:
-      - odontofunil-network
+      - clinifunnel-network
 
   postgres:
     image: postgres:16-alpine
-    container_name: odontofunil-postgres
+    container_name: clinifunnel-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: odontofunil
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odontofunil}
-      POSTGRES_DB: odontofunil
+      POSTGRES_USER: clinifunnel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clinifunnel}
+      POSTGRES_DB: clinifunnel
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - odontofunil-network
+      - clinifunnel-network
 
   redis:
     image: redis:7-alpine
-    container_name: odontofunil-redis
+    container_name: clinifunnel-redis
     restart: unless-stopped
     volumes:
       - redis_data:/data
     networks:
-      - odontofunil-network
+      - clinifunnel-network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  odontofunil-network:
+  clinifunnel-network:
     driver: bridge

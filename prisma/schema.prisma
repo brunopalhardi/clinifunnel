@@ -7,17 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([clinicId])
+}
+
 model Clinic {
   id               String      @id @default(cuid())
   name             String
   kommoSubdomain   String      @unique
   kommoToken       String
-  clinicorpToken   String?
-  clinicorpOAuth   Json?
+  clinicorpUser       String?
+  clinicorpToken      String?
+  clinicorpBusinessId String?
+  // Toggles de integração
+  clinicorpAutoCreatePatient Boolean @default(false)
+  clinicorpWebhookEnabled    Boolean @default(true)
   pipelineId       String?
   stageAgendamento String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+  users            User[]
   leads            Lead[]
   patients         Patient[]
   procedures       Procedure[]

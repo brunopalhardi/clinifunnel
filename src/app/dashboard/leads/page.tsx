@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,25 +11,59 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { DateFilter } from "@/components/dashboard/date-filter";
+import { useClinic } from "@/hooks/use-clinic";
+
+interface Lead {
+  id: string;
+  name: string;
+  phone: string | null;
+  channel: string;
+  utmCampaign: string | null;
+  kommoStatus: string | null;
+  agendamentoAt: string | null;
+  createdAt: string;
+}
 
 export default function LeadsPage() {
-  // TODO: Fetch leads from API
-  const leads: Array<{
-    id: string;
-    name: string;
-    phone: string;
-    channel: string;
-    utmCampaign: string | null;
-    agendamentoAt: string | null;
-    createdAt: string;
-  }> = [];
+  const { clinic, loading: clinicLoading } = useClinic();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+
+  const fetchLeads = useCallback(() => {
+    if (!clinic) return;
+    setLoading(true);
+    const params = new URLSearchParams({ clinicId: clinic.id });
+    if (dateRange.from) params.set("from", dateRange.from);
+    if (dateRange.to) params.set("to", dateRange.to);
+    fetch(`/api/leads?${params}`)
+      .then((res) => res.json())
+      .then((json) => setLeads(json.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [clinic, dateRange]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  if (clinicLoading) {
+    return <p className="text-muted-foreground">Carregando...</p>;
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Leads</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Leads</h1>
+        {loading && (
+          <span className="text-sm text-muted-foreground">Carregando...</span>
+        )}
+      </div>
+      <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Leads</CardTitle>
+          <CardTitle>Lista de Leads ({leads.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -38,6 +73,7 @@ export default function LeadsPage() {
                 <TableHead>Telefone</TableHead>
                 <TableHead>Canal</TableHead>
                 <TableHead>Campanha</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Agendamento</TableHead>
                 <TableHead>Data</TableHead>
               </TableRow>
@@ -46,18 +82,19 @@ export default function LeadsPage() {
               {leads.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-muted-foreground"
                   >
-                    Nenhum lead encontrado. Configure o webhook do Kommo para
-                    comecar.
+                    {loading
+                      ? "Carregando leads..."
+                      : "Nenhum lead encontrado. Configure o webhook do Kommo para comecar."}
                   </TableCell>
                 </TableRow>
               ) : (
                 leads.map((lead) => (
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.name}</TableCell>
-                    <TableCell>{lead.phone}</TableCell>
+                    <TableCell>{lead.phone || "-"}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -68,6 +105,7 @@ export default function LeadsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{lead.utmCampaign || "-"}</TableCell>
+                    <TableCell>{lead.kommoStatus || "-"}</TableCell>
                     <TableCell>
                       {lead.agendamentoAt
                         ? new Date(lead.agendamentoAt).toLocaleDateString(

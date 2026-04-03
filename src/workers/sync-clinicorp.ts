@@ -12,30 +12,22 @@ export const syncClinicorpWorker = new Worker(
   async () => {
     const clinics = await prisma.clinic.findMany({
       where: {
+        clinicorpUser: { not: null },
         clinicorpToken: { not: null },
-        clinicorpOAuth: { not: undefined },
       },
     });
 
     for (const clinic of clinics) {
+      if (!clinic.clinicorpUser || !clinic.clinicorpToken) continue;
+
       try {
         const client = new ClinicorpClient({
-          tokens: clinic.clinicorpOAuth as {
-            accessToken: string;
-            refreshToken: string;
-            expiresAt: number;
-          },
-          clientId: process.env.CLINICORP_CLIENT_ID || "",
-          clientSecret: process.env.CLINICORP_CLIENT_SECRET || "",
-          onTokenRefresh: async (tokens) => {
-            await prisma.clinic.update({
-              where: { id: clinic.id },
-              data: { clinicorpOAuth: tokens as unknown as object },
-            });
-          },
+          user: clinic.clinicorpUser,
+          token: clinic.clinicorpToken,
+          subscriberId: clinic.clinicorpUser,
         });
 
-        // Get patients that have UTMs (came from leads)
+        // Sync patients that have UTMs (came from leads)
         const patients = await prisma.patient.findMany({
           where: {
             clinicId: clinic.id,
@@ -45,38 +37,21 @@ export const syncClinicorpWorker = new Worker(
         });
 
         for (const patient of patients) {
-          if (!patient.clinicorpPatientId) continue;
+          if (!patient.clinicorpPatientId || !clinic.clinicorpBusinessId)
+            continue;
 
-          const procedures = await client.getPatientProcedures(
-            patient.clinicorpPatientId
+          const appointments = await client.listAppointments({
+            from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0],
+            to: new Date().toISOString().split("T")[0],
+            businessId: parseInt(clinic.clinicorpBusinessId, 10),
+            patientId: patient.clinicorpPatientId,
+          });
+
+          console.log(
+            `[sync-clinicorp] Patient ${patient.name}: ${appointments.length} appointments`
           );
-
-          for (const proc of procedures) {
-            await prisma.procedure.upsert({
-              where: {
-                id: proc.id,
-              },
-              update: {
-                name: proc.name,
-                value: proc.value,
-                status: proc.status,
-                completedAt: proc.completedAt
-                  ? new Date(proc.completedAt)
-                  : null,
-              },
-              create: {
-                clinicId: clinic.id,
-                patientId: patient.id,
-                clinicorpProcedureId: proc.id,
-                name: proc.name,
-                value: proc.value,
-                status: proc.status,
-                completedAt: proc.completedAt
-                  ? new Date(proc.completedAt)
-                  : null,
-              },
-            });
-          }
         }
       } catch (error) {
         console.error(

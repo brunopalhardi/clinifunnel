@@ -5,6 +5,106 @@ import { KommoClient } from "@/lib/kommo/client";
 import { extractUTMsFromCustomFields } from "@/lib/kommo/utm";
 import { classifyChannel } from "@/lib/utils/utm";
 import { normalizePhoneBR } from "@/lib/utils/phone";
+import { createPatientQueue } from "@/workers/create-patient";
+
+function extractContact(kommoLead: {
+  _embedded?: {
+    contacts?: Array<{
+      custom_fields_values: Array<{
+        field_code: string | null;
+        values: Array<{ value: string }>;
+      }> | null;
+    }>;
+  };
+}) {
+  let phone: string | null = null;
+  let email: string | null = null;
+
+  const contacts = kommoLead._embedded?.contacts;
+  if (contacts?.length) {
+    const contact = contacts[0];
+    if (contact.custom_fields_values) {
+      for (const field of contact.custom_fields_values) {
+        if (field.field_code === "PHONE" && field.values.length > 0) {
+          phone = normalizePhoneBR(field.values[0].value);
+        }
+        if (field.field_code === "EMAIL" && field.values.length > 0) {
+          email = field.values[0].value;
+        }
+      }
+    }
+  }
+
+  return { phone, email };
+}
+
+async function processLead(
+  clinic: {
+    id: string;
+    kommoSubdomain: string;
+    kommoToken: string;
+    stageAgendamento: string | null;
+  },
+  leadId: string,
+  statusId: string,
+  pipelineId: string
+) {
+  const kommoClient = new KommoClient(
+    clinic.kommoSubdomain,
+    clinic.kommoToken
+  );
+  const kommoLead = await kommoClient.getLead(parseInt(leadId));
+
+  const utms = extractUTMsFromCustomFields(kommoLead.custom_fields_values);
+  const channel = classifyChannel(utms);
+  const { phone, email } = extractContact(kommoLead);
+
+  const isAgendamento =
+    clinic.stageAgendamento && statusId === clinic.stageAgendamento;
+
+  const lead = await prisma.lead.upsert({
+    where: {
+      clinicId_kommoLeadId: {
+        clinicId: clinic.id,
+        kommoLeadId: String(kommoLead.id),
+      },
+    },
+    update: {
+      name: kommoLead.name,
+      phone,
+      email,
+      ...utms,
+      channel,
+      kommoStatus: statusId,
+      kommoPipelineId: pipelineId,
+      ...(isAgendamento ? { agendamentoAt: new Date() } : {}),
+    },
+    create: {
+      clinicId: clinic.id,
+      kommoLeadId: String(kommoLead.id),
+      name: kommoLead.name,
+      phone,
+      email,
+      ...utms,
+      channel,
+      kommoStatus: statusId,
+      kommoPipelineId: pipelineId,
+      kommoCreatedAt: new Date(kommoLead.created_at * 1000),
+      ...(isAgendamento ? { agendamentoAt: new Date() } : {}),
+    },
+  });
+
+  // Enqueue patient creation when lead reaches "Agendado"
+  if (isAgendamento && !lead.patientId) {
+    await createPatientQueue.add(
+      "create-patient",
+      { leadId: lead.id },
+      { jobId: `patient-${lead.id}`, attempts: 3, backoff: { type: "exponential", delay: 5000 } }
+    );
+  }
+
+  return lead;
+}
 
 export async function POST(request: NextRequest) {
   let logId: string | undefined;
@@ -12,7 +112,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
 
-    // Log the webhook immediately
     const log = await prisma.webhookLog.create({
       data: {
         source: "kommo",
@@ -23,17 +122,7 @@ export async function POST(request: NextRequest) {
     });
     logId = log.id;
 
-    // Parse the x-www-form-urlencoded payload
     const webhook = parseKommoWebhook(body);
-
-    // Only process lead status changes
-    if (!webhook.leads?.status?.length) {
-      await prisma.webhookLog.update({
-        where: { id: logId },
-        data: { status: "processed", event: "ignored_no_status_change" },
-      });
-      return NextResponse.json({ ok: true });
-    }
 
     const subdomain = webhook.account?.subdomain;
     if (!subdomain) {
@@ -44,7 +133,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Find the clinic
     const clinic = await prisma.clinic.findUnique({
       where: { kommoSubdomain: subdomain },
     });
@@ -57,84 +145,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    for (const statusChange of webhook.leads.status) {
-      const isAgendamento =
-        clinic.stageAgendamento &&
-        statusChange.status_id === clinic.stageAgendamento;
+    let processed = 0;
 
-      if (!isAgendamento) continue;
-
-      // Fetch full lead data from Kommo API
-      const kommoClient = new KommoClient(
-        clinic.kommoSubdomain,
-        clinic.kommoToken
-      );
-      const kommoLead = await kommoClient.getLead(parseInt(statusChange.id));
-
-      // Extract UTMs from custom fields
-      const utms = extractUTMsFromCustomFields(
-        kommoLead.custom_fields_values
-      );
-      const channel = classifyChannel(utms);
-
-      // Extract contact info
-      let phone: string | null = null;
-      let email: string | null = null;
-
-      const contacts = kommoLead._embedded?.contacts;
-      if (contacts?.length) {
-        const contact = contacts[0];
-        if (contact.custom_fields_values) {
-          for (const field of contact.custom_fields_values) {
-            if (field.field_code === "PHONE" && field.values.length > 0) {
-              phone = normalizePhoneBR(field.values[0].value);
-            }
-            if (field.field_code === "EMAIL" && field.values.length > 0) {
-              email = field.values[0].value;
-            }
-          }
-        }
+    // Process new leads (add)
+    if (webhook.leads?.add?.length) {
+      for (const added of webhook.leads.add) {
+        await processLead(clinic, added.id, added.status_id, added.pipeline_id);
+        processed++;
       }
-
-      // Upsert lead
-      await prisma.lead.upsert({
-        where: {
-          clinicId_kommoLeadId: {
-            clinicId: clinic.id,
-            kommoLeadId: String(kommoLead.id),
-          },
-        },
-        update: {
-          name: kommoLead.name,
-          phone,
-          email,
-          ...utms,
-          channel,
-          kommoStatus: String(kommoLead.status_id),
-          kommoPipelineId: String(kommoLead.pipeline_id),
-          agendamentoAt: new Date(),
-        },
-        create: {
-          clinicId: clinic.id,
-          kommoLeadId: String(kommoLead.id),
-          name: kommoLead.name,
-          phone,
-          email,
-          ...utms,
-          channel,
-          kommoStatus: String(kommoLead.status_id),
-          kommoPipelineId: String(kommoLead.pipeline_id),
-          kommoCreatedAt: new Date(kommoLead.created_at * 1000),
-          agendamentoAt: new Date(),
-        },
-      });
-
-      // TODO: Enqueue BullMQ job "create-patient" when workers are set up
     }
+
+    // Process status changes
+    if (webhook.leads?.status?.length) {
+      for (const statusChange of webhook.leads.status) {
+        await processLead(
+          clinic,
+          statusChange.id,
+          statusChange.status_id,
+          statusChange.pipeline_id
+        );
+        processed++;
+      }
+    }
+
+    const event =
+      processed > 0
+        ? `processed_${processed}_leads`
+        : "ignored_no_lead_events";
 
     await prisma.webhookLog.update({
       where: { id: logId },
-      data: { status: "processed", event: "lead_status_changed" },
+      data: { status: "processed", event },
     });
 
     return NextResponse.json({ ok: true });
@@ -151,7 +192,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Always return 200 to Kommo so it doesn't retry
     return NextResponse.json({ ok: true });
   }
 }

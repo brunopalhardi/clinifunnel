@@ -1,72 +1,30 @@
 import {
   ClinicorpPatient,
-  ClinicorpProcedure,
-  ClinicorpOAuthTokens,
+  ClinicorpBusiness,
+  ClinicorpProfessional,
+  ClinicorpAppointment,
   CreatePatientPayload,
+  CreateAppointmentPayload,
 } from "./types";
 
 export class ClinicorpClient {
-  private baseUrl = "https://sistema.clinicorp.com/api";
-  private tokens: ClinicorpOAuthTokens;
-  private clientId: string;
-  private clientSecret: string;
-  private onTokenRefresh?: (tokens: ClinicorpOAuthTokens) => Promise<void>;
+  private baseUrl = "https://api.clinicorp.com/rest/v1";
+  private authHeader: string;
+  private subscriberId: string;
 
-  constructor(config: {
-    tokens: ClinicorpOAuthTokens;
-    clientId: string;
-    clientSecret: string;
-    onTokenRefresh?: (tokens: ClinicorpOAuthTokens) => Promise<void>;
-  }) {
-    this.tokens = config.tokens;
-    this.clientId = config.clientId;
-    this.clientSecret = config.clientSecret;
-    this.onTokenRefresh = config.onTokenRefresh;
+  constructor(config: { user: string; token: string; subscriberId?: string }) {
+    const credentials = Buffer.from(`${config.user}:${config.token}`).toString(
+      "base64"
+    );
+    this.authHeader = `Basic ${credentials}`;
+    this.subscriberId = config.subscriberId ?? config.user;
   }
 
-  private async ensureValidToken(): Promise<string> {
-    if (Date.now() < this.tokens.expiresAt - 60_000) {
-      return this.tokens.accessToken;
-    }
-
-    const response = await fetch(`${this.baseUrl}/oauth/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        grant_type: "refresh_token",
-        refresh_token: this.tokens.refreshToken,
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Clinicorp token refresh failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    this.tokens = {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresAt: Date.now() + data.expires_in * 1000,
-    };
-
-    if (this.onTokenRefresh) {
-      await this.onTokenRefresh(this.tokens);
-    }
-
-    return this.tokens.accessToken;
-  }
-
-  private async request<T>(
-    path: string,
-    options?: RequestInit
-  ): Promise<T> {
-    const token = await this.ensureValidToken();
+  private async request<T>(path: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: this.authHeader,
         "Content-Type": "application/json",
         ...options?.headers,
       },
@@ -80,43 +38,85 @@ export class ClinicorpClient {
     return response.json();
   }
 
+  // --- Patients ---
+
   async createPatient(
     payload: CreatePatientPayload
   ): Promise<ClinicorpPatient> {
-    return this.request<ClinicorpPatient>("/patients", {
+    return this.request<ClinicorpPatient>("/patient/create", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   }
 
-  async findPatientByPhone(phone: string): Promise<ClinicorpPatient | null> {
+  async findPatient(params: {
+    patientId?: string;
+    name?: string;
+    phone?: string;
+    cpf?: string;
+    email?: string;
+  }): Promise<ClinicorpPatient | null> {
+    const qs = new URLSearchParams({ subscriber_id: this.subscriberId });
+    if (params.patientId) qs.set("PatientId", params.patientId);
+    if (params.name) qs.set("Name", params.name);
+    if (params.phone) qs.set("Phone", params.phone);
+    if (params.cpf) qs.set("OtherDocumentId", params.cpf);
+    if (params.email) qs.set("Email", params.email);
+
     try {
-      const data = await this.request<{ data: ClinicorpPatient[] }>(
-        `/patients?phone=${encodeURIComponent(phone)}`
+      const data = await this.request<ClinicorpPatient[]>(
+        `/patient/get?${qs.toString()}`
       );
-      return data.data.length > 0 ? data.data[0] : null;
+      return data.length > 0 ? data[0] : null;
     } catch {
       return null;
     }
   }
 
-  async findPatientByCpf(cpf: string): Promise<ClinicorpPatient | null> {
-    try {
-      const data = await this.request<{ data: ClinicorpPatient[] }>(
-        `/patients?cpf=${encodeURIComponent(cpf)}`
-      );
-      return data.data.length > 0 ? data.data[0] : null;
-    } catch {
-      return null;
-    }
-  }
+  // --- Appointments ---
 
-  async getPatientProcedures(
-    patientId: string
-  ): Promise<ClinicorpProcedure[]> {
-    const data = await this.request<{ data: ClinicorpProcedure[] }>(
-      `/patients/${patientId}/procedures`
+  async createAppointment(
+    payload: CreateAppointmentPayload
+  ): Promise<ClinicorpAppointment> {
+    return this.request<ClinicorpAppointment>(
+      "/appointment/create_appointment_by_api",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
     );
-    return data.data;
+  }
+
+  async listAppointments(params: {
+    from: string;
+    to: string;
+    businessId: number;
+    patientId?: string;
+  }): Promise<ClinicorpAppointment[]> {
+    const qs = new URLSearchParams({
+      subscriber_id: this.subscriberId,
+      from: params.from,
+      to: params.to,
+      businessId: String(params.businessId),
+    });
+    if (params.patientId) qs.set("patientId", params.patientId);
+
+    return this.request<ClinicorpAppointment[]>(
+      `/appointment/list?${qs.toString()}`
+    );
+  }
+
+  // --- Business & Professionals ---
+
+  async listBusinesses(): Promise<ClinicorpBusiness[]> {
+    return this.request<ClinicorpBusiness[]>(
+      `/business/list?subscriber_id=${this.subscriberId}`
+    );
+  }
+
+  async listProfessionals(): Promise<ClinicorpProfessional[]> {
+    return this.request<ClinicorpProfessional[]>(
+      "/professional/list_all_professionals"
+    );
   }
 }

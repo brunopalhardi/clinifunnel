@@ -1,3 +1,4 @@
+import "dotenv/config";
 import IORedis from "ioredis";
 
 const globalForRedis = globalThis as unknown as {
