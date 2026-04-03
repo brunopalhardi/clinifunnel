@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.0";
+export const APP_VERSION = "0.6.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.6.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Webhook Clinicorp processa eventos de procedimentos e agendamentos",
+      "Worker process-procedure: cria/atualiza procedures no banco com matching de paciente",
+      "Mapeamento de status Clinicorp → status interno (pending/approved/completed/cancelled)",
+      "Workers match-leads e sync-clinicorp registrados no index",
+      "Todos os 4 workers com graceful shutdown",
+    ],
+  },
   {
     version: "0.5.0",
     date: "2026-04-03",
