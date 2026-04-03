@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ClinicorpClient } from "./client";
 import { ClinicorpPatient, CreatePatientPayload } from "./types";
 import { normalizePhoneBR } from "@/lib/utils/phone";
-import { utmsToNote, utmsToTags } from "@/lib/utils/utm";
+import { utmsToNote } from "@/lib/utils/utm";
 import { UTMData } from "@/types";
 
 export async function createOrUpdateLocalPatient(
@@ -10,51 +10,67 @@ export async function createOrUpdateLocalPatient(
   clinicorpPatient: ClinicorpPatient,
   utms: UTMData
 ) {
+  const phone = clinicorpPatient.MobilePhone
+    ? normalizePhoneBR(String(clinicorpPatient.MobilePhone))
+    : null;
+
   return prisma.patient.upsert({
     where: {
       clinicId_clinicorpPatientId: {
         clinicId,
-        clinicorpPatientId: clinicorpPatient.id,
+        clinicorpPatientId: String(clinicorpPatient.id),
       },
     },
     update: {
-      name: clinicorpPatient.name,
-      phone: clinicorpPatient.phone
-        ? normalizePhoneBR(clinicorpPatient.phone)
-        : undefined,
-      cpf: clinicorpPatient.cpf,
+      name: clinicorpPatient.Name,
+      phone: phone ?? undefined,
+      cpf: clinicorpPatient.OtherDocumentId ?? undefined,
       ...utms,
     },
     create: {
       clinicId,
-      clinicorpPatientId: clinicorpPatient.id,
-      name: clinicorpPatient.name,
-      phone: clinicorpPatient.phone
-        ? normalizePhoneBR(clinicorpPatient.phone)
-        : null,
-      cpf: clinicorpPatient.cpf,
+      clinicorpPatientId: String(clinicorpPatient.id),
+      name: clinicorpPatient.Name,
+      phone,
+      cpf: clinicorpPatient.OtherDocumentId ?? null,
       ...utms,
     },
   });
 }
 
-export async function createPatientInClinicorp(
+export async function findOrCreatePatientInClinicorp(
   client: ClinicorpClient,
+  subscriberId: string,
   data: {
     name: string;
     phone?: string;
     email?: string;
-    cpf?: string;
     utms: UTMData;
   }
 ): Promise<ClinicorpPatient> {
+  // Try finding by phone first
+  if (data.phone) {
+    const digits = data.phone.replace(/\D/g, "");
+    const existing = await client.findPatient({ phone: digits });
+    if (existing) return existing;
+  }
+
+  // Try finding by email
+  if (data.email) {
+    const existing = await client.findPatient({ email: data.email });
+    if (existing) return existing;
+  }
+
+  // Create new patient
   const payload: CreatePatientPayload = {
-    name: data.name,
-    phone: data.phone,
-    email: data.email,
-    cpf: data.cpf,
-    tags: utmsToTags(data.utms),
-    notes: utmsToNote(data.utms),
+    subscriber_id: subscriberId,
+    Name: data.name,
+    Email: data.email,
+    MobilePhone: data.phone
+      ? parseInt(data.phone.replace(/\D/g, ""), 10)
+      : undefined,
+    Notes: utmsToNote(data.utms),
+    IgnoreSameName: "true",
   };
 
   return client.createPatient(payload);

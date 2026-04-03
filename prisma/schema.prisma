@@ -12,8 +12,9 @@ model Clinic {
   name             String
   kommoSubdomain   String      @unique
   kommoToken       String
-  clinicorpToken   String?
-  clinicorpOAuth   Json?
+  clinicorpUser       String?
+  clinicorpToken      String?
+  clinicorpBusinessId String?
   pipelineId       String?
   stageAgendamento String?
   createdAt        DateTime    @default(now())
