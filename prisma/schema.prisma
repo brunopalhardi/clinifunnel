@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id               String      @id @default(cuid())
+  name             String
+  kommoSubdomain   String      @unique
+  kommoToken       String
+  clinicorpToken   String?
+  clinicorpOAuth   Json?
+  pipelineId       String?
+  stageAgendamento String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  leads            Lead[]
+  patients         Patient[]
+  procedures       Procedure[]
+}
+
+model Lead {
+  id              String    @id @default(cuid())
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id])
+  kommoLeadId     String
+  name            String
+  phone           String?
+  email           String?
+  // UTMs
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  utmContent      String?
+  utmTerm         String?
+  // Status
+  channel         String    @default("organic") // "campaign" | "organic"
+  kommoStatus     String?
+  kommoPipelineId String?
+  // Matching
+  patientId       String?
+  patient         Patient?  @relation(fields: [patientId], references: [id])
+  // Timestamps
+  kommoCreatedAt  DateTime?
+  agendamentoAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([clinicId, kommoLeadId])
+  @@index([clinicId, channel])
+  @@index([clinicId, utmCampaign])
+}
+
+model Patient {
+  id                 String      @id @default(cuid())
+  clinicId           String
+  clinic             Clinic      @relation(fields: [clinicId], references: [id])
+  clinicorpPatientId String?
+  name               String
+  phone              String?
+  cpf                String?
+  // UTMs herdadas do lead
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  utmContent         String?
+  utmTerm            String?
+  // Relações
+  leads              Lead[]
+  procedures         Procedure[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@unique([clinicId, clinicorpPatientId])
+  @@index([clinicId, phone])
+}
+
+model Procedure {
+  id                   String    @id @default(cuid())
+  clinicId             String
+  clinic               Clinic    @relation(fields: [clinicId], references: [id])
+  patientId            String
+  patient              Patient   @relation(fields: [patientId], references: [id])
+  clinicorpProcedureId String?
+  name                 String
+  value                Float
+  status               String    @default("pending") // "pending" | "approved" | "completed" | "cancelled"
+  completedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([clinicId, status])
+  @@index([patientId])
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  source    String   // "kommo" | "clinicorp"
+  event     String
+  payload   Json
+  status    String   @default("received") // "received" | "processed" | "error"
+  error     String?
+  createdAt DateTime @default(now())
+}

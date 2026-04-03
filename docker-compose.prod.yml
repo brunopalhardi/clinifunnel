@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: odontofunil-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - odontofunil-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: odontofunil-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: odontofunil
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odontofunil}
+      POSTGRES_DB: odontofunil
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - odontofunil-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: odontofunil-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - odontofunil-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  odontofunil-network:
+    driver: bridge
