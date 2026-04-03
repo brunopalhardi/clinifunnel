@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.4.0";
+export const APP_VERSION = "0.5.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.5.0",
+    date: "2026-04-03",
+    type: "minor",
+    changes: [
+      "Autenticacao com NextAuth (CredentialsProvider + JWT)",
+      "Modelo User no Prisma vinculado a Clinic",
+      "Middleware protegendo /dashboard e /api (exceto webhooks)",
+      "Pagina de login com email + senha",
+      "SessionProvider no layout, useClinic via session",
+      "Header com nome do usuario e botao de logout",
+      "Seed de usuario admin",
+    ],
+  },
   {
     version: "0.4.0",
     date: "2026-04-03",

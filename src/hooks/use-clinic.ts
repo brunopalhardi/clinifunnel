@@ -1,31 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-interface Clinic {
-  id: string;
-  name: string;
-  kommoSubdomain: string;
-}
+import { useSession } from "next-auth/react";
 
 export function useClinic() {
-  const [clinic, setClinic] = useState<Clinic | null>(null);
-  const [clinics, setClinics] = useState<Clinic[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: session, status } = useSession();
 
-  useEffect(() => {
-    fetch("/api/clinics")
-      .then((res) => res.json())
-      .then((json) => {
-        const data: Clinic[] = json.data ?? [];
-        setClinics(data);
-        if (data.length > 0) {
-          setClinic(data[0]);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const clinic =
+    session?.user
+      ? { id: session.user.clinicId, name: session.user.clinicName }
+      : null;
 
-  return { clinic, clinics, setClinic, loading };
+  return {
+    clinic,
+    loading: status === "loading",
+  };
 }
