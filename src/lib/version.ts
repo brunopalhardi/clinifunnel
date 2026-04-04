@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.9.0";
+export const APP_VERSION = "0.10.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.10.0",
+    date: "2026-04-04",
+    type: "minor",
+    changes: [
+      "Integracao Meta Ads (Marketing API) — OAuth, sync automatico a cada 6h, somente leitura (ads_read)",
+      "Integracao Google Ads — OAuth com refresh token, sync via GAQL, somente leitura",
+      "Model AdCampaignData para armazenar dados de campanhas (spend, impressions, clicks) por dia",
+      "API /api/campaigns enriquecida com dados de ad spend, CPL, CPC e ROI",
+      "API /api/ads/status e /api/ads/disconnect para gerenciar conexoes",
+      "Workers sync-meta-ads e sync-google-ads com BullMQ (repeat every 6h)",
+      "Aba Anuncios no settings com botoes conectar/desconectar Meta e Google",
+      "Pagina de campanhas redesenhada: KPIs (investimento, receita, ROI, CPL), grafico comparativo, tabela com plataforma e metricas de ads",
+      "Compliance Meta: scope ads_read apenas, zero dados de pacientes enviados",
+    ],
+  },
   {
     version: "0.9.0",
     date: "2026-04-03",

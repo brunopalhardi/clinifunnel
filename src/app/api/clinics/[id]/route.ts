@@ -33,6 +33,10 @@ export async function GET(
       clinicorpWebhookEnabled: clinic.clinicorpWebhookEnabled,
       hasKommo: !!clinic.kommoToken,
       hasClinicorp: !!clinic.clinicorpUser && !!clinic.clinicorpToken,
+      hasMeta: !!clinic.metaAccessToken,
+      hasGoogle: !!clinic.googleAdsRefreshToken,
+      metaAdAccountId: clinic.metaAdAccountId ?? "",
+      googleAdsCustomerId: clinic.googleAdsCustomerId ?? "",
     },
   });
 }

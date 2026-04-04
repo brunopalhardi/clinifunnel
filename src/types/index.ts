@@ -30,6 +30,23 @@ export interface CampaignMetrics {
   agendamentos: number;
   procedimentos: number;
   revenue: number;
-  costPerLead?: number;
-  roi?: number;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  costPerLead: number | null;
+  costPerClick: number | null;
+  roi: number | null;
+  platform: string | null;
+}
+
+export interface CampaignTotals {
+  leads: number;
+  agendamentos: number;
+  procedimentos: number;
+  revenue: number;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  roi: number | null;
+  avgCpl: number | null;
 }
