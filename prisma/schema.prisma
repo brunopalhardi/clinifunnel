@@ -31,6 +31,13 @@ model Clinic {
   // Toggles de integração
   clinicorpAutoCreatePatient Boolean @default(false)
   clinicorpWebhookEnabled    Boolean @default(true)
+  // Meta Ads (Marketing API - somente leitura)
+  metaAccessToken    String?
+  metaTokenExpiresAt DateTime?
+  metaAdAccountId    String?
+  // Google Ads (Marketing API - somente leitura)
+  googleAdsRefreshToken  String?
+  googleAdsCustomerId    String?
   pipelineId       String?
   stageAgendamento String?
   createdAt        DateTime    @default(now())
@@ -39,6 +46,7 @@ model Clinic {
   leads            Lead[]
   patients         Patient[]
   procedures       Procedure[]
+  adCampaignData   AdCampaignData[]
 }
 
 model Lead {
@@ -113,6 +121,26 @@ model Procedure {
 
   @@index([clinicId, status])
   @@index([patientId])
+}
+
+model AdCampaignData {
+  id           String   @id @default(cuid())
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
+  platform     String   // "meta" | "google"
+  campaignId   String   // ID da campanha na plataforma
+  campaignName String
+  date         DateTime @db.Date
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  spend        Float    @default(0)
+  currency     String   @default("BRL")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([clinicId, platform, campaignId, date])
+  @@index([clinicId, date])
+  @@index([clinicId, campaignName])
 }
 
 model WebhookLog {
