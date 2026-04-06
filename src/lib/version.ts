@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.10.0";
+export const APP_VERSION = "0.10.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.10.1",
+    date: "2026-04-06",
+    type: "patch",
+    changes: [
+      "Fix: infinite re-render loop em todas as paginas do dashboard causado por referencia instavel do objeto clinic no useClinic hook",
+      "useClinic agora usa useMemo para estabilizar referencia do objeto clinic",
+    ],
+  },
   {
     version: "0.10.0",
     date: "2026-04-04",
