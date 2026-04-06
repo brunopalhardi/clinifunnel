@@ -1,6 +1,6 @@
 import { AdInsight } from "./types";
 
-const GRAPH_API = "https://graph.facebook.com/v21.0";
+const GRAPH_API = "https://graph.facebook.com/v25.0";
 
 /**
  * Client para Meta Marketing API (somente leitura).
@@ -76,7 +76,7 @@ export class MetaAdsClient {
       if (result.paging?.next) {
         // Para paginação do Meta, a URL completa é retornada
         const nextUrl = new URL(result.paging.next);
-        path = nextUrl.pathname.replace("/v21.0", "");
+        path = nextUrl.pathname.replace("/v25.0", "");
       } else {
         hasMore = false;
       }
