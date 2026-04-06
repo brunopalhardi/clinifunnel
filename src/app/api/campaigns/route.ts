@@ -24,19 +24,6 @@ export async function GET(request: NextRequest) {
         }
       : {};
 
-  // Get campaign metrics grouped by utmCampaign
-  const leads = await prisma.lead.groupBy({
-    by: ["utmCampaign"],
-    where: {
-      clinicId,
-      channel: "campaign",
-      utmCampaign: { not: null },
-      ...dateFilter,
-    },
-    _count: { id: true },
-  });
-
-  // Get ad spend data aggregated by campaign name
   const adDateFilter =
     from || to
       ? {
@@ -47,20 +34,29 @@ export async function GET(request: NextRequest) {
         }
       : {};
 
+  // 1. Leads agrupados por utmCampaign
+  const leadGroups = await prisma.lead.groupBy({
+    by: ["utmCampaign"],
+    where: {
+      clinicId,
+      channel: "campaign",
+      utmCampaign: { not: null },
+      ...dateFilter,
+    },
+    _count: { id: true },
+  });
+
+  // 2. Ad data agrupado por campaignName
   const adData = await prisma.adCampaignData.groupBy({
     by: ["campaignName", "platform"],
     where: { clinicId, ...adDateFilter },
-    _sum: {
-      spend: true,
-      impressions: true,
-      clicks: true,
-    },
+    _sum: { spend: true, impressions: true, clicks: true },
   });
 
-  // Indexar ad data por campaign name (case-insensitive)
+  // Index de ad data por nome (case-insensitive)
   const adIndex = new Map<
     string,
-    { spend: number; impressions: number; clicks: number; platform: string }
+    { name: string; spend: number; impressions: number; clicks: number; platform: string }
   >();
   for (const ad of adData) {
     const key = ad.campaignName.toLowerCase();
@@ -72,6 +68,7 @@ export async function GET(request: NextRequest) {
       existing.platform = "both";
     } else {
       adIndex.set(key, {
+        name: ad.campaignName,
         spend: ad._sum.spend || 0,
         impressions: ad._sum.impressions || 0,
         clicks: ad._sum.clicks || 0,
@@ -80,13 +77,33 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Get procedure data per campaign
+  // Index de leads por campaign name
+  const leadIndex = new Map<string, number>();
+  for (const g of leadGroups) {
+    if (g.utmCampaign) {
+      leadIndex.set(g.utmCampaign.toLowerCase(), g._count.id);
+    }
+  }
+
+  // 3. Merge: todas as campanhas (leads + ads)
+  const allCampaignKeys = new Set<string>();
+  for (const g of leadGroups) {
+    if (g.utmCampaign) allCampaignKeys.add(g.utmCampaign.toLowerCase());
+  }
+  for (const key of adIndex.keys()) {
+    allCampaignKeys.add(key);
+  }
+
   const campaigns = await Promise.all(
-    leads.map(async (group) => {
+    Array.from(allCampaignKeys).map(async (key) => {
+      const ad = adIndex.get(key);
+      const campaignName = ad?.name || leadGroups.find(g => g.utmCampaign?.toLowerCase() === key)?.utmCampaign || key;
+
+      // Lead data
       const campaignLeads = await prisma.lead.findMany({
         where: {
           clinicId,
-          utmCampaign: group.utmCampaign,
+          utmCampaign: { equals: campaignName, mode: "insensitive" },
           ...dateFilter,
         },
         select: {
@@ -102,31 +119,21 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      const agendamentos = campaignLeads.filter(
-        (l) => l.agendamentoAt
-      ).length;
+      const leadCount = campaignLeads.length;
+      const agendamentos = campaignLeads.filter(l => l.agendamentoAt).length;
 
       let procedimentos = 0;
       let revenue = 0;
       for (const lead of campaignLeads) {
         if (lead.patient) {
           for (const proc of lead.patient.procedures) {
-            if (
-              proc.status === "completed" ||
-              proc.status === "approved"
-            ) {
+            if (proc.status === "completed" || proc.status === "approved") {
               procedimentos++;
               revenue += proc.value;
             }
           }
         }
       }
-
-      const campaignName = group.utmCampaign || "unknown";
-      const leadCount = group._count.id;
-
-      // Match com ad data (case-insensitive)
-      const ad = adIndex.get(campaignName.toLowerCase());
 
       const spend = ad?.spend || 0;
       const impressions = ad?.impressions || 0;
@@ -152,7 +159,9 @@ export async function GET(request: NextRequest) {
     })
   );
 
-  // Totais agregados
+  // Ordenar por spend desc
+  campaigns.sort((a, b) => b.spend - a.spend);
+
   const totals = campaigns.reduce(
     (acc, c) => ({
       leads: acc.leads + c.leads,
@@ -166,12 +175,8 @@ export async function GET(request: NextRequest) {
     { leads: 0, agendamentos: 0, procedimentos: 0, revenue: 0, spend: 0, impressions: 0, clicks: 0 }
   );
 
-  const totalRoi =
-    totals.spend > 0
-      ? ((totals.revenue - totals.spend) / totals.spend) * 100
-      : null;
-  const avgCpl =
-    totals.leads > 0 && totals.spend > 0 ? totals.spend / totals.leads : null;
+  const totalRoi = totals.spend > 0 ? ((totals.revenue - totals.spend) / totals.spend) * 100 : null;
+  const avgCpl = totals.leads > 0 && totals.spend > 0 ? totals.spend / totals.leads : null;
 
   return NextResponse.json({
     data: campaigns,
