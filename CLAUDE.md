@@ -72,3 +72,4 @@ npm run build                                      # Build producao
 - Funcoes: camelCase, verbos descritivos
 - Webhooks: sempre responder 200 rapido, processar async via BullMQ
 - Variaveis sensiveis: nunca hardcode, sempre via env ou banco
+# test
