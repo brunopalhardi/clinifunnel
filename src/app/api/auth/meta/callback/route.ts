@@ -17,13 +17,13 @@ export async function GET(request: NextRequest) {
   // Usuário negou permissão
   if (error) {
     return NextResponse.redirect(
-      new URL("/dashboard/settings?meta=denied", request.url)
+      new URL("/dashboard/settings?meta=denied", process.env.NEXTAUTH_URL || request.url)
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL("/dashboard/settings?meta=error", request.url)
+      new URL("/dashboard/settings?meta=error", process.env.NEXTAUTH_URL || request.url)
     );
   }
 
@@ -31,12 +31,12 @@ export async function GET(request: NextRequest) {
   const clinicId = verifyOAuthState(state);
   if (!clinicId) {
     return NextResponse.redirect(
-      new URL("/dashboard/settings?meta=invalid_state", request.url)
+      new URL("/dashboard/settings?meta=invalid_state", process.env.NEXTAUTH_URL || request.url)
     );
   }
 
   try {
-    const origin = new URL(request.url).origin;
+    const origin = process.env.NEXTAUTH_URL || new URL(request.url).origin;
     const redirectUri = `${origin}/api/auth/meta/callback`;
 
     // Trocar code por long-lived token
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     if (adAccounts.length === 0) {
       return NextResponse.redirect(
-        new URL("/dashboard/settings?meta=no_accounts", request.url)
+        new URL("/dashboard/settings?meta=no_accounts", process.env.NEXTAUTH_URL || request.url)
       );
     }
 
@@ -69,12 +69,12 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.redirect(
-      new URL("/dashboard/settings?meta=success", request.url)
+      new URL("/dashboard/settings?meta=success", process.env.NEXTAUTH_URL || request.url)
     );
   } catch (err) {
     console.error("[meta-callback] Error:", err);
     return NextResponse.redirect(
-      new URL("/dashboard/settings?meta=error", request.url)
+      new URL("/dashboard/settings?meta=error", process.env.NEXTAUTH_URL || request.url)
     );
   }
 }

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const origin = new URL(request.url).origin;
+  const origin = process.env.NEXTAUTH_URL || new URL(request.url).origin;
   const redirectUri = `${origin}/api/auth/google-ads/callback`;
   const state = generateOAuthState(clinicId);
 
