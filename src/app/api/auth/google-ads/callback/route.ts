@@ -15,25 +15,25 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL("/dashboard/settings?google=denied", request.url)
+      new URL("/dashboard/settings?google=denied", process.env.NEXTAUTH_URL || request.url)
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL("/dashboard/settings?google=error", request.url)
+      new URL("/dashboard/settings?google=error", process.env.NEXTAUTH_URL || request.url)
     );
   }
 
   const clinicId = verifyOAuthState(state);
   if (!clinicId) {
     return NextResponse.redirect(
-      new URL("/dashboard/settings?google=invalid_state", request.url)
+      new URL("/dashboard/settings?google=invalid_state", process.env.NEXTAUTH_URL || request.url)
     );
   }
 
   try {
-    const origin = new URL(request.url).origin;
+    const origin = process.env.NEXTAUTH_URL || new URL(request.url).origin;
     const redirectUri = `${origin}/api/auth/google-ads/callback`;
 
     // Trocar code por tokens
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     if (customerIds.length === 0) {
       return NextResponse.redirect(
-        new URL("/dashboard/settings?google=no_accounts", request.url)
+        new URL("/dashboard/settings?google=no_accounts", process.env.NEXTAUTH_URL || request.url)
       );
     }
 
@@ -61,12 +61,12 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.redirect(
-      new URL("/dashboard/settings?google=success", request.url)
+      new URL("/dashboard/settings?google=success", process.env.NEXTAUTH_URL || request.url)
     );
   } catch (err) {
     console.error("[google-ads-callback] Error:", err);
     return NextResponse.redirect(
-      new URL("/dashboard/settings?google=error", request.url)
+      new URL("/dashboard/settings?google=error", process.env.NEXTAUTH_URL || request.url)
     );
   }
 }
