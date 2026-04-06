@@ -1,5 +1,7 @@
 # CLAUDE.md — CliniFunnel
 
+> URL Produção: https://clinifunnel.koaai.com.br
+
 ## Stack
 - **Framework**: Next.js 14 (App Router) + TypeScript (strict)
 - **UI**: Tailwind CSS + shadcn/ui
