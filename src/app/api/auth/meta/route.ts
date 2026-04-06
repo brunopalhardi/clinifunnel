@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${origin}/api/auth/meta/callback`;
   const state = generateOAuthState(clinicId);
 
-  const authUrl = new URL("https://www.facebook.com/v21.0/dialog/oauth");
+  const authUrl = new URL("https://www.facebook.com/v25.0/dialog/oauth");
   authUrl.searchParams.set("client_id", appId);
   authUrl.searchParams.set("redirect_uri", redirectUri);
   authUrl.searchParams.set("state", state);
