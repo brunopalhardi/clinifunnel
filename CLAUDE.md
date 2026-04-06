@@ -1,6 +1,7 @@
 # CLAUDE.md — CliniFunnel
 
 > URL Produção: https://clinifunnel.koaai.com.br
+> Deploy: auto via GitHub Actions (push to main)
 
 ## Stack
 - **Framework**: Next.js 14 (App Router) + TypeScript (strict)
