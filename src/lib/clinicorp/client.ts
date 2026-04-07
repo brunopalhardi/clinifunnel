@@ -3,6 +3,7 @@ import {
   ClinicorpBusiness,
   ClinicorpProfessional,
   ClinicorpAppointment,
+  ClinicorpEstimate,
   CreatePatientPayload,
   CreateAppointmentPayload,
 } from "./types";
@@ -103,6 +104,25 @@ export class ClinicorpClient {
 
     return this.request<ClinicorpAppointment[]>(
       `/appointment/list?${qs.toString()}`
+    );
+  }
+
+  // --- Estimates (Orçamentos/Procedimentos) ---
+
+  async listEstimates(params: {
+    from: string;
+    to: string;
+    clinicId?: string;
+  }): Promise<ClinicorpEstimate[]> {
+    const qs = new URLSearchParams({
+      subscriber_id: this.subscriberId,
+      from: params.from,
+      to: params.to,
+    });
+    if (params.clinicId) qs.set("clinic_id", params.clinicId);
+
+    return this.request<ClinicorpEstimate[]>(
+      `/estimates/list?${qs.toString()}`
     );
   }
 

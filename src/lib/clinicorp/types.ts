@@ -20,6 +20,36 @@ export interface ClinicorpProcedure {
   createdAt: string;
 }
 
+export interface ClinicorpEstimate {
+  id: number;
+  Date: string;
+  Amount: number;
+  DiscountAmount?: number;
+  Status: string; // "APPROVED" | "PENDING" | "CANCELED" | "OPENED"
+  BusinessId: number;
+  CreateDate: string;
+  ProfessionalId: number;
+  TreatmentId: number;
+  ProfessionalName: string;
+  PatientId: number;
+  PatientName: string;
+  PatientMobilePhone?: string;
+  ProcedureList: ClinicorpEstimateProcedure[];
+}
+
+export interface ClinicorpEstimateProcedure {
+  id: number;
+  TreatmentId: number;
+  OperationDescription: string;
+  Amount: number;
+  FinalAmount: number;
+  Executed?: string; // "X" = executed
+  ExecutedDate?: string;
+  StatusDescription: string;
+  DentistName: string;
+  Patient_PersonId: number;
+}
+
 export interface ClinicorpBusiness {
   id: number;
   CompanyId: string;
