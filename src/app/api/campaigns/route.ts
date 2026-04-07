@@ -90,9 +90,9 @@ export async function GET(request: NextRequest) {
   for (const g of leadGroups) {
     if (g.utmCampaign) allCampaignKeys.add(g.utmCampaign.toLowerCase());
   }
-  for (const key of adIndex.keys()) {
+  adIndex.forEach((_, key) => {
     allCampaignKeys.add(key);
-  }
+  });
 
   const campaigns = await Promise.all(
     Array.from(allCampaignKeys).map(async (key) => {
