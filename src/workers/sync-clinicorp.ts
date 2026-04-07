@@ -72,7 +72,7 @@ export const syncClinicorpWorker = new Worker(
                 clinicId: clinic.id,
                 clinicorpPatientId: String(est.PatientId),
                 name: est.PatientName,
-                phone: est.PatientMobilePhone || null,
+                phone: est.PatientMobilePhone ? String(est.PatientMobilePhone) : null,
               },
             });
             patientsCreated++;
@@ -81,7 +81,7 @@ export const syncClinicorpWorker = new Worker(
               where: { id: patient.id },
               data: {
                 name: est.PatientName,
-                phone: est.PatientMobilePhone || patient.phone,
+                phone: est.PatientMobilePhone ? String(est.PatientMobilePhone) : patient.phone,
               },
             });
           }
