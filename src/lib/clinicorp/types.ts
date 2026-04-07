@@ -33,7 +33,7 @@ export interface ClinicorpEstimate {
   ProfessionalName: string;
   PatientId: number;
   PatientName: string;
-  PatientMobilePhone?: string;
+  PatientMobilePhone?: string | number;
   ProcedureList: ClinicorpEstimateProcedure[];
 }
 
