@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.claude
+*.md
+docker-compose*.yml
+.env*
+.gitignore
+sync-*.ts
+test-*.ts
+force-*.ts
+switch-*.ts
+update-*.ts
+clean-*.ts
