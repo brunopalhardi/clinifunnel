@@ -1,8 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 interface DateFilterProps {
@@ -12,11 +9,12 @@ interface DateFilterProps {
 export function DateFilter({ onFilter }: DateFilterProps) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [activePreset, setActivePreset] = useState<number | null>(30);
 
   const presets = [
-    { label: "7 dias", days: 7 },
-    { label: "30 dias", days: 30 },
-    { label: "90 dias", days: 90 },
+    { label: "7d", days: 7 },
+    { label: "30d", days: 30 },
+    { label: "90d", days: 90 },
   ];
 
   const applyPreset = (days: number) => {
@@ -27,48 +25,43 @@ export function DateFilter({ onFilter }: DateFilterProps) {
     const toStr = toDate.toISOString().split("T")[0];
     setFrom(fromStr);
     setTo(toStr);
+    setActivePreset(days);
     onFilter(fromStr, toStr);
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <div className="space-y-1">
-        <Label htmlFor="from" className="text-xs">
-          De
-        </Label>
-        <Input
-          id="from"
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="w-36"
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="to" className="text-xs">
-          Ate
-        </Label>
-        <Input
-          id="to"
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className="w-36"
-        />
-      </div>
-      <Button size="sm" onClick={() => onFilter(from, to)}>
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        type="date"
+        value={from}
+        onChange={(e) => { setFrom(e.target.value); setActivePreset(null); }}
+        className="rounded-lg bg-card px-3 py-2 text-sm glass-border outline-none focus:ring-1 focus:ring-gold/40"
+      />
+      <input
+        type="date"
+        value={to}
+        onChange={(e) => { setTo(e.target.value); setActivePreset(null); }}
+        className="rounded-lg bg-card px-3 py-2 text-sm glass-border outline-none focus:ring-1 focus:ring-gold/40"
+      />
+      <button
+        onClick={() => { setActivePreset(null); onFilter(from, to); }}
+        className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-gold-foreground transition-all hover:opacity-90"
+      >
         Filtrar
-      </Button>
-      <div className="flex gap-1">
+      </button>
+      <div className="flex rounded-lg bg-card glass-border p-0.5">
         {presets.map((p) => (
-          <Button
+          <button
             key={p.days}
-            variant="outline"
-            size="sm"
             onClick={() => applyPreset(p.days)}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+              activePreset === p.days
+                ? "bg-gold text-gold-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
             {p.label}
-          </Button>
+          </button>
         ))}
       </div>
     </div>
