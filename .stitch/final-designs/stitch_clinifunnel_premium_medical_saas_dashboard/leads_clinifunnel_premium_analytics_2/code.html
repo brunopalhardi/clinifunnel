@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@700;800&amp;family=DM+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-primary-fixed": "#271900",
+                    "on-tertiary": "#003824",
+                    "primary": "#f2c36b",
+                    "inverse-on-surface": "#303036",
+                    "surface-container-lowest": "#0e0e13",
+                    "surface-container-low": "#1b1b20",
+                    "secondary-container": "#464760",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "tertiary-fixed": "#6ffbbe",
+                    "tertiary-container": "#2dc68d",
+                    "on-tertiary-container": "#004d33",
+                    "surface-tint": "#eec068",
+                    "outline-variant": "#4e4637",
+                    "on-secondary": "#2d2e46",
+                    "on-primary": "#412d00",
+                    "inverse-surface": "#e4e1e9",
+                    "on-secondary-fixed-variant": "#44455d",
+                    "secondary-fixed-dim": "#c4c4e2",
+                    "on-secondary-fixed": "#181930",
+                    "on-tertiary-fixed": "#002113",
+                    "on-surface-variant": "#d2c5b2",
+                    "secondary": "#c4c4e2",
+                    "inverse-primary": "#7b5804",
+                    "surface-container-high": "#2a292f",
+                    "primary-container": "#d4a853",
+                    "primary-fixed": "#ffdea6",
+                    "on-background": "#e4e1e9",
+                    "surface-container": "#1f1f25",
+                    "secondary-fixed": "#e1e0ff",
+                    "on-surface": "#e4e1e9",
+                    "error": "#ffb4ab",
+                    "surface": "#131318",
+                    "surface-variant": "#35343a",
+                    "error-container": "#93000a",
+                    "surface-dim": "#131318",
+                    "on-error": "#690005",
+                    "primary-fixed-dim": "#eec068",
+                    "tertiary": "#53e2a7",
+                    "on-primary-fixed-variant": "#5d4200",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-container": "#b6b6d3",
+                    "surface-bright": "#39383e",
+                    "on-primary-container": "#573d00",
+                    "background": "#131318",
+                    "surface-container-highest": "#35343a",
+                    "outline": "#9b8f7e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0F;
+            background-image: radial-gradient(circle at 50% 0%, rgba(212, 168, 83, 0.05) 0%, transparent 50%);
+            font-family: 'Inter', sans-serif;
+        }
+        .inner-glow {
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .obsidian-card {
+            background-color: #1f1f25;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 h-screen w-64 border-r border-white/5 backdrop-blur-xl bg-[#131318] z-50">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center inner-glow shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary font-bold">clinical_notes</span>
+</div>
+<div>
+<h1 class="text-xl font-headline font-extrabold text-[#D4A853] tracking-tighter">CliniFunnel</h1>
+<p class="text-[10px] text-secondary/60 uppercase tracking-widest font-bold">Clinical Analytics</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2 font-['Manrope'] font-bold tracking-tight text-sm">
+<a class="flex items-center gap-3 px-4 py-3 text-[#8B8BA7] hover:text-[#E4E1E9] hover:bg-white/5 transition-colors duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard</span>
+                Visão Geral
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#D4A853] bg-white/5 rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_search</span>
+                Leads
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#8B8BA7] hover:text-[#E4E1E9] hover:bg-white/5 transition-colors duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">campaign</span>
+                Campanhas
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#8B8BA7] hover:text-[#E4E1E9] hover:bg-white/5 transition-colors duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">monitoring</span>
+                Analytics
+            </a>
+<div class="pt-6 mt-6 border-t border-white/5">
+<a class="flex items-center gap-3 px-4 py-3 text-[#8B8BA7] hover:text-[#E4E1E9] hover:bg-white/5 transition-colors duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+                    Configurações
+                </a>
+</div>
+</nav>
+<div class="mt-auto obsidian-card inner-glow p-4 rounded-xl flex items-center gap-3">
+<img alt="Dr. Ricardo Silva" class="w-10 h-10 rounded-full object-cover border border-primary/20" data-alt="Close-up portrait of a professional male doctor in a dark medical studio with soft dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWm4oQWwd8M6Mx929kongHH9K5WIGtOZX427ThEPgGJMhl8AWUc_E5sBDQD-HdMBh9YlxC2tqMNmNQ8xykWkH_K0d0_cPpyWG9Ozk425wXYkzcW5LM4qgHSwCpWCikKqXfriiOEDqJhoZCk3kdf8yrBY7Mz7Ri5aidgID6qqtuvSoOYbDBZjrI0rWdxHcJULRU0cG_NpbvEoCmixKpvFWVKJWOpooTN-SvhiXg2OOOqanV6Mfsp8e8t92FgSdFW5mx8cXBpwV7y04l"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">Dr. Ricardo Silva</p>
+<p class="text-[10px] text-secondary/60 truncate">Diretor Clínico</p>
+</div>
+<span class="material-symbols-outlined text-secondary/40 text-sm">logout</span>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="flex justify-between items-center w-full pl-72 pr-8 py-4 fixed top-0 bg-[#0A0A0F]/80 backdrop-blur-md z-40">
+<div class="flex items-center gap-4">
+<nav class="flex items-center gap-2 text-xs font-medium text-secondary/60">
+<span>AD Clínica</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Dashboard</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Leads</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex bg-surface-container-low rounded-full p-1 border border-white/5">
+<button class="px-4 py-1.5 text-[10px] font-bold text-secondary/40">7D</button>
+<button class="px-4 py-1.5 text-[10px] font-bold text-secondary/40">15D</button>
+<button class="px-4 py-1.5 text-[10px] font-bold text-[#412D00] bg-primary-container rounded-full shadow-sm">30D</button>
+</div>
+<div class="flex items-center gap-4 border-l border-white/10 pl-6">
+<button class="material-symbols-outlined text-secondary hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-secondary hover:text-primary transition-colors">help</button>
+<button class="bg-primary text-on-primary font-bold text-xs px-6 py-2 rounded-lg hover:brightness-110 active:scale-95 transition-all inner-glow">
+                    Sincronizar
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-24 p-8 min-h-screen">
+<!-- Title Section -->
+<div class="mb-10 flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-2">Leads</h2>
+<p class="text-secondary/60 text-lg">Gerencie e acompanhe todos os leads da clínica</p>
+</div>
+<button class="flex items-center gap-2 text-primary border border-primary/20 bg-primary/5 px-5 py-2.5 rounded-xl hover:bg-primary/10 transition-all font-semibold">
+<span class="material-symbols-outlined text-lg">person_add</span>
+                Novo Lead
+            </button>
+</div>
+<!-- KPI Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="obsidian-card inner-glow p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
+<p class="text-secondary/60 text-sm font-medium mb-1">Total de Leads</p>
+<div class="flex items-end gap-3">
+<span class="text-5xl font-headline font-extrabold text-on-surface">31</span>
+<span class="text-tertiary text-sm font-bold flex items-center mb-1.5">
+<span class="material-symbols-outlined text-xs">trending_up</span> 12%
+                    </span>
+</div>
+</div>
+<div class="obsidian-card inner-glow p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
+<p class="text-secondary/60 text-sm font-medium mb-1">Via Campanha</p>
+<div class="flex items-end gap-3">
+<span class="text-5xl font-headline font-extrabold text-primary">22</span>
+<span class="text-secondary/40 text-xs font-bold mb-1.5">71% do total</span>
+</div>
+</div>
+<div class="obsidian-card inner-glow p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
+<p class="text-secondary/60 text-sm font-medium mb-1">Via Orgânico</p>
+<div class="flex items-end gap-3">
+<span class="text-5xl font-headline font-extrabold text-on-surface">9</span>
+<span class="text-secondary/40 text-xs font-bold mb-1.5">29% do total</span>
+</div>
+</div>
+</div>
+<!-- Filters Section -->
+<div class="obsidian-card inner-glow p-4 rounded-2xl mb-6 flex flex-col md:flex-row gap-4 items-center">
+<div class="relative flex-1 w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary/40">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-1 focus:ring-primary/40 placeholder:text-secondary/40" placeholder="Buscar por nome ou telefone..." type="text"/>
+</div>
+<div class="flex gap-4 w-full md:w-auto">
+<select class="bg-surface-container-low border-none rounded-xl px-6 py-3 text-sm focus:ring-1 focus:ring-primary/40 appearance-none min-w-[140px]">
+<option>Canal: Todos</option>
+<option>Campanha</option>
+<option>Orgânico</option>
+</select>
+<select class="bg-surface-container-low border-none rounded-xl px-6 py-3 text-sm focus:ring-1 focus:ring-primary/40 appearance-none min-w-[140px]">
+<option>Status: Todos</option>
+<option>Novo</option>
+<option>Agendado</option>
+<option>Convertido</option>
+<option>Perdido</option>
+</select>
+<button class="bg-surface-container-high hover:bg-surface-bright text-on-surface p-3 rounded-xl transition-colors">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="obsidian-card inner-glow rounded-2xl overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-white/[0.02] border-b border-white/5">
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">Nome</th>
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">Telefone</th>
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">Canal</th>
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">UTM Source</th>
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">Status</th>
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">Agendamento</th>
+<th class="px-6 py-5 text-xs font-bold text-secondary/60 uppercase tracking-widest">Data</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Row 1 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Ana Paula Souza</td>
+<td class="px-6 py-5 text-secondary/80">(11) 98765-4321</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-primary/40 text-primary uppercase">campanha</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">facebook_ads</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase ring-1 ring-primary/20">Novo</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 italic">Pendente</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">Hoje, 09:45</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Bruno Oliveira</td>
+<td class="px-6 py-5 text-secondary/80">(21) 91234-5678</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-secondary/40 text-secondary uppercase">orgânico</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">google_search</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-tertiary/10 text-tertiary uppercase ring-1 ring-tertiary/20">Agendado</span>
+</td>
+<td class="px-6 py-5 text-on-surface font-medium text-xs">15 Out, 14:00</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">Hoje, 08:20</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Camila Martins</td>
+<td class="px-6 py-5 text-secondary/80">(31) 99887-7665</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-primary/40 text-primary uppercase">campanha</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">instagram_ads</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-tertiary text-on-tertiary uppercase ring-1 ring-tertiary/20">Convertido</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 italic">Finalizado</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">Ontem, 17:30</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Diego Ferreira</td>
+<td class="px-6 py-5 text-secondary/80">(41) 97766-5544</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-primary/40 text-primary uppercase">campanha</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">google_ads</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-error/10 text-error uppercase ring-1 ring-error/20">Perdido</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 italic">Cancelado</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">Ontem, 11:15</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Fernanda Lima</td>
+<td class="px-6 py-5 text-secondary/80">(11) 96655-4433</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-secondary/40 text-secondary uppercase">orgânico</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">whatsapp_direct</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase ring-1 ring-primary/20">Novo</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 italic">Pendente</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">12 Out, 16:40</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Gustavo Santos</td>
+<td class="px-6 py-5 text-secondary/80">(19) 95544-3322</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-primary/40 text-primary uppercase">campanha</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">facebook_ads</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-tertiary/10 text-tertiary uppercase ring-1 ring-tertiary/20">Agendado</span>
+</td>
+<td class="px-6 py-5 text-on-surface font-medium text-xs">18 Out, 10:30</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">12 Out, 14:10</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5 font-semibold text-on-surface">Helena Ribeiro</td>
+<td class="px-6 py-5 text-secondary/80">(81) 94433-2211</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-primary/40 text-primary uppercase">campanha</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">tiktok_ads</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase ring-1 ring-primary/20">Novo</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 italic">Pendente</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">11 Out, 09:05</td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-white/[0.02] transition-colors group border-none">
+<td class="px-6 py-5 font-semibold text-on-surface">Igor Machado</td>
+<td class="px-6 py-5 text-secondary/80">(48) 93322-1100</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold border border-secondary/40 text-secondary uppercase">orgânico</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 font-mono text-xs">google_search</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-tertiary text-on-tertiary uppercase ring-1 ring-tertiary/20">Convertido</span>
+</td>
+<td class="px-6 py-5 text-secondary/40 italic">Finalizado</td>
+<td class="px-6 py-5 text-secondary/60 text-xs font-medium">10 Out, 15:55</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="mt-8 flex justify-between items-center px-4">
+<p class="text-secondary/40 text-sm">Mostrando <span class="text-on-surface font-bold">8</span> de 31 leads</p>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl obsidian-card inner-glow text-secondary/40 hover:text-primary transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl obsidian-card inner-glow bg-primary/10 text-primary border border-primary/30 font-bold">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl obsidian-card inner-glow text-secondary/60 hover:text-primary transition-colors">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl obsidian-card inner-glow text-secondary/60 hover:text-primary transition-colors">3</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl obsidian-card inner-glow text-secondary/60 hover:text-primary transition-colors">4</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl obsidian-card inner-glow text-secondary/60 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Noise Overlay for Texture -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.02] z-[-1]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAS61Qj5xxPhzG32PbXDWk5O51SjdQQAliYzzfX8rN0QXoZqo9Lrbadh5owfMNO1b6vd1z729ZuPyKeEinH2U2bPZialNGwdl9-K_JpihlAWPI1sfROTRQ8ScHdpyzCQprCPfTV0vB0OMqoDsch5_By3mv9r0Yw0-DO2_Cakli_cAW_GVUa8aUPeKcTSOOz5EwXGXAaM8aXk2MrItpvo6Yx8c6_5NCJsmw_aeWVFwtJi3R1pJyWTLT5juCoWV-9AT_rNkv6U8CTMsMs');">
+</div>
+</body></html>

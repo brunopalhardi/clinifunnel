@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Precision Noir | Campanhas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#d6e3ff",
+                        "on-tertiary-fixed": "#001b3d",
+                        "inverse-surface": "#e4e1e9",
+                        "on-tertiary-container": "#1d4274",
+                        "error-container": "#93000a",
+                        "outline": "#9b8f7e",
+                        "on-secondary-fixed-variant": "#554424",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-container": "#8fb0e9",
+                        "primary-fixed": "#ffdea6",
+                        "surface-container-highest": "#35343a",
+                        "on-surface": "#e4e1e9",
+                        "primary-container": "#d4a853",
+                        "on-background": "#e4e1e9",
+                        "inverse-on-surface": "#303036",
+                        "secondary-fixed": "#fadfb4",
+                        "surface-variant": "#35343a",
+                        "on-error": "#690005",
+                        "surface-bright": "#39383e",
+                        "on-secondary-fixed": "#261901",
+                        "surface-container-lowest": "#0e0e13",
+                        "on-secondary-container": "#ceb58c",
+                        "on-primary-fixed": "#271900",
+                        "surface-container": "#1f1f25",
+                        "tertiary": "#afcbff",
+                        "secondary": "#dcc399",
+                        "on-primary-container": "#573d00",
+                        "background": "#131318",
+                        "surface-container-low": "#1b1b20",
+                        "inverse-primary": "#7b5804",
+                        "primary-fixed-dim": "#eec068",
+                        "surface-container-high": "#2a292f",
+                        "outline-variant": "#4e4637",
+                        "surface": "#131318",
+                        "on-tertiary-fixed-variant": "#234779",
+                        "on-secondary": "#3d2e10",
+                        "on-surface-variant": "#d2c5b2",
+                        "error": "#ffb4ab",
+                        "primary": "#f2c36b",
+                        "on-primary-fixed-variant": "#5d4200",
+                        "secondary-fixed-dim": "#dcc399",
+                        "on-primary": "#412d00",
+                        "tertiary-fixed-dim": "#a8c8ff",
+                        "surface-tint": "#eec068",
+                        "on-tertiary": "#023061",
+                        "secondary-container": "#584626",
+                        "surface-dim": "#131318"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #131318;
+            color: #e4e1e9;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(31, 31, 37, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 168, 83, 0.05);
+        }
+        .text-emerald { color: #10B981; }
+        .text-rose { color: #F87171; }
+        .bg-emerald { background-color: #10B981; }
+        .bg-rose { background-color: #F87171; }
+    </style>
+</head>
+<body class="font-body selection:bg-primary/30 selection:text-primary">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-[#131318] flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-bold tracking-tighter text-[#D4A853] font-headline">Precision Noir</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-headline opacity-60">Clinical Intelligence</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-gray-500 hover:text-gray-300 transition-colors font-manrope tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Visão Geral</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-gray-500 hover:text-gray-300 transition-colors font-manrope tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span>Leads</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 bg-[#1b1b21] text-[#D4A853] font-semibold border-r-2 border-[#D4A853] transition-all font-manrope tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span>Campanhas</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-gray-500 hover:text-gray-300 transition-colors font-manrope tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-gray-500 hover:text-gray-300 transition-colors font-manrope tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configurações</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<div class="flex items-center gap-3 p-3 bg-surface-container-high rounded-xl">
+<img alt="Clinic Logo" class="w-8 h-8 rounded-full border border-primary/20" data-alt="professional clinical logo with gold accents on a dark background showing medical precision" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhjcgmseRJcP1sJjndVC0FVmsr5gyNkkgSOUFlVfFaE1jTcsLoU9gajzAlyj9RVa00L7oaNGiGpernTOwnO0sGMcOSzwRbkuJbecTznKZwXIR2RRgTMjWAO7fILvVGoFUPt3u2MeBzS05MkfYEIe_7ZvZ1L3wVDOTYieccfWmlUBjqN0fkJBxOEj3AbL7yb0zSbqMVayXe99oPxIuc7WvKe1okbQLaUxCBsGae44gyb8qTlg-Hq_RdXd1VCOTcA0cI5kvSsbqPxQ5M"/>
+<div>
+<p class="text-xs font-bold text-on-surface">AD Clínica</p>
+<p class="text-[10px] text-on-surface-variant">Premium Plan</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#131318]/80 backdrop-blur-xl border-b border-[#D4A853]/10 shadow-xl shadow-black/20 flex justify-between items-center px-8 h-16 ml-64">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-[10px] font-headline uppercase tracking-widest text-on-surface-variant">
+<span>AD Clínica</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span>Dashboard</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-primary font-bold">Campanhas</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex bg-surface-container-lowest p-1 rounded-full border border-outline-variant/10">
+<button class="px-4 py-1 text-[10px] font-bold rounded-full text-gray-400 hover:text-gray-200 transition-all">7D</button>
+<button class="px-4 py-1 text-[10px] font-bold rounded-full bg-primary text-on-primary shadow-lg shadow-primary/20 transition-all">30D</button>
+<button class="px-4 py-1 text-[10px] font-bold rounded-full text-gray-400 hover:text-gray-200 transition-all">90D</button>
+</div>
+<div class="flex items-center gap-4 border-l border-outline-variant/20 pl-6">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">help_outline</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/30">
+<img alt="Dr. User Profile" data-alt="close-up of a professional doctor with a kind expression in high-key lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdvK8wcMSDJcYcfcHXMwlO_XLfkPMTlrWoOdnVTKXBp1n5KPVjVaUg26eOOo71Yr0w5BzsrUokcn2XrV7uMRp-8OCacAuQrPRvjTYLKa3FWKIy0ysF8jYrnO6wFPBgLqzSM3IjU3HfYVGTCgIwvdaz8oyLmBsuoQ23It_QxwlWIavYJTICdx7JD4MH0z-nSiOc2Q_IxbyCrChL653lad6-cs6T1S4FfuXb6E7AK9vZLYjzEEfM89oNznJo_9x7yj-DfnCveyIXoqtE"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 mt-16 p-8 min-h-screen">
+<!-- Header Section -->
+<section class="mb-10">
+<h2 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface mb-1">Performance por Campanha</h2>
+<p class="text-on-surface-variant font-body">Analise o ROI de cada campanha de marketing</p>
+</section>
+<!-- KPI Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- KPI Card 1 -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl text-primary">payments</span>
+</div>
+<p class="text-xs font-headline font-bold text-on-surface-variant uppercase tracking-widest mb-2">Investimento Total</p>
+<h3 class="text-2xl font-headline font-bold text-on-surface mb-2">R$ 12.928,00</h3>
+<p class="text-xs text-on-surface-variant/80 font-medium">90.960 impressões · 3.954 cliques</p>
+</div>
+<!-- KPI Card 2 -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl text-primary">account_balance_wallet</span>
+</div>
+<p class="text-xs font-headline font-bold text-on-surface-variant uppercase tracking-widest mb-2">Receita Gerada</p>
+<h3 class="text-2xl font-headline font-bold text-on-surface mb-2">R$ 28.589,00</h3>
+<p class="text-xs text-on-surface-variant/80 font-medium">5 procedimentos fechados</p>
+</div>
+<!-- KPI Card 3 -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl text-emerald">trending_up</span>
+</div>
+<p class="text-xs font-headline font-bold text-on-surface-variant uppercase tracking-widest mb-2">ROI</p>
+<h3 class="text-2xl font-headline font-bold text-emerald mb-2">121%</h3>
+<p class="text-[10px] text-on-surface-variant/60 font-medium italic">(receita - investimento) / investimento</p>
+</div>
+<!-- KPI Card 4 -->
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl text-primary">analytics</span>
+</div>
+<p class="text-xs font-headline font-bold text-on-surface-variant uppercase tracking-widest mb-2">CPL Médio</p>
+<h3 class="text-2xl font-headline font-bold text-on-surface mb-2">R$ 587,64</h3>
+<p class="text-xs text-on-surface-variant/80 font-medium">custo por lead · 22 leads</p>
+</div>
+</div>
+<!-- Performance Chart Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+<div class="lg:col-span-3 glass-card p-8 rounded-xl">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h4 class="text-lg font-headline font-bold text-on-surface">Investimento vs Receita por Campanha</h4>
+<p class="text-sm text-on-surface-variant">Comparativo direto de aporte e retorno financeiro</p>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-rose rounded-full"></span>
+<span class="text-xs font-medium text-on-surface-variant">Investimento</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-emerald rounded-full"></span>
+<span class="text-xs font-medium text-on-surface-variant">Receita</span>
+</div>
+</div>
+</div>
+<!-- Custom Bar Chart Visualization -->
+<div class="space-y-6">
+<!-- Row 1 -->
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-tighter text-on-surface-variant mb-1">
+<span>[3C] [CONVERSAO] [WHATSAPP] [FRIO]</span>
+<span class="text-emerald">ROI 156%</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-24 shrink-0 text-[10px] text-right text-on-surface-variant pr-2 border-r border-outline-variant/20">R$ 4.2k</div>
+<div class="flex-1 flex gap-1 h-3">
+<div class="bg-rose/80 h-full rounded-sm" style="width: 25%"></div>
+<div class="bg-emerald h-full rounded-sm" style="width: 65%"></div>
+</div>
+<div class="w-20 text-[10px] text-emerald font-bold">R$ 10.8k</div>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-tighter text-on-surface-variant mb-1">
+<span>[3C] [DTS] [DESCOBERTA] [ENGAJAMENTO]</span>
+<span class="text-emerald">ROI 42%</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-24 shrink-0 text-[10px] text-right text-on-surface-variant pr-2 border-r border-outline-variant/20">R$ 2.9k</div>
+<div class="flex-1 flex gap-1 h-3">
+<div class="bg-rose/80 h-full rounded-sm" style="width: 15%"></div>
+<div class="bg-emerald h-full rounded-sm" style="width: 22%"></div>
+</div>
+<div class="w-20 text-[10px] text-emerald font-bold">R$ 4.1k</div>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-tighter text-on-surface-variant mb-1">
+<span>[3C] [CONVERSAO] [WHATSAPP] [QUENTE]</span>
+<span class="text-rose">ROI -12%</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-24 shrink-0 text-[10px] text-right text-on-surface-variant pr-2 border-r border-outline-variant/20">R$ 3.1k</div>
+<div class="flex-1 flex gap-1 h-3">
+<div class="bg-rose/80 h-full rounded-sm" style="width: 18%"></div>
+<div class="bg-emerald h-full rounded-sm" style="width: 15%"></div>
+</div>
+<div class="w-20 text-[10px] text-emerald font-bold">R$ 2.7k</div>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-tighter text-on-surface-variant mb-1">
+<span>[3C] [ATRACAO] [TRAFEGO] [FRIO]</span>
+<span class="text-on-surface-variant/40">—</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-24 shrink-0 text-[10px] text-right text-on-surface-variant pr-2 border-r border-outline-variant/20">R$ 1.5k</div>
+<div class="flex-1 flex gap-1 h-3">
+<div class="bg-rose/80 h-full rounded-sm" style="width: 8%"></div>
+<div class="bg-surface-container-highest h-full rounded-sm" style="width: 2%"></div>
+</div>
+<div class="w-20 text-[10px] text-on-surface-variant/40 font-bold">R$ 0</div>
+</div>
+</div>
+<!-- Row 5 -->
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-tighter text-on-surface-variant mb-1">
+<span>[3C] [LEADS] [FORMULARIO] [FRIO]</span>
+<span class="text-on-surface-variant/40">—</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-24 shrink-0 text-[10px] text-right text-on-surface-variant pr-2 border-r border-outline-variant/20">R$ 1.2k</div>
+<div class="flex-1 flex gap-1 h-3">
+<div class="bg-rose/80 h-full rounded-sm" style="width: 7%"></div>
+<div class="bg-surface-container-highest h-full rounded-sm" style="width: 2%"></div>
+</div>
+<div class="w-20 text-[10px] text-on-surface-variant/40 font-bold">R$ 0</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Table (Leads Style) -->
+<section class="glass-card rounded-xl overflow-hidden">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center">
+<h4 class="text-lg font-headline font-bold text-on-surface">Detalhamento por Campanha</h4>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest transition-colors rounded-lg text-xs font-bold text-primary">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Exportar Relatório
+                </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Campanha</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Plataforma</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Leads</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Agend.</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Proc.</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Investimento</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">CPL</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ROI</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">[3C] [CONVERSAO] [WHATSAPP] [FRIO]</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 border border-primary/40 rounded-full text-[9px] font-bold text-primary uppercase">Meta</span>
+</td>
+<td class="px-6 py-4 text-xs font-medium">8</td>
+<td class="px-6 py-4 text-xs font-medium">5</td>
+<td class="px-6 py-4 text-xs font-medium">3</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 4.230</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 528,75</td>
+<td class="px-6 py-4 text-xs font-bold text-emerald">156%</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">[3C] [DTS] [DESCOBERTA] [ENGAJAMENTO]</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 border border-primary/40 rounded-full text-[9px] font-bold text-primary uppercase">Meta</span>
+</td>
+<td class="px-6 py-4 text-xs font-medium">6</td>
+<td class="px-6 py-4 text-xs font-medium">3</td>
+<td class="px-6 py-4 text-xs font-medium">1</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 2.890</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 481,67</td>
+<td class="px-6 py-4 text-xs font-bold text-emerald">42%</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">[3C] [CONVERSAO] [WHATSAPP] [QUENTE]</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 border border-primary/40 rounded-full text-[9px] font-bold text-primary uppercase">Meta</span>
+</td>
+<td class="px-6 py-4 text-xs font-medium">5</td>
+<td class="px-6 py-4 text-xs font-medium">4</td>
+<td class="px-6 py-4 text-xs font-medium">1</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 3.100</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 620,00</td>
+<td class="px-6 py-4 text-xs font-bold text-rose">-12%</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">[3C] [ATRACAO] [TRAFEGO] [FRIO]</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 border border-primary/40 rounded-full text-[9px] font-bold text-primary uppercase">Meta</span>
+</td>
+<td class="px-6 py-4 text-xs font-medium">3</td>
+<td class="px-6 py-4 text-xs font-medium">2</td>
+<td class="px-6 py-4 text-xs font-medium">0</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 1.450</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 483,33</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface-variant">—</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">[3C] [LEADS] [FORMULARIO] [FRIO]</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 border border-primary/40 rounded-full text-[9px] font-bold text-primary uppercase">Meta</span>
+</td>
+<td class="px-6 py-4 text-xs font-medium">2</td>
+<td class="px-6 py-4 text-xs font-medium">1</td>
+<td class="px-6 py-4 text-xs font-medium">0</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 1.258</td>
+<td class="px-6 py-4 text-xs font-medium">R$ 629,00</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface-variant">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant/10 flex justify-between items-center text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
+<span>Exibindo 5 de 12 campanhas ativas</span>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined hover:text-primary transition-colors">chevron_left</button>
+<span class="text-primary">1 de 3</span>
+<button class="material-symbols-outlined hover:text-primary transition-colors">chevron_right</button>
+</div>
+</div>
+</section>
+<!-- Footer Background Text Overlay -->
+<div class="mt-12 opacity-5 flex flex-col items-center select-none pointer-events-none">
+<h5 class="text-8xl font-headline font-black tracking-tighter">CLINIFUNNEL</h5>
+</div>
+</main>
+<!-- FAB Action (As per UI hierarchy logic, suppressed if not dashboard, but included here for "Campanhas" context as potential "New Campaign") -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center group hover:scale-110 transition-transform z-50">
+<span class="material-symbols-outlined text-2xl group-hover:rotate-90 transition-transform">add</span>
+</button>
+</body></html>

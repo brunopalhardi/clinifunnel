@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Procedimentos | CliniFunnel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#2dc68d",
+                        "on-secondary-fixed-variant": "#44455d",
+                        "surface-container": "#1f1f25",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "surface": "#131318",
+                        "error-container": "#93000a",
+                        "primary": "#f2c36b",
+                        "tertiary-fixed": "#6ffbbe",
+                        "outline": "#9b8f7e",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e4e1e9",
+                        "on-primary-fixed-variant": "#5d4200",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#181930",
+                        "surface-tint": "#eec068",
+                        "outline-variant": "#4e4637",
+                        "on-background": "#e4e1e9",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-surface-variant": "#d2c5b2",
+                        "surface-bright": "#39383e",
+                        "primary-fixed": "#ffdea6",
+                        "secondary-container": "#464760",
+                        "on-error-container": "#ffdad6",
+                        "inverse-primary": "#7b5804",
+                        "primary-container": "#d4a853",
+                        "on-primary-container": "#573d00",
+                        "secondary-fixed-dim": "#c4c4e2",
+                        "surface-dim": "#131318",
+                        "surface-container-high": "#2a292f",
+                        "surface-container-low": "#1b1b20",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-tertiary-container": "#004d33",
+                        "on-tertiary": "#003824",
+                        "on-secondary": "#2d2e46",
+                        "on-tertiary-fixed": "#002113",
+                        "on-primary-fixed": "#271900",
+                        "background": "#131318",
+                        "surface-container-lowest": "#0e0e13",
+                        "secondary": "#8B8BA7",
+                        "on-surface": "#e4e1e9",
+                        "surface-container-highest": "#35343a",
+                        "primary-fixed-dim": "#eec068",
+                        "on-primary": "#412d00",
+                        "surface-variant": "#35343a",
+                        "on-secondary-container": "#b6b6d3",
+                        "tertiary": "#53e2a7",
+                        "inverse-on-surface": "#303036"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0A0A0F; color: #e4e1e9; }
+        .glass-card { background: rgba(31, 31, 37, 0.6); backdrop-filter: blur(12px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .noise-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.02; z-index: 100; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+<div class="noise-bg"></div>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-[#131318] flex flex-col z-50 border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
+<div class="p-8">
+<h1 class="text-[#D4A853] font-['Manrope'] font-bold text-lg tracking-widest uppercase">CliniFunnel</h1>
+<p class="text-[#8B8BA7] text-[10px] tracking-widest uppercase mt-1">Clinical Analytics</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="text-[#8B8BA7] flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#D4A853]">dashboard</span>
+<span class="font-['Inter'] text-sm">Visão Geral</span>
+</a>
+<a class="text-[#8B8BA7] flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#D4A853]">person_search</span>
+<span class="font-['Inter'] text-sm">Leads</span>
+</a>
+<a class="text-[#8B8BA7] flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#D4A853]">campaign</span>
+<span class="font-['Inter'] text-sm">Campanhas</span>
+</a>
+<a class="text-[#D4A853] bg-white/5 border-l-4 border-[#D4A853] flex items-center gap-3 px-6 py-4 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+<span class="font-['Manrope'] font-bold tracking-tight text-sm">Procedimentos</span>
+</a>
+<a class="text-[#8B8BA7] flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#D4A853]">terminal</span>
+<span class="font-['Inter'] text-sm">Webhook Logs</span>
+</a>
+<a class="text-[#8B8BA7] flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#D4A853]">settings</span>
+<span class="font-['Inter'] text-sm">Configurações</span>
+</a>
+</nav>
+<div class="p-6 mt-auto">
+<div class="bg-surface-container-high rounded-2xl p-4 border border-white/5 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full border border-[#D4A853]/30" data-alt="portrait of a professional female doctor in white coat with friendly expression and clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA11jYmUBZbZQ6zAkijdONes-U0i02XWUvlb1Cs37kjEqWZ50_-gyxQx_upjWLoY18PbCqKwIIU417NuTJfp2MvRa7z118cdTZAJlKPgfM-b7OaOaDgKGGEXrkC6-A0iehNX28ftfa2p2cWznSaRcbMz0sAzD45M8c1DyazcmZL85E5JXWSgvKRdxwTxgphFwaATU2xFKyPsl-5MPmEO5uqZmbNfFANVvYY1vKEC_28aUf5bgV_5FuEPxmRQS-onWwXN8rH7X2ps6g4"/>
+<div class="overflow-hidden">
+<p class="text-on-surface text-xs font-bold truncate">Dra. Aléxia Duarte</p>
+<p class="text-[#8B8BA7] text-[10px] truncate">Clínica Premium</p>
+</div>
+</div>
+</div>
+</aside>
+<div class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#0A0A0F]/80 backdrop-blur-md flex justify-between items-center px-8 border-b border-white/5">
+<div class="flex items-center gap-3">
+<span class="text-[#8B8BA7] text-[10px] font-['Inter'] uppercase tracking-widest">AD Clínica</span>
+<span class="material-symbols-outlined text-[#8B8BA7] text-sm">chevron_right</span>
+<span class="text-[#8B8BA7] text-[10px] font-['Inter'] uppercase tracking-widest">Dashboard</span>
+<span class="material-symbols-outlined text-[#8B8BA7] text-sm">chevron_right</span>
+<span class="text-[#D4A853] text-[10px] font-['Inter'] uppercase tracking-widest font-bold">Procedimentos</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-[#8B8BA7] hover:text-[#D4A853] transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-[#F43F5E] rounded-full border border-[#0A0A0F]"></span>
+</button>
+<button class="text-[#8B8BA7] hover:text-[#D4A853] transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 p-8 space-y-8">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight">Procedimentos Realizados</h2>
+<p class="text-secondary mt-2 font-body text-sm">Acompanhe todos os tratamentos e orçamentos da clínica</p>
+</div>
+<div class="flex bg-surface-container-low p-1.5 rounded-full border border-white/5">
+<button class="px-5 py-2 text-xs font-semibold rounded-full text-secondary hover:text-on-surface transition-all">7d</button>
+<button class="px-5 py-2 text-xs font-semibold rounded-full bg-primary-container text-on-primary-container shadow-lg shadow-primary-container/10 transition-all">30d</button>
+<button class="px-5 py-2 text-xs font-semibold rounded-full text-secondary hover:text-on-surface transition-all">90d</button>
+</div>
+</div>
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl">medical_services</span>
+</div>
+<p class="text-secondary text-[10px] font-bold uppercase tracking-widest">Total de Procedimentos</p>
+<div class="mt-4 flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">148</span>
+</div>
+<p class="text-secondary/60 text-xs mt-2">últimos 30 dias</p>
+</div>
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl text-primary">payments</span>
+</div>
+<p class="text-secondary text-[10px] font-bold uppercase tracking-widest">Receita Total</p>
+<div class="mt-4 flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-primary">R$ 142.850,00</span>
+</div>
+<p class="text-secondary/60 text-xs mt-2">R$ 965,20 / procedimento</p>
+</div>
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl text-tertiary">check_circle</span>
+</div>
+<p class="text-secondary text-[10px] font-bold uppercase tracking-widest">Concluídos</p>
+<div class="mt-4 flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-tertiary">112</span>
+</div>
+<p class="text-secondary/60 text-xs mt-2">75.7% dos procedimentos</p>
+</div>
+<div class="glass-card p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl">trending_up</span>
+</div>
+<p class="text-secondary text-[10px] font-bold uppercase tracking-widest">Ticket Médio</p>
+<div class="mt-4 flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">R$ 1.275,45</span>
+</div>
+<p class="text-secondary/60 text-xs mt-2">por orçamento aprovado</p>
+</div>
+</div>
+<!-- Table & Filters Container -->
+<div class="bg-surface-container-low rounded-xl border border-white/5 overflow-hidden flex flex-col">
+<!-- Filter Bar -->
+<div class="p-6 border-b border-white/5 flex flex-col lg:flex-row gap-4 items-center">
+<div class="relative flex-1 w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary text-sm">search</span>
+<input class="w-full bg-surface-container-highest border-none rounded-xl pl-12 pr-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-primary/40 transition-all placeholder:text-secondary/50" placeholder="Buscar por paciente ou procedimento..." type="text"/>
+</div>
+<div class="flex gap-4 w-full lg:w-auto">
+<div class="relative min-w-[160px] flex-1 lg:flex-none">
+<select class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer">
+<option>Status: Todos</option>
+<option>Concluído</option>
+<option>Aprovado</option>
+<option>Pendente</option>
+<option>Cancelado</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none">expand_more</span>
+</div>
+<div class="relative min-w-[200px] flex-1 lg:flex-none">
+<select class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer">
+<option>Profissional: Todos</option>
+<option>Dra. Aléxia Duarte</option>
+<option>Dr. Roberto Silva</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="bg-surface-container/50">
+<th class="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest border-b border-white/5">Procedimento</th>
+<th class="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest border-b border-white/5">Paciente</th>
+<th class="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest border-b border-white/5">Profissional</th>
+<th class="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest border-b border-white/5">Valor</th>
+<th class="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest border-b border-white/5">Status</th>
+<th class="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest border-b border-white/5">Data</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface">BOTOX TERÇO SUPERIOR</td>
+<td class="px-6 py-4 text-sm text-secondary">Joselia Moura Aguiar</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 1.500,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-tertiary/10 text-tertiary">Concluído</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">09/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface">Bioestimulador Diamond</td>
+<td class="px-6 py-4 text-sm text-secondary">Joselia Moura Aguiar</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 1.500,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-tertiary/10 text-tertiary">Concluído</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">09/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface">Botox Terço Superior + Pescoço</td>
+<td class="px-6 py-4 text-sm text-secondary">Rowena Mota de Oliveira</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 2.100,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-primary/10 text-primary">Aprovado</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">10/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface uppercase">Preenchimento Labial</td>
+<td class="px-6 py-4 text-sm text-secondary">Mayra Ribeiro dos Santos</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 2.300,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-tertiary/10 text-tertiary">Concluído</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">10/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface uppercase">Preenchimento Malar</td>
+<td class="px-6 py-4 text-sm text-secondary">Mayra Ribeiro dos Santos</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 1.650,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-tertiary/10 text-tertiary">Concluído</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">10/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface">Harmonização Facial</td>
+<td class="px-6 py-4 text-sm text-secondary">Ana Clara Silva</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 4.500,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-secondary-container/30 text-secondary-fixed-dim">Pendente</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">12/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface">Limpeza de Pele Premium</td>
+<td class="px-6 py-4 text-sm text-secondary">Fernanda Costa</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 350,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-error-container/20 text-error">Cancelado</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">15/03/2026</td>
+</tr>
+<tr class="group hover:bg-white/[0.02] transition-colors border-none">
+<td class="px-6 py-4 text-sm font-semibold text-on-surface uppercase">Botox Terço Superior</td>
+<td class="px-6 py-4 text-sm text-secondary">Patricia Mendes</td>
+<td class="px-6 py-4 text-sm text-secondary">Dra. Aléxia Duarte</td>
+<td class="px-6 py-4 text-sm font-bold text-on-surface">R$ 1.800,00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-tertiary/10 text-tertiary">Concluído</span>
+</td>
+<td class="px-6 py-4 text-sm text-secondary">18/03/2026</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-6 border-t border-white/5 flex items-center justify-between">
+<p class="text-xs text-secondary font-medium">Mostrando 1-8 de 148</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 text-secondary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 text-secondary hover:bg-white/5 transition-colors text-xs font-bold">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 text-secondary hover:bg-white/5 transition-colors text-xs font-bold">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 text-secondary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Background Decoration -->
+<div class="fixed top-0 right-0 -z-10 w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-tertiary/5 blur-[100px] rounded-full -translate-x-1/2 translate-y-1/2"></div>
+</body></html>
