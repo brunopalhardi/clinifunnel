@@ -5,33 +5,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
 @layer base {
-  /* Light Mode — Clinical Alabaster */
+  /* Light Mode — Clinical Alabaster (off-white) */
   :root {
-    --background: 210 11% 98%;
-    --foreground: 200 19% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 200 19% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 200 19% 10%;
-    --primary: 38 100% 22%;
+    --background: 40 20% 95%;
+    --foreground: 220 25% 12%;
+    --card: 40 15% 98%;
+    --card-foreground: 220 25% 12%;
+    --popover: 40 15% 98%;
+    --popover-foreground: 220 25% 12%;
+    --primary: 38 90% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 11% 96%;
-    --secondary-foreground: 200 19% 10%;
-    --muted: 210 11% 96%;
-    --muted-foreground: 215 14% 45%;
-    --accent: 38 80% 45%;
+    --secondary: 40 12% 92%;
+    --secondary-foreground: 220 25% 12%;
+    --muted: 40 12% 92%;
+    --muted-foreground: 220 10% 40%;
+    --accent: 38 80% 40%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
-    --success: 160 84% 39%;
+    --success: 160 70% 35%;
     --success-foreground: 0 0% 100%;
-    --gold: 38 85% 67%;
-    --gold-foreground: 38 100% 16%;
-    --border: 214 20% 92%;
-    --input: 214 20% 92%;
-    --ring: 38 85% 67%;
+    --gold: 38 75% 50%;
+    --gold-foreground: 38 100% 12%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 38 75% 50%;
     --radius: 0.75rem;
-    --sidebar: 220 30% 10%;
+    --sidebar: 220 30% 12%;
     --sidebar-foreground: 0 0% 90%;
   }
 
