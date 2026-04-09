@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#817563",
+                        "primary": "#785600",
+                        "on-secondary-container": "#57657b",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-container": "#fdfcff",
+                        "primary-fixed": "#ffdea6",
+                        "outline-variant": "#d3c4af",
+                        "secondary-container": "#d5e3fd",
+                        "surface-bright": "#f8f9fa",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#edeeef",
+                        "primary-container": "#986d00",
+                        "on-primary-container": "#fffbff",
+                        "surface": "#f8f9fa",
+                        "on-primary-fixed": "#271900",
+                        "surface-dim": "#d9dadb",
+                        "secondary-fixed": "#d5e3fd",
+                        "surface-variant": "#e1e3e4",
+                        "error": "#ba1a1a",
+                        "tertiary": "#085ea2",
+                        "on-background": "#191c1d",
+                        "tertiary-fixed": "#d2e4ff",
+                        "inverse-primary": "#f7bd48",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#004880",
+                        "on-primary-fixed-variant": "#5d4200",
+                        "surface-container-low": "#f3f4f5",
+                        "tertiary-fixed-dim": "#a1c9ff",
+                        "primary-fixed-dim": "#f7bd48",
+                        "on-surface": "#191c1d",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#515f74",
+                        "tertiary-container": "#3477bc",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#4f4535",
+                        "inverse-surface": "#2e3132",
+                        "surface-container-high": "#e7e8e9",
+                        "background": "#f8f9fa",
+                        "surface-tint": "#7b5800",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2f",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-tertiary-fixed": "#001c37"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen overflow-hidden">
+<!-- Sidebar Integration (SideNavBar Shared Component) -->
+<aside class="hidden md:flex flex-col h-screen w-72 bg-[#f8f9fa] space-y-4 py-8 px-6 border-r-0 transition-all duration-300">
+<div class="mb-10">
+<span class="text-lg font-black text-[#191c1d]">Clínica Curator</span>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-[#191c1d]/70 hover:bg-[#f3f4f5] rounded-lg transition-all font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Visão Geral</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#191c1d]/70 hover:bg-[#f3f4f5] rounded-lg transition-all font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span>Leads</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#191c1d]/70 hover:bg-[#f3f4f5] rounded-lg transition-all font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span>Campanhas</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#191c1d]/70 hover:bg-[#f3f4f5] rounded-lg transition-all font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">medical_services</span>
+<span>Procedimentos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#191c1d]/70 hover:bg-[#f3f4f5] rounded-lg transition-all font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span>Webhook Logs</span>
+</a>
+<!-- Active Tab: Configurações -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#785600] border-r-4 border-[#785600] bg-[#f3f4f5] font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configurações</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 pt-6">
+<div class="flex items-center gap-3 px-4 py-4 mb-4 bg-surface-container-low rounded-xl">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Professional studio portrait of a male doctor in clinical attire, soft natural lighting, high-end medical professional aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4Ws8R6847ToayhO9JFyGZos_LCrsIR_0V2S3tGgvJXuY8sN2hZU2uGhvZUSUgI4Kq2-MBAdZUfSr1O8_g9P1oiMc98D0w13NWaI0nzJ0ePW0CoTyZfYtwtJUEvVHc-0ngmE1Ry5KQ3AggRohkqMWsoY0hOCwHgV_paEvs-fMB8O-hxgWhU2mNcFmi201LO2dazRfX5WAim1d1hnO0TXGWNk4Z_KP_sixPj2RDiBg8wz920QbiEFm870CfQsRdo8MHxcLNVWdTVoDo"/>
+<div>
+<p class="text-sm font-bold text-on-surface">Dr. Smith</p>
+<p class="text-xs text-on-surface/60">Clinical Curator</p>
+</div>
+</div>
+<a class="flex items-center gap-3 px-4 py-2 text-[#191c1d]/70 hover:bg-error-container/20 rounded-lg transition-all font-manrope text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Sair</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-screen overflow-y-auto">
+<!-- Top Navigation (TopAppBar Shared Component) -->
+<header class="flex justify-between items-center px-8 py-4 w-full bg-[#f8f9fa] sticky top-0 z-10">
+<div class="flex flex-col">
+<h1 class="text-2xl font-bold text-[#191c1d] font-manrope tracking-tight">Configurações</h1>
+<div class="text-xs text-on-surface-variant flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-[14px]">home</span>
+<span>Admin</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-[#785600]">Ajustes de Integração</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container-low px-4 py-2 rounded-full border-none">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48" placeholder="Buscar configurações..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[#785600]">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[#785600]">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="p-8 space-y-10 max-w-7xl mx-auto w-full">
+<!-- Tabs Menu -->
+<div class="flex items-center space-x-12 border-b-0">
+<a class="pb-4 text-[#785600] font-bold border-b-2 border-[#785600] transition-colors font-manrope text-sm tracking-wide uppercase" href="#">Integrações</a>
+<a class="pb-4 text-[#191c1d]/60 hover:text-[#785600] transition-colors font-manrope text-sm tracking-wide uppercase" href="#">Anúncios</a>
+<a class="pb-4 text-[#191c1d]/60 hover:text-[#785600] transition-colors font-manrope text-sm tracking-wide uppercase" href="#">Controles</a>
+<a class="pb-4 text-[#191c1d]/60 hover:text-[#785600] transition-colors font-manrope text-sm tracking-wide uppercase" href="#">Webhooks</a>
+<a class="pb-4 text-[#191c1d]/60 hover:text-[#785600] transition-colors font-manrope text-sm tracking-wide uppercase" href="#">Logs</a>
+</div>
+<!-- Integration Cards Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Kommo CRM Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-8 transition-all hover:shadow-sm">
+<div class="flex justify-between items-start mb-8">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 bg-[#313942] rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">hub</span>
+</div>
+<div>
+<h3 class="text-xl font-extrabold text-on-surface tracking-tight">Kommo CRM</h3>
+<div class="flex items-center gap-1 mt-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-bold text-green-600 uppercase tracking-tighter">Conectado</span>
+</div>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-black uppercase tracking-widest text-[#785600]">Subdomínio</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 rounded-lg px-4 py-3 text-sm font-medium" type="text" value="clinica_curator"/>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-black uppercase tracking-widest text-[#785600]">Token de Acesso</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none focus:ring-0 rounded-lg px-4 py-3 text-sm font-medium" type="password" value="************************"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant" type="button">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full bg-[#D4A853] hover:bg-[#b88e3d] text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-[#D4A853]/20 uppercase tracking-widest text-xs" type="submit">
+                                Salvar Kommo
+                            </button>
+</div>
+</form>
+</div>
+<!-- Clinicorp Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-8 transition-all hover:shadow-sm">
+<div class="flex justify-between items-start mb-8">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">medical_information</span>
+</div>
+<div>
+<h3 class="text-xl font-extrabold text-on-surface tracking-tight">Clinicorp</h3>
+<div class="flex items-center gap-1 mt-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-bold text-green-600 uppercase tracking-tighter">Conectado</span>
+</div>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-black uppercase tracking-widest text-[#785600]">Client ID</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 rounded-lg px-4 py-3 text-sm font-medium" type="text" value="cc_prod_88291"/>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-black uppercase tracking-widest text-[#785600]">API Key</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none focus:ring-0 rounded-lg px-4 py-3 text-sm font-medium" type="password" value="************************"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant" type="button">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full bg-[#D4A853] hover:bg-[#b88e3d] text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-[#D4A853]/20 uppercase tracking-widest text-xs" type="submit">
+                                Salvar Clinicorp
+                            </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Ads Channels Section -->
+<section class="space-y-6">
+<div class="flex items-end justify-between">
+<div>
+<h2 class="text-2xl font-black text-on-surface tracking-tight">Canais de Anúncios</h2>
+<p class="text-on-surface-variant text-sm mt-1">Gerencie a conexão com suas plataformas de tráfego pago.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Meta Ads -->
+<div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-[#1877F2] rounded-full flex items-center justify-center text-white">
+<span class="material-symbols-outlined">ads_click</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Meta Ads</h4>
+<span class="text-xs text-green-600 font-bold uppercase tracking-tighter">Ativo</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-surface-container-lowest text-xs font-bold rounded-lg border border-outline-variant/20 hover:bg-surface transition-colors">Configurar</button>
+</div>
+<!-- Google Ads -->
+<div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-full flex items-center justify-center">
+<svg class="w-6 h-6" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.24.81-.6z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Google Ads</h4>
+<span class="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">Pausado</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-surface-container-lowest text-xs font-bold rounded-lg border border-outline-variant/20 hover:bg-surface transition-colors">Reconectar</button>
+</div>
+<!-- Add New -->
+<div class="border-2 border-dashed border-outline-variant/30 rounded-2xl p-6 flex items-center justify-center group cursor-pointer hover:border-primary/40 transition-all">
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">add_circle</span>
+<span class="text-xs font-bold text-outline-variant group-hover:text-primary uppercase tracking-widest">Novo Canal</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer Info -->
+<div class="bg-tertiary-fixed/30 rounded-2xl p-6 flex gap-4 items-start">
+<span class="material-symbols-outlined text-tertiary mt-1">info</span>
+<div>
+<p class="text-sm font-medium text-on-tertiary-fixed">
+                        As integrações acima permitem a sincronização automática de leads e procedimentos entre a Clínica Curator e seus sistemas parceiros. Certifique-se de que os Webhooks estejam configurados corretamente em seus respectivos painéis para garantir o fluxo de dados em tempo real.
+                    </p>
+<a class="inline-block mt-3 text-xs font-bold text-tertiary uppercase tracking-widest hover:underline" href="#">Ver Guia de Configuração</a>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Navigation (Simulated Responsive) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest flex justify-around items-center py-3 border-t-0 shadow-2xl z-20">
+<button class="flex flex-col items-center text-on-surface/40">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] mt-1">Início</span>
+</button>
+<button class="flex flex-col items-center text-on-surface/40">
+<span class="material-symbols-outlined">person_search</span>
+<span class="text-[10px] mt-1">Leads</span>
+</button>
+<button class="flex flex-col items-center text-[#785600] scale-110">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] mt-1 font-bold">Ajustes</span>
+</button>
+<button class="flex flex-col items-center text-on-surface/40">
+<span class="material-symbols-outlined">campaign</span>
+<span class="text-[10px] mt-1">Ads</span>
+</button>
+</nav>
+</body></html>
