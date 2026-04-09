@@ -11,7 +11,6 @@ const navItems = [
   { href: "/dashboard/leads", label: "Leads", icon: "Users" },
   { href: "/dashboard/campaigns", label: "Campanhas", icon: "Megaphone" },
   { href: "/dashboard/procedures", label: "Procedimentos", icon: "ClipboardCheck" },
-  { href: "/dashboard/logs", label: "Webhook Logs", icon: "Terminal" },
   { href: "/dashboard/settings", label: "Configuracoes", icon: "Settings" },
 ];
 
