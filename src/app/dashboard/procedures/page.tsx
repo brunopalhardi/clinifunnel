@@ -118,7 +118,7 @@ export default function ProceduresPage() {
 
           {/* Ranking Table */}
           <div className="rounded-xl bg-card p-6 glass-border">
-            <h2 className="font-display text-lg font-semibold mb-4">Todos os procedimentos</h2>
+            <h2 className="font-display text-lg font-semibold mb-4">Procedimentos mais vendidos</h2>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/20">
@@ -131,7 +131,7 @@ export default function ProceduresPage() {
                 </tr>
               </thead>
               <tbody>
-                {grouped.map((g, i) => {
+                {grouped.slice(0, 10).map((g, i) => {
                   const tm = g.count > 0 ? g.revenue / g.count : 0;
                   const trend = Math.floor(Math.random() * 50) - 10; // placeholder
                   return (
