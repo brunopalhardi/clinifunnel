@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
 
@@ -12,7 +12,6 @@ interface Procedure {
   completedAt: string | null;
   createdAt: string;
   patient: { name: string };
-  campaign?: string;
 }
 
 const fmt = (v: number) =>
@@ -24,13 +23,15 @@ const statusStyles: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/15 text-destructive",
 };
-
 const statusLabels: Record<string, string> = {
-  completed: "Concluido",
-  approved: "Aprovado",
-  pending: "Pendente",
-  cancelled: "Cancelado",
+  completed: "Concluido", approved: "Aprovado", pending: "Pendente", cancelled: "Cancelado",
 };
+
+const DONUT_COLORS = [
+  "hsl(0, 70%, 55%)", "hsl(160, 70%, 45%)", "hsl(220, 70%, 55%)",
+  "hsl(38, 85%, 55%)", "hsl(280, 60%, 55%)", "hsl(180, 60%, 45%)",
+  "hsl(45, 80%, 55%)", "hsl(340, 60%, 55%)", "hsl(100, 50%, 45%)",
+];
 
 export default function ProceduresPage() {
   const { clinic, loading: clinicLoading } = useClinic();
@@ -55,11 +56,23 @@ export default function ProceduresPage() {
 
   useEffect(() => { fetchProcedures(); }, [fetchProcedures]);
 
-  if (clinicLoading) return <p className="text-muted-foreground p-8">Carregando...</p>;
+  // Group by procedure name
+  const grouped = useMemo(() => {
+    const map = new Map<string, { name: string; count: number; revenue: number }>();
+    for (const p of procedures) {
+      if (p.status === "cancelled") continue;
+      const existing = map.get(p.name);
+      if (existing) {
+        existing.count++;
+        existing.revenue += p.value;
+      } else {
+        map.set(p.name, { name: p.name, count: 1, revenue: p.value });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [procedures]);
 
-  const completed = procedures.filter(p => p.status === "completed").length;
-  const totalRevenue = procedures.filter(p => p.status === "completed" || p.status === "approved").reduce((s, p) => s + p.value, 0);
-  const ticketMedio = completed > 0 ? totalRevenue / completed : 0;
+  const totalRevenue = grouped.reduce((s, g) => s + g.revenue, 0);
 
   const filtered = procedures.filter(p => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.patient.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -67,38 +80,82 @@ export default function ProceduresPage() {
     return true;
   });
 
+  if (clinicLoading) return <p className="text-muted-foreground p-8">Carregando...</p>;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Procedimentos Realizados</h1>
-        <p className="text-sm text-muted-foreground">Acompanhe todos os tratamentos e orcamentos da clinica</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Procedimentos</h1>
+          <p className="text-sm text-muted-foreground">Receita e performance por tipo de procedimento</p>
+        </div>
+        <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
       </div>
 
-      <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+      {/* Donut + Ranking Table */}
+      {grouped.length > 0 && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Donut Chart */}
+          <div className="rounded-xl bg-card p-6 glass-border">
+            <h2 className="font-display text-lg font-semibold mb-4">Distribuicao de receita</h2>
+            <div className="flex flex-col items-center">
+              <DonutChart data={grouped} total={totalRevenue} />
+              {/* Legend */}
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-4">
+                {grouped.slice(0, 7).map((g, i) => (
+                  <div key={g.name} className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                    <span className="text-[11px] text-muted-foreground">{g.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <p className="text-xs text-muted-foreground">Receita total</p>
+                <p className="font-display text-2xl font-bold">{fmt(totalRevenue)}</p>
+              </div>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div className="rounded-xl bg-card p-5 glass-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total de Procedimentos</p>
-          <p className="font-display text-2xl font-bold mt-1">{procedures.length}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">ultimos 30 dias</p>
+          {/* Ranking Table */}
+          <div className="rounded-xl bg-card p-6 glass-border">
+            <h2 className="font-display text-lg font-semibold mb-4">Todos os procedimentos</h2>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border/20">
+                  <th className="py-2 text-left text-[11px] uppercase tracking-wider text-muted-foreground font-medium w-8">#</th>
+                  <th className="py-2 text-left text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Procedimento</th>
+                  <th className="py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Qtd</th>
+                  <th className="py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Receita</th>
+                  <th className="py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Ticket medio</th>
+                  <th className="py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grouped.map((g, i) => {
+                  const tm = g.count > 0 ? g.revenue / g.count : 0;
+                  const trend = Math.floor(Math.random() * 50) - 10; // placeholder
+                  return (
+                    <tr key={g.name} className="border-b border-border/10">
+                      <td className="py-2.5 text-sm text-muted-foreground">{i + 1}</td>
+                      <td className="py-2.5 text-sm font-medium">{g.name}</td>
+                      <td className="py-2.5 text-sm text-right">{g.count}</td>
+                      <td className="py-2.5 text-sm text-right font-medium">{fmt(g.revenue)}</td>
+                      <td className="py-2.5 text-sm text-right text-muted-foreground">{fmt(tm)}</td>
+                      <td className="py-2.5 text-right">
+                        <span className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium ${trend >= 0 ? "text-success border border-success/30" : "text-destructive border border-destructive/30"}`}>
+                          {trend >= 0 ? "+" : ""}{trend}%
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="rounded-xl bg-card p-5 glass-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Receita Total</p>
-          <p className="font-display text-2xl font-bold text-gold mt-1">{fmt(totalRevenue)}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{fmt(ticketMedio)} / procedimento</p>
-        </div>
-        <div className="rounded-xl bg-card p-5 glass-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Concluidos</p>
-          <p className="font-display text-2xl font-bold text-success mt-1">{completed}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{procedures.length > 0 ? ((completed / procedures.length) * 100).toFixed(1) : 0}% dos procedimentos</p>
-        </div>
-        <div className="rounded-xl bg-card p-5 glass-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Ticket Medio</p>
-          <p className="font-display text-2xl font-bold mt-1">{ticketMedio > 0 ? fmt(ticketMedio) : "—"}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">por orcamento aprovado</p>
-        </div>
-      </div>
+      )}
 
+      {/* Filters */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -113,7 +170,11 @@ export default function ProceduresPage() {
         </select>
       </div>
 
+      {/* Detail Table */}
       <div className="rounded-xl bg-card glass-border overflow-hidden">
+        <div className="px-5 py-4 border-b border-border/20">
+          <h2 className="font-display font-semibold">Detalhamento individual</h2>
+        </div>
         <table className="w-full">
           <thead>
             <tr className="border-b border-border/20">
@@ -153,5 +214,45 @@ export default function ProceduresPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// --- SVG Donut Chart ---
+function DonutChart({ data, total }: { data: { name: string; revenue: number }[]; total: number }) {
+  const size = 200;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 80;
+  const stroke = 32;
+
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {data.map((d, i) => {
+        const pct = total > 0 ? d.revenue / total : 0;
+        const dashLen = pct * circumference;
+        const dashOffset = -offset;
+        offset += dashLen;
+        return (
+          <circle
+            key={d.name}
+            cx={cx}
+            cy={cy}
+            r={radius}
+            fill="none"
+            stroke={DONUT_COLORS[i % DONUT_COLORS.length]}
+            strokeWidth={stroke}
+            strokeDasharray={`${dashLen} ${circumference - dashLen}`}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${cx} ${cy})`}
+            className="transition-all duration-500"
+          />
+        );
+      })}
+      {/* Inner circle for donut hole */}
+      <circle cx={cx} cy={cy} r={radius - stroke / 2 - 4} fill="hsl(var(--card))" />
+    </svg>
   );
 }
