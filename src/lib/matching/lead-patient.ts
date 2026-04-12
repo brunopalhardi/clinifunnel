@@ -37,3 +37,24 @@ export async function linkLeadToPatient(
     data: { patientId },
   });
 }
+
+export async function matchPatientToLeads(
+  patient: { id: string; clinicId: string; phone: string | null }
+): Promise<number> {
+  if (!patient.phone) return 0;
+
+  const normalized = normalizePhoneBR(patient.phone);
+  const unmatchedLeads = await prisma.lead.findMany({
+    where: {
+      clinicId: patient.clinicId,
+      patientId: null,
+      phone: normalized,
+    },
+  });
+
+  for (const lead of unmatchedLeads) {
+    await linkLeadToPatient(lead.id, patient.id);
+  }
+
+  return unmatchedLeads.length;
+}

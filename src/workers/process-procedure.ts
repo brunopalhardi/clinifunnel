@@ -2,6 +2,7 @@ import { Queue, Worker } from "bullmq";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneBR } from "@/lib/utils/phone";
+import { matchPatientToLeads } from "@/lib/matching/lead-patient";
 
 export const processProcedureQueue = new Queue("process-procedure", {
   connection: redis,
@@ -64,7 +65,15 @@ export const processProcedureWorker = new Worker<ProcedureJobData>(
       );
     }
 
-    // 2. Map Clinicorp status to our status
+    // 2. Auto-match: vincular paciente a leads existentes por telefone
+    const matchedCount = await matchPatientToLeads(patient);
+    if (matchedCount > 0) {
+      console.log(
+        `[process-procedure] Auto-matched ${matchedCount} lead(s) to patient ${patient.name}`
+      );
+    }
+
+    // 3. Map Clinicorp status to our status
     const statusMap: Record<string, string> = {
       pending: "pending",
       scheduled: "pending",
@@ -82,7 +91,7 @@ export const processProcedureWorker = new Worker<ProcedureJobData>(
     const normalizedStatus =
       statusMap[(payload.status ?? "pending").toLowerCase()] ?? "pending";
 
-    // 3. Upsert procedure
+    // 4. Upsert procedure
     if (payload.procedureId) {
       await prisma.procedure.upsert({
         where: {

@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.10.1";
+export const APP_VERSION = "0.11.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.11.0",
+    date: "2026-04-12",
+    type: "minor",
+    changes: [
+      "Funil agora mostra apenas dados de leads do Kommo (nao todos os procedimentos da clinica)",
+      "Compareceram reflete dados reais: leads cujo paciente teve pelo menos 1 procedimento",
+      "Auto-matching: quando procedimento chega do Clinicorp, vincula paciente a leads existentes por telefone",
+      "Removidos trends hardcoded e porcentagens aleatorias do dashboard",
+      "Corrigido SQL injection na query de receita por dia",
+      "Receita e top procedimentos filtrados apenas por pacientes vinculados a leads",
+    ],
+  },
   {
     version: "0.10.1",
     date: "2026-04-06",
