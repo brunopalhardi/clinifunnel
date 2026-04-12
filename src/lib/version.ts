@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.11.0";
+export const APP_VERSION = "0.11.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.11.1",
+    date: "2026-04-12",
+    type: "patch",
+    changes: [
+      "Fix: telefone do lead agora e buscado via API de contatos do Kommo (antes tentava extrair do embed que nao trazia custom_fields)",
+      "Novo metodo getContact() no KommoClient para buscar dados completos do contato",
+      "field_code agora e case-insensitive (PHONE, Phone, phone todos funcionam)",
+      "Logging de erro quando busca de contato falha",
+    ],
+  },
   {
     version: "0.11.0",
     date: "2026-04-12",

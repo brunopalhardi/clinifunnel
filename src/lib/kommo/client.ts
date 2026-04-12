@@ -34,6 +34,18 @@ export class KommoClient {
     return this.request<KommoLead>(`/leads/${leadId}?with=contacts`);
   }
 
+  async getContact(contactId: number): Promise<{
+    id: number;
+    name: string;
+    custom_fields_values: Array<{
+      field_code: string | null;
+      field_name: string;
+      values: Array<{ value: string }>;
+    }> | null;
+  }> {
+    return this.request(`/contacts/${contactId}`);
+  }
+
   async getPipelines(): Promise<KommoPipeline[]> {
     const data = await this.request<{
       _embedded: { pipelines: KommoPipeline[] };

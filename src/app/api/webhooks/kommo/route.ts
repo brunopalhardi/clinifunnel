@@ -7,32 +7,35 @@ import { classifyChannel } from "@/lib/utils/utm";
 import { normalizePhoneBR } from "@/lib/utils/phone";
 import { createPatientQueue } from "@/workers/create-patient";
 
-function extractContact(kommoLead: {
-  _embedded?: {
-    contacts?: Array<{
-      custom_fields_values: Array<{
-        field_code: string | null;
-        values: Array<{ value: string }>;
-      }> | null;
-    }>;
-  };
-}) {
+async function extractContact(
+  kommoClient: KommoClient,
+  kommoLead: {
+    _embedded?: {
+      contacts?: Array<{ id: number }>;
+    };
+  }
+) {
   let phone: string | null = null;
   let email: string | null = null;
 
   const contacts = kommoLead._embedded?.contacts;
-  if (contacts?.length) {
-    const contact = contacts[0];
+  if (!contacts?.length) return { phone, email };
+
+  try {
+    const contact = await kommoClient.getContact(contacts[0].id);
     if (contact.custom_fields_values) {
       for (const field of contact.custom_fields_values) {
-        if (field.field_code === "PHONE" && field.values.length > 0) {
+        const code = field.field_code?.toUpperCase();
+        if (code === "PHONE" && field.values.length > 0) {
           phone = normalizePhoneBR(field.values[0].value);
         }
-        if (field.field_code === "EMAIL" && field.values.length > 0) {
+        if (code === "EMAIL" && field.values.length > 0) {
           email = field.values[0].value;
         }
       }
     }
+  } catch (err) {
+    console.error(`[kommo] Failed to fetch contact ${contacts[0].id}:`, err);
   }
 
   return { phone, email };
@@ -57,7 +60,7 @@ async function processLead(
 
   const utms = extractUTMsFromCustomFields(kommoLead.custom_fields_values);
   const channel = classifyChannel(utms);
-  const { phone, email } = extractContact(kommoLead);
+  const { phone, email } = await extractContact(kommoClient, kommoLead);
 
   const isAgendamento =
     clinic.stageAgendamento && statusId === clinic.stageAgendamento;
