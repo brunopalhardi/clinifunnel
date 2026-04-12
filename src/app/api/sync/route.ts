@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { KommoClient } from "@/lib/kommo/client";
 import { normalizePhoneBR } from "@/lib/utils/phone";
+import { matchLeadToPatient, linkLeadToPatient } from "@/lib/matching/lead-patient";
 import { matchLeadsQueue } from "@/workers/match-leads";
 import { syncClinicorpQueue } from "@/workers/sync-clinicorp";
 
@@ -25,10 +26,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Reprocess phones completed", ...result });
   }
 
+  if (type === "match-now") {
+    const result = await matchLeadsNow();
+    return NextResponse.json({ message: "Match leads completed", ...result });
+  }
+
   return NextResponse.json({
     message: `Sync jobs enqueued: ${jobs.join(", ")}`,
     jobs,
   });
+}
+
+async function matchLeadsNow() {
+  const leads = await prisma.lead.findMany({
+    where: { patientId: null },
+  });
+
+  let matched = 0;
+  for (const lead of leads) {
+    const patient = await matchLeadToPatient(lead);
+    if (patient) {
+      await linkLeadToPatient(lead.id, patient.id);
+      matched++;
+    }
+  }
+
+  return { totalProcessed: leads.length, matched };
 }
 
 async function reprocessLeadPhones() {
