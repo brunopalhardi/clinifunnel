@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
     },
   } : {};
 
+  const procedureDateFilter = from || to ? {
+    createdAt: {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to) } : {}),
+    },
+  } : {};
+
   const adDateFilter = from || to ? {
     date: {
       ...(from ? { gte: new Date(from) } : {}),
@@ -25,24 +32,37 @@ export async function GET(request: NextRequest) {
     },
   } : {};
 
+  // Filter: only procedures whose patient has at least one lead (came through funnel)
+  const funnelProcedureFilter = {
+    clinicId,
+    status: { in: ["completed", "approved"] },
+    patient: { leads: { some: {} } },
+    ...procedureDateFilter,
+  };
+
   const [
     totalLeads,
     campaignLeads,
     agendamentos,
+    compareceram,
     procedureAgg,
     adSpendAgg,
     topProcedures,
-    revenueByDay,
   ] = await Promise.all([
     prisma.lead.count({ where: { clinicId, ...dateFilter } }),
     prisma.lead.count({ where: { clinicId, channel: "campaign", ...dateFilter } }),
     prisma.lead.count({ where: { clinicId, agendamentoAt: { not: null }, ...dateFilter } }),
-    prisma.procedure.aggregate({
+    // Compareceram: leads com paciente vinculado E paciente tem >= 1 procedimento
+    prisma.lead.count({
       where: {
         clinicId,
-        status: { in: ["completed", "approved"] },
-        ...(from || to ? { createdAt: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) } } : {}),
+        patientId: { not: null },
+        patient: { procedures: { some: {} } },
+        ...dateFilter,
       },
+    }),
+    prisma.procedure.aggregate({
+      where: funnelProcedureFilter,
       _count: { id: true },
       _sum: { value: true },
     }),
@@ -50,30 +70,40 @@ export async function GET(request: NextRequest) {
       where: { clinicId, ...adDateFilter },
       _sum: { spend: true, impressions: true, clicks: true },
     }),
-    // Top 3 procedures by revenue
+    // Top 3 procedures by revenue (only funnel-linked)
     prisma.procedure.groupBy({
       by: ["name"],
-      where: {
-        clinicId,
-        status: { in: ["completed", "approved"] },
-        ...(from || to ? { createdAt: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) } } : {}),
-      },
+      where: funnelProcedureFilter,
       _sum: { value: true },
       _count: { id: true },
       orderBy: { _sum: { value: "desc" } },
       take: 3,
     }),
-    // Revenue by day of week
-    prisma.$queryRawUnsafe<Array<{ day: number; total: number }>>(
-      `SELECT EXTRACT(DOW FROM "createdAt") as day, SUM(value) as total
-       FROM "Procedure"
-       WHERE "clinicId" = $1 AND status IN ('completed', 'approved')
-       ${from ? `AND "createdAt" >= '${from}'` : ""}
-       ${to ? `AND "createdAt" <= '${to}'` : ""}
-       GROUP BY day ORDER BY day`,
-      clinicId
-    ),
   ]);
+
+  // Revenue by day of week (only funnel-linked procedures)
+  const dateParams: string[] = [clinicId];
+  let dateConditions = "";
+  if (from) {
+    dateParams.push(from);
+    dateConditions += ` AND p."createdAt" >= $${dateParams.length}::timestamp`;
+  }
+  if (to) {
+    dateParams.push(to);
+    dateConditions += ` AND p."createdAt" <= $${dateParams.length}::timestamp`;
+  }
+
+  const revenueByDay = await prisma.$queryRawUnsafe<Array<{ day: number; total: number }>>(
+    `SELECT EXTRACT(DOW FROM p."createdAt") as day, SUM(p.value) as total
+     FROM "Procedure" p
+     INNER JOIN "Patient" pt ON p."patientId" = pt.id
+     WHERE p."clinicId" = $1
+       AND p.status IN ('completed', 'approved')
+       AND EXISTS (SELECT 1 FROM "Lead" l WHERE l."patientId" = pt.id)
+       ${dateConditions}
+     GROUP BY day ORDER BY day`,
+    ...dateParams
+  );
 
   const organicLeads = totalLeads - campaignLeads;
   const procedimentos = procedureAgg._count.id;
@@ -126,6 +156,7 @@ export async function GET(request: NextRequest) {
       campaignLeads,
       organicLeads,
       agendamentos,
+      compareceram,
       procedimentos,
       totalRevenue,
       totalSpend,

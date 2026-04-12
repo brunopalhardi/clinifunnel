@@ -9,6 +9,7 @@ interface DashboardData {
   campaignLeads: number;
   organicLeads: number;
   agendamentos: number;
+  compareceram: number;
   procedimentos: number;
   totalRevenue: number;
   totalSpend: number;
@@ -25,7 +26,7 @@ const fmtK = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : fmt(v);
 
 const empty: DashboardData = {
   totalLeads: 0, campaignLeads: 0, organicLeads: 0, agendamentos: 0,
-  procedimentos: 0, totalRevenue: 0, totalSpend: 0, cpl: null,
+  compareceram: 0, procedimentos: 0, totalRevenue: 0, totalSpend: 0, cpl: null,
   conversionRate: 0, revenueChart: [], topProcedures: [], channelPerformance: [],
 };
 
@@ -54,7 +55,7 @@ export default function DashboardPage() {
 
   const d = data;
   const agendRate = d.totalLeads > 0 ? (d.agendamentos / d.totalLeads) * 100 : 0;
-  const compareRate = d.agendamentos > 0 ? (d.procedimentos / d.agendamentos) * 100 : 0;
+  const compareRate = d.totalLeads > 0 ? (d.compareceram / d.totalLeads) * 100 : 0;
   const procRate = d.totalLeads > 0 ? (d.procedimentos / d.totalLeads) * 100 : 0;
   const maxRevenue = Math.max(...d.revenueChart.map(r => r.value), 1);
 
@@ -74,27 +75,23 @@ export default function DashboardPage() {
         <KpiCard
           label="Leads captados"
           value={d.totalLeads}
-          trend="+12% vs periodo anterior"
           breakdown={`Meta: ${d.campaignLeads}  Organico: ${d.organicLeads}`}
           icon={<UsersIcon />}
         />
         <KpiCard
           label="Consultas realizadas"
           value={d.agendamentos}
-          trend={`+8% vs periodo anterior`}
           icon={<CalendarIcon />}
         />
         <KpiCard
           label="Procedimentos fechados"
           value={d.procedimentos}
-          trend={`+15% vs periodo anterior`}
           icon={<CheckIcon />}
         />
         <KpiCard
           label="Receita gerada"
           value={d.totalRevenue}
           isCurrency
-          trend="+18% vs periodo anterior"
           icon={<DollarIcon />}
           highlight
         />
@@ -116,17 +113,17 @@ export default function DashboardPage() {
             />
             <FunnelRow
               label="Compareceram"
-              value={d.agendamentos}
+              value={d.compareceram}
               max={d.totalLeads}
-              pct={agendRate}
-              drop={0}
+              pct={compareRate}
+              drop={d.agendamentos > 0 ? ((d.agendamentos - d.compareceram) / d.agendamentos) * 100 : 0}
             />
             <FunnelRow
               label="Fecharam procedimento"
               value={d.procedimentos}
               max={d.totalLeads}
               pct={procRate}
-              drop={d.agendamentos > 0 ? 100 - compareRate : 0}
+              drop={d.compareceram > 0 ? ((d.compareceram - d.procedimentos) / d.compareceram) * 100 : 0}
             />
           </div>
         </div>
@@ -196,7 +193,6 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">{fmtK(p.revenue)}</p>
-                    <p className="text-xs text-success">+{Math.floor(Math.random() * 30 + 10)}%</p>
                   </div>
                 </div>
               ))
@@ -227,8 +223,8 @@ export default function DashboardPage() {
 
 // --- Components ---
 
-function KpiCard({ label, value, isCurrency, trend, breakdown, icon, highlight }: {
-  label: string; value: number; isCurrency?: boolean; trend: string;
+function KpiCard({ label, value, isCurrency, breakdown, icon, highlight }: {
+  label: string; value: number; isCurrency?: boolean;
   breakdown?: string; icon: React.ReactNode; highlight?: boolean;
 }) {
   const displayValue = isCurrency ? fmt(value) : String(value);
@@ -239,7 +235,6 @@ function KpiCard({ label, value, isCurrency, trend, breakdown, icon, highlight }
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10 text-gold">{icon}</div>
       </div>
       <p className={`font-display text-2xl font-bold ${highlight ? "text-gold" : ""}`}>{displayValue}</p>
-      <p className="text-xs text-success mt-1.5">{trend}</p>
       {breakdown && <p className="text-[11px] text-muted-foreground mt-1">{breakdown}</p>}
     </div>
   );
