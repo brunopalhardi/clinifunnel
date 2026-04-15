@@ -47,6 +47,21 @@ async function main() {
 
   console.log("✅ Admin user seeded:", user.email);
 
+  // Seed Sergio user
+  const sergioHash = await bcrypt.hash("Sucesso@2026", 10);
+  const sergio = await prisma.user.upsert({
+    where: { email: "sergio@clinicaad.com.br" },
+    update: { passwordHash: sergioHash, clinicId: clinic.id },
+    create: {
+      email: "sergio@clinicaad.com.br",
+      passwordHash: sergioHash,
+      name: "Sergio",
+      clinicId: clinic.id,
+    },
+  });
+
+  console.log("✅ Sergio user seeded:", sergio.email);
+
   // Seed leads com UTMs de campanha
   const campaignNames = [
     "implante_sp_maio",
