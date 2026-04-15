@@ -12,21 +12,36 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[auth] Missing credentials");
+          return null;
+        }
+
+        console.log("[auth] Login attempt:", credentials.email);
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: { clinic: { select: { id: true, name: true } } },
         });
 
-        if (!user) return null;
+        if (!user) {
+          console.log("[auth] User not found:", credentials.email);
+          return null;
+        }
+
+        console.log("[auth] User found:", user.email, "id:", user.id);
 
         const valid = await bcrypt.compare(
           credentials.password,
           user.passwordHash
         );
-        if (!valid) return null;
 
+        if (!valid) {
+          console.log("[auth] Invalid password for:", credentials.email);
+          return null;
+        }
+
+        console.log("[auth] Login success:", credentials.email);
         return {
           id: user.id,
           email: user.email,
