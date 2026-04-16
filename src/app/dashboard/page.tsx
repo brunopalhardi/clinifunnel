@@ -18,6 +18,7 @@ interface DashboardData {
   revenueChart: { day: string; value: number }[];
   topProcedures: { name: string; count: number; revenue: number; ticketMedio: number }[];
   channelPerformance: { channel: string; spend: number; impressions: number; clicks: number }[];
+  canalBreakdown: { canal: string; count: number }[];
 }
 
 const fmt = (v: number) =>
@@ -28,6 +29,7 @@ const empty: DashboardData = {
   totalLeads: 0, campaignLeads: 0, organicLeads: 0, agendamentos: 0,
   compareceram: 0, procedimentos: 0, totalRevenue: 0, totalSpend: 0, cpl: null,
   conversionRate: 0, revenueChart: [], topProcedures: [], channelPerformance: [],
+  canalBreakdown: [],
 };
 
 export default function DashboardPage() {
@@ -35,6 +37,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData>(empty);
   const [, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [patientType, setPatientType] = useState<"all" | "new" | "returning">("all");
 
   const fetchData = useCallback(() => {
     if (!clinic) return;
@@ -42,12 +45,13 @@ export default function DashboardPage() {
     const params = new URLSearchParams({ clinicId: clinic.id });
     if (dateRange.from) params.set("from", dateRange.from);
     if (dateRange.to) params.set("to", dateRange.to);
+    if (patientType !== "all") params.set("patientType", patientType);
     fetch(`/api/dashboard?${params}`)
       .then((res) => res.json())
       .then((json) => setData(json.data ?? empty))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [clinic, dateRange]);
+  }, [clinic, dateRange, patientType]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -67,7 +71,28 @@ export default function DashboardPage() {
           <h1 className="font-display text-2xl font-bold">Visao Geral</h1>
           <p className="text-sm text-muted-foreground">{clinic?.name} — Dashboard completo</p>
         </div>
-        <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {(["all", "new", "returning"] as const).map((type) => {
+              const labels = { all: "Todos", new: "Novos", returning: "Existentes" };
+              const isActive = patientType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setPatientType(type)}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isActive
+                      ? "bg-gold/15 text-gold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/10"
+                  }`}
+                >
+                  {labels[type]}
+                </button>
+              );
+            })}
+          </div>
+          <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+        </div>
       </div>
 
       {/* 4 KPI Cards */}
@@ -200,6 +225,34 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Canal de Prospeccao Breakdown */}
+      {d.canalBreakdown.length > 0 && (
+        <div className="rounded-xl bg-card p-6 glass-border">
+          <h2 className="font-display text-lg font-semibold mb-4">Leads por canal de prospeccao</h2>
+          <div className="space-y-3">
+            {d.canalBreakdown.map((c) => {
+              const pct = d.totalLeads > 0 ? (c.count / d.totalLeads) * 100 : 0;
+              return (
+                <div key={c.canal} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">{c.canal}</span>
+                      <span>{c.count} <span className="text-muted-foreground text-xs">({pct.toFixed(1)}%)</span></span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-gold/60 to-gold transition-all"
+                        style={{ width: `${Math.max(pct, 2)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Insight Card */}
       <div className="rounded-xl border-l-4 border-gold bg-card p-5 glass-border">

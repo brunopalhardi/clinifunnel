@@ -8,7 +8,8 @@ import { UTMData } from "@/types";
 export async function createOrUpdateLocalPatient(
   clinicId: string,
   clinicorpPatient: ClinicorpPatient,
-  utms: UTMData
+  utms: UTMData,
+  canalProspeccao?: string | null
 ) {
   const phone = clinicorpPatient.MobilePhone
     ? normalizePhoneBR(String(clinicorpPatient.MobilePhone))
@@ -25,6 +26,7 @@ export async function createOrUpdateLocalPatient(
       name: clinicorpPatient.Name,
       phone: phone ?? undefined,
       cpf: clinicorpPatient.OtherDocumentId ?? undefined,
+      canalProspeccao: canalProspeccao ?? undefined,
       ...utms,
     },
     create: {
@@ -33,6 +35,7 @@ export async function createOrUpdateLocalPatient(
       name: clinicorpPatient.Name,
       phone,
       cpf: clinicorpPatient.OtherDocumentId ?? null,
+      canalProspeccao: canalProspeccao ?? null,
       ...utms,
     },
   });
@@ -46,6 +49,7 @@ export async function findOrCreatePatientInClinicorp(
     phone?: string;
     email?: string;
     utms: UTMData;
+    canalProspeccao?: string | null;
   }
 ): Promise<ClinicorpPatient> {
   // Try finding by phone first
@@ -69,7 +73,7 @@ export async function findOrCreatePatientInClinicorp(
     MobilePhone: data.phone
       ? parseInt(data.phone.replace(/\D/g, ""), 10)
       : undefined,
-    Notes: utmsToNote(data.utms),
+    Notes: utmsToNote(data.utms, data.canalProspeccao),
     IgnoreSameName: "true",
   };
 

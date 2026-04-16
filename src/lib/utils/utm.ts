@@ -24,12 +24,13 @@ export function utmsToTags(data: UTMData): string[] {
   return tags;
 }
 
-export function utmsToNote(data: UTMData): string {
+export function utmsToNote(data: UTMData, canalProspeccao?: string | null): string {
   const parts: string[] = [];
+  if (canalProspeccao) parts.push(`Canal: ${canalProspeccao}`);
   if (data.utmSource) parts.push(`Source: ${data.utmSource}`);
   if (data.utmMedium) parts.push(`Medium: ${data.utmMedium}`);
   if (data.utmCampaign) parts.push(`Campaign: ${data.utmCampaign}`);
   if (data.utmContent) parts.push(`Content: ${data.utmContent}`);
   if (data.utmTerm) parts.push(`Term: ${data.utmTerm}`);
-  return `[CliniFunnel UTMs] ${parts.join(" | ")}`;
+  return parts.length > 0 ? `[CliniFunnel] ${parts.join(" | ")}` : "";
 }

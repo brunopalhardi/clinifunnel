@@ -17,5 +17,7 @@ export const config = {
     "/api/sync/:path*",
     "/api/ads/:path*",
     "/api/webhook-logs/:path*",
+    "/api/patients/:path*",
+    "/api/reminders/:path*",
   ],
 };

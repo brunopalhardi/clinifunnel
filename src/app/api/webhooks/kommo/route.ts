@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseKommoWebhook } from "@/lib/kommo/webhooks";
 import { KommoClient } from "@/lib/kommo/client";
-import { extractUTMsFromCustomFields } from "@/lib/kommo/utm";
+import { extractUTMsFromCustomFields, extractCanalProspeccao, extractAppointmentFields } from "@/lib/kommo/utm";
 import { classifyChannel } from "@/lib/utils/utm";
 import { normalizePhoneBR } from "@/lib/utils/phone";
 import { createPatientQueue } from "@/workers/create-patient";
@@ -59,6 +59,8 @@ async function processLead(
   const kommoLead = await kommoClient.getLead(parseInt(leadId));
 
   const utms = extractUTMsFromCustomFields(kommoLead.custom_fields_values);
+  const canalProspeccao = extractCanalProspeccao(kommoLead.custom_fields_values);
+  const appointmentFields = extractAppointmentFields(kommoLead.custom_fields_values);
   const channel = classifyChannel(utms);
   const { phone, email } = await extractContact(kommoClient, kommoLead);
 
@@ -77,6 +79,8 @@ async function processLead(
       phone,
       email,
       ...utms,
+      canalProspeccao,
+      ...appointmentFields,
       channel,
       kommoStatus: statusId,
       kommoPipelineId: pipelineId,
@@ -89,6 +93,8 @@ async function processLead(
       phone,
       email,
       ...utms,
+      canalProspeccao,
+      ...appointmentFields,
       channel,
       kommoStatus: statusId,
       kommoPipelineId: pipelineId,

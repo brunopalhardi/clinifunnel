@@ -64,6 +64,10 @@ model Lead {
   utmCampaign     String?
   utmContent      String?
   utmTerm         String?
+  // Canal de Prospeccao (Kommo custom field)
+  canalProspeccao String?
+  // Patient classification: true = first-time (acquisition), false = returning (retention)
+  isNewPatient    Boolean?
   // Status
   channel         String    @default("organic") // "campaign" | "organic"
   kommoStatus     String?
@@ -74,12 +78,18 @@ model Lead {
   // Timestamps
   kommoCreatedAt  DateTime?
   agendamentoAt   DateTime?
+  // Appointment data from Kommo custom fields
+  appointmentDate     String?
+  appointmentTime     String?
+  appointmentProfId   String?
+  clinicorpAppointmentId String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   @@unique([clinicId, kommoLeadId])
   @@index([clinicId, channel])
   @@index([clinicId, utmCampaign])
+  @@index([clinicId, isNewPatient])
 }
 
 model Patient {
@@ -96,6 +106,8 @@ model Patient {
   utmCampaign        String?
   utmContent         String?
   utmTerm            String?
+  // Canal de prospeccao herdado do lead
+  canalProspeccao    String?
   // Relações
   leads              Lead[]
   procedures         Procedure[]

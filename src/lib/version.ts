@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.12.0";
+export const APP_VERSION = "0.13.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,23 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.13.0",
+    date: "2026-04-16",
+    type: "minor",
+    changes: [
+      "Fix: dashboard filtra leads apenas do pipeline 'Captacao de Leads'",
+      "Segmentacao Novos vs Existentes: leads classificados como paciente novo ou retorno",
+      "Toggle no dashboard para alternar entre Novos / Existentes / Todos",
+      "Campo 'Canal de Prospeccao' capturado do Kommo e transferido para Clinicorp",
+      "Validacao de campos obrigatorios antes de criar paciente no Clinicorp",
+      "Automacao de agendamento no Clinicorp quando lead chega em 'Agendado'",
+      "Dashboard LTV & ROAS com metricas por canal de aquisicao",
+      "Pagina de listagem de pacientes com busca",
+      "Perfil do paciente 360: timeline completa lead-to-procedure",
+      "API de lembretes de retorno por procedimento (Botox 4m, Preenchimento 8m)",
+    ],
+  },
   {
     version: "0.12.0",
     date: "2026-04-16",
