@@ -43,8 +43,7 @@ function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
-      router.refresh();
+      window.location.href = callbackUrl;
     } catch {
       setError("Erro ao conectar. Tente novamente.");
       setLoading(false);
