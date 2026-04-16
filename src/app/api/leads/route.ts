@@ -22,7 +22,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
   }
 
+  const allPipelines = searchParams.get("allPipelines") === "true";
+
   const where: Record<string, unknown> = { clinicId };
+
+  if (!allPipelines) {
+    const clinic = await prisma.clinic.findUnique({
+      where: { id: clinicId },
+      select: { pipelineId: true },
+    });
+    if (clinic?.pipelineId) {
+      where.kommoPipelineId = clinic.pipelineId;
+    }
+  }
 
   if (channel) where.channel = channel;
   if (campaign) where.utmCampaign = campaign;

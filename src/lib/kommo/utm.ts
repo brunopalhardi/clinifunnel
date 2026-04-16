@@ -55,3 +55,61 @@ export function extractUTMsFromCustomFields(
 
   return utms;
 }
+
+export function extractCanalProspeccao(
+  fields: KommoCustomField[] | null | undefined
+): string | null {
+  if (!fields) return null;
+  for (const field of fields) {
+    const name = field.field_name?.toLowerCase() ?? "";
+    const code = field.field_code?.toLowerCase() ?? "";
+    if (
+      name.includes("canal") ||
+      name.includes("prospeccao") ||
+      name.includes("prospecção") ||
+      code.includes("canal") ||
+      code === "prospeccao"
+    ) {
+      if (field.values.length > 0) return field.values[0].value;
+    }
+  }
+  return null;
+}
+
+export interface AppointmentFields {
+  appointmentDate: string | null;
+  appointmentTime: string | null;
+  appointmentProfId: string | null;
+}
+
+export function extractAppointmentFields(
+  fields: KommoCustomField[] | null | undefined
+): AppointmentFields {
+  const result: AppointmentFields = {
+    appointmentDate: null,
+    appointmentTime: null,
+    appointmentProfId: null,
+  };
+  if (!fields) return result;
+
+  for (const field of fields) {
+    const name = field.field_name?.toLowerCase() ?? "";
+    const code = field.field_code?.toLowerCase() ?? "";
+    const value = field.values?.[0]?.value;
+    if (!value) continue;
+
+    if (
+      (name.includes("data") && (name.includes("consulta") || name.includes("agendamento"))) ||
+      code === "appointment_date"
+    ) {
+      result.appointmentDate = value;
+    }
+    if (name.includes("hora") || name.includes("horario") || code === "appointment_time") {
+      result.appointmentTime = value;
+    }
+    if (name.includes("profissional") || name.includes("dentista") || code === "professional_id") {
+      result.appointmentProfId = value;
+    }
+  }
+  return result;
+}

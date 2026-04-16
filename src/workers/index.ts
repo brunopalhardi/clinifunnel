@@ -5,6 +5,7 @@ import { matchLeadsWorker } from "./match-leads";
 import { syncClinicorpWorker } from "./sync-clinicorp";
 import { syncMetaAdsWorker } from "./sync-meta-ads";
 import { syncGoogleAdsWorker } from "./sync-google-ads";
+import { checkRemindersWorker } from "./check-reminders";
 
 console.log("[workers] Starting CliniFunnel workers...");
 console.log("[workers] create-patient worker ready");
@@ -13,6 +14,7 @@ console.log("[workers] match-leads worker ready");
 console.log("[workers] sync-clinicorp worker ready");
 console.log("[workers] sync-meta-ads worker ready");
 console.log("[workers] sync-google-ads worker ready");
+console.log("[workers] check-reminders worker ready");
 
 // Graceful shutdown
 const shutdown = async () => {
@@ -24,6 +26,7 @@ const shutdown = async () => {
     syncClinicorpWorker.close(),
     syncMetaAdsWorker.close(),
     syncGoogleAdsWorker.close(),
+    checkRemindersWorker.close(),
   ]);
   process.exit(0);
 };

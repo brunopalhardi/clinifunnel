@@ -19,6 +19,22 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const patientType = searchParams.get("patientType"); // "new" | "returning" | null
+
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
+    select: { pipelineId: true },
+  });
+
+  const pipelineFilter = clinic?.pipelineId
+    ? { kommoPipelineId: clinic.pipelineId }
+    : {};
+
+  const patientTypeFilter = patientType === "new"
+    ? { isNewPatient: true }
+    : patientType === "returning"
+      ? { isNewPatient: false }
+      : {};
 
   const dateFilter = from || to ? {
     createdAt: {
@@ -45,9 +61,11 @@ export async function GET(request: NextRequest) {
   const funnelProcedureFilter = {
     clinicId,
     status: { in: ["completed", "approved"] },
-    patient: { leads: { some: {} } },
+    patient: { leads: { some: { ...pipelineFilter, ...patientTypeFilter } } },
     ...procedureDateFilter,
   };
+
+  const leadWhere = { clinicId, ...pipelineFilter, ...patientTypeFilter, ...dateFilter };
 
   const [
     totalLeads,
@@ -57,17 +75,17 @@ export async function GET(request: NextRequest) {
     procedureAgg,
     adSpendAgg,
     topProcedures,
+    canalBreakdown,
   ] = await Promise.all([
-    prisma.lead.count({ where: { clinicId, ...dateFilter } }),
-    prisma.lead.count({ where: { clinicId, channel: "campaign", ...dateFilter } }),
-    prisma.lead.count({ where: { clinicId, agendamentoAt: { not: null }, ...dateFilter } }),
+    prisma.lead.count({ where: leadWhere }),
+    prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
+    prisma.lead.count({ where: { ...leadWhere, agendamentoAt: { not: null } } }),
     // Compareceram: leads com paciente vinculado E paciente tem >= 1 procedimento
     prisma.lead.count({
       where: {
-        clinicId,
+        ...leadWhere,
         patientId: { not: null },
         patient: { procedures: { some: {} } },
-        ...dateFilter,
       },
     }),
     prisma.procedure.aggregate({
@@ -88,11 +106,28 @@ export async function GET(request: NextRequest) {
       orderBy: { _sum: { value: "desc" } },
       take: 3,
     }),
+    // Canal de prospeccao breakdown
+    prisma.lead.groupBy({
+      by: ["canalProspeccao"],
+      where: { ...leadWhere, canalProspeccao: { not: null } },
+      _count: { id: true },
+      orderBy: { _count: { id: "desc" } },
+    }),
   ]);
 
   // Revenue by day of week (only funnel-linked procedures)
   const dateParams: string[] = [clinicId];
-  let dateConditions = "";
+  let leadSubquery = `SELECT 1 FROM "Lead" l WHERE l."patientId" = pt.id`;
+  if (clinic?.pipelineId) {
+    dateParams.push(clinic.pipelineId);
+    leadSubquery += ` AND l."kommoPipelineId" = $${dateParams.length}`;
+  }
+  if (patientType === "new") {
+    leadSubquery += ` AND l."isNewPatient" = true`;
+  } else if (patientType === "returning") {
+    leadSubquery += ` AND l."isNewPatient" = false`;
+  }
+  let dateConditions = ` AND EXISTS (${leadSubquery})`;
   if (from) {
     dateParams.push(from);
     dateConditions += ` AND p."createdAt" >= $${dateParams.length}::timestamp`;
@@ -108,7 +143,6 @@ export async function GET(request: NextRequest) {
      INNER JOIN "Patient" pt ON p."patientId" = pt.id
      WHERE p."clinicId" = $1
        AND p.status IN ('completed', 'approved')
-       AND EXISTS (SELECT 1 FROM "Lead" l WHERE l."patientId" = pt.id)
        ${dateConditions}
      GROUP BY day ORDER BY day`,
     ...dateParams
@@ -174,6 +208,10 @@ export async function GET(request: NextRequest) {
       revenueChart,
       topProcedures: topProcs,
       channelPerformance,
+      canalBreakdown: canalBreakdown.map((c) => ({
+        canal: c.canalProspeccao ?? "Nao identificado",
+        count: c._count.id,
+      })),
     },
   });
 }
