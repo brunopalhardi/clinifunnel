@@ -44,7 +44,7 @@ export function Header() {
   return (
     <header className="flex h-14 items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-sm px-6">
       <div className="flex items-center gap-2 text-sm">
-        {isSuperAdmin && clinics.length > 1 ? (
+        {isSuperAdmin && clinics.length >= 1 ? (
           <select
             value={clinic?.id ?? ""}
             onChange={(e) => selectClinic(e.target.value)}
