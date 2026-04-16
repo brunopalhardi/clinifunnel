@@ -18,10 +18,12 @@ export function useClinic() {
   const isSuperAdmin = role === "super_admin";
 
   // Default clinic from session (always available)
+  const userClinicId = session?.user?.clinicId;
+  const userClinicName = session?.user?.clinicName;
   const sessionClinic = useMemo(() => {
-    if (!session?.user) return null;
-    return { id: session.user.clinicId, name: session.user.clinicName };
-  }, [session?.user?.clinicId, session?.user?.clinicName]);
+    if (!userClinicId) return null;
+    return { id: userClinicId, name: userClinicName ?? "" };
+  }, [userClinicId, userClinicName]);
 
   // For super_admin: fetch all clinics
   useEffect(() => {
