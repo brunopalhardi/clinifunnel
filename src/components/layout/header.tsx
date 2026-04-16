@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useClinic } from "@/hooks/use-clinic";
@@ -87,7 +87,10 @@ export function Header() {
               {session.user.name?.charAt(0).toUpperCase() || "U"}
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => {
+                await fetch("/api/logout", { method: "POST" });
+                window.location.href = "/login";
+              }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Sair
