@@ -33,11 +33,12 @@ async function main() {
   const adminHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 10);
   const admin = await prisma.user.upsert({
     where: { email: process.env.ADMIN_EMAIL || "admin@clinifunnel.com" },
-    update: { passwordHash: adminHash, clinicId: clinic.id },
+    update: { passwordHash: adminHash, clinicId: clinic.id, role: "super_admin" },
     create: {
       email: process.env.ADMIN_EMAIL || "admin@clinifunnel.com",
       passwordHash: adminHash,
       name: "Admin",
+      role: "super_admin",
       clinicId: clinic.id,
     },
   });
@@ -47,11 +48,12 @@ async function main() {
   const sergioHash = await bcrypt.hash("Sucesso@2026", 10);
   const sergio = await prisma.user.upsert({
     where: { email: "sergio@clinicaad.com.br" },
-    update: { passwordHash: sergioHash, clinicId: clinic.id },
+    update: { passwordHash: sergioHash, clinicId: clinic.id, role: "clinic_admin" },
     create: {
       email: "sergio@clinicaad.com.br",
       passwordHash: sergioHash,
       name: "Sergio",
+      role: "clinic_admin",
       clinicId: clinic.id,
     },
   });

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 function maskToken(token: string | null): string {
   if (!token || token.length < 8) return token ? "****" : "";
@@ -10,7 +14,17 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  }
+
   const { id } = await params;
+
+  // Verificar acesso: super_admin acessa qualquer, demais só a própria
+  if (session.user.role !== "super_admin" && id !== session.user.clinicId) {
+    return NextResponse.json({ error: "Sem permissao" }, { status: 403 });
+  }
 
   const clinic = await prisma.clinic.findUnique({ where: { id } });
 
@@ -45,7 +59,17 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  }
+
   const { id } = await params;
+
+  if (session.user.role !== "super_admin" && id !== session.user.clinicId) {
+    return NextResponse.json({ error: "Sem permissao" }, { status: 403 });
+  }
+
   const body = await request.json();
 
   const clinic = await prisma.clinic.findUnique({ where: { id } });

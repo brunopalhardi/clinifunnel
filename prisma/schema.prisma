@@ -12,6 +12,7 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  role         String   @default("user")
   clinicId     String
   clinic       Clinic   @relation(fields: [clinicId], references: [id])
   createdAt    DateTime @default(now())

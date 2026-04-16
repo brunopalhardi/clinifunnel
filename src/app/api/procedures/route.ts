@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const clinicId = searchParams.get("clinicId");
   const status = searchParams.get("status");
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  if (!clinicId) {
-    return NextResponse.json(
-      { error: "clinicId is required" },
-      { status: 400 }
-    );
+  let clinicId: string;
+  try {
+    const auth = await getAuthorizedClinicId(request);
+    clinicId = auth.clinicId;
+  } catch (err) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
   }
 
   const where: Record<string, unknown> = { clinicId };
