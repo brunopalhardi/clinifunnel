@@ -1,17 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { normalizePhoneBR } from "@/lib/utils/phone";
 import { Lead, Patient } from "@prisma/client";
 
 export async function matchLeadToPatient(
   lead: Lead
 ): Promise<Patient | null> {
-  // 1. Match by phone
+  // 1. Match by phone (last 8 digits to handle format differences)
   if (lead.phone) {
-    const normalized = normalizePhoneBR(lead.phone);
-    const patient = await prisma.patient.findFirst({
-      where: { clinicId: lead.clinicId, phone: normalized },
-    });
-    if (patient) return patient;
+    const digits = lead.phone.replace(/\D/g, "");
+    const last8 = digits.slice(-8);
+    if (last8.length === 8) {
+      const patient = await prisma.patient.findFirst({
+        where: {
+          clinicId: lead.clinicId,
+          phone: { endsWith: last8 },
+        },
+      });
+      if (patient) return patient;
+    }
   }
 
   // 2. Match by email (if both have it)
@@ -43,12 +48,15 @@ export async function matchPatientToLeads(
 ): Promise<number> {
   if (!patient.phone) return 0;
 
-  const normalized = normalizePhoneBR(patient.phone);
+  const digits = patient.phone.replace(/\D/g, "");
+  const last8 = digits.slice(-8);
+  if (last8.length < 8) return 0;
+
   const unmatchedLeads = await prisma.lead.findMany({
     where: {
       clinicId: patient.clinicId,
       patientId: null,
-      phone: normalized,
+      phone: { endsWith: last8 },
     },
   });
 
