@@ -3,43 +3,53 @@ import { prisma } from "@/lib/prisma";
 import { KommoClient } from "@/lib/kommo/client";
 import { normalizePhoneBR } from "@/lib/utils/phone";
 import { matchLeadToPatient, linkLeadToPatient } from "@/lib/matching/lead-patient";
+import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
 import { matchLeadsQueue } from "@/workers/match-leads";
 import { syncClinicorpQueue } from "@/workers/sync-clinicorp";
 
-export async function POST(request: NextRequest) {
-  const { type } = await request.json();
+export const dynamic = "force-dynamic";
 
+export async function POST(request: NextRequest) {
+  let clinicId: string;
+  try {
+    const auth = await getAuthorizedClinicId(request);
+    clinicId = auth.clinicId;
+  } catch (err) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
+  }
+
+  const { type } = await request.json();
   const jobs: string[] = [];
 
   if (type === "all" || type === "match") {
-    await matchLeadsQueue.add("match-leads", {}, { removeOnComplete: 100 });
+    await matchLeadsQueue.add("match-leads", { clinicId }, { removeOnComplete: 100 });
     jobs.push("match-leads");
   }
 
   if (type === "all" || type === "clinicorp") {
-    await syncClinicorpQueue.add("sync-clinicorp", {}, { removeOnComplete: 100 });
+    await syncClinicorpQueue.add("sync-clinicorp", { clinicId }, { removeOnComplete: 100 });
     jobs.push("sync-clinicorp");
   }
 
   if (type === "reprocess-phones") {
-    const result = await reprocessLeadPhones();
+    const result = await reprocessLeadPhones(clinicId);
     return NextResponse.json({ message: "Reprocess phones completed", ...result });
   }
 
   if (type === "match-now") {
-    const result = await matchLeadsNow();
+    const result = await matchLeadsNow(clinicId);
     return NextResponse.json({ message: "Match leads completed", ...result });
   }
 
-  return NextResponse.json({
-    message: `Sync jobs enqueued: ${jobs.join(", ")}`,
-    jobs,
-  });
+  return NextResponse.json({ message: `Sync jobs enqueued: ${jobs.join(", ")}`, jobs });
 }
 
-async function matchLeadsNow() {
+async function matchLeadsNow(clinicId: string) {
   const leads = await prisma.lead.findMany({
-    where: { patientId: null },
+    where: { clinicId, patientId: null },
   });
 
   let matched = 0;
@@ -54,63 +64,64 @@ async function matchLeadsNow() {
   return { totalProcessed: leads.length, matched };
 }
 
-async function reprocessLeadPhones() {
-  const clinics = await prisma.clinic.findMany({
-    where: { kommoToken: { not: "" } },
+async function reprocessLeadPhones(clinicId: string) {
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
     select: { id: true, kommoSubdomain: true, kommoToken: true },
   });
+
+  if (!clinic || !clinic.kommoToken) {
+    return { totalProcessed: 0, totalUpdated: 0, totalErrors: 0 };
+  }
 
   let totalProcessed = 0;
   let totalUpdated = 0;
   let totalErrors = 0;
 
-  for (const clinic of clinics) {
-    const leads = await prisma.lead.findMany({
-      where: { clinicId: clinic.id, phone: { equals: null } },
-      select: { id: true, kommoLeadId: true },
-    });
+  const leads = await prisma.lead.findMany({
+    where: { clinicId: clinic.id, phone: { equals: null } },
+    select: { id: true, kommoLeadId: true },
+  });
 
-    if (leads.length === 0) continue;
+  if (leads.length === 0) return { totalProcessed, totalUpdated, totalErrors };
 
-    const kommoClient = new KommoClient(clinic.kommoSubdomain, clinic.kommoToken);
+  const kommoClient = new KommoClient(clinic.kommoSubdomain, clinic.kommoToken);
 
-    for (const lead of leads) {
-      totalProcessed++;
-      try {
-        const kommoLead = await kommoClient.getLead(parseInt(lead.kommoLeadId));
-        const contacts = kommoLead._embedded?.contacts;
-        if (!contacts?.length) continue;
+  for (const lead of leads) {
+    totalProcessed++;
+    try {
+      const kommoLead = await kommoClient.getLead(parseInt(lead.kommoLeadId));
+      const contacts = kommoLead._embedded?.contacts;
+      if (!contacts?.length) continue;
 
-        const contact = await kommoClient.getContact(contacts[0].id);
-        if (!contact.custom_fields_values) continue;
+      const contact = await kommoClient.getContact(contacts[0].id);
+      if (!contact.custom_fields_values) continue;
 
-        let phone: string | null = null;
-        let email: string | null = null;
+      let phone: string | null = null;
+      let email: string | null = null;
 
-        for (const field of contact.custom_fields_values) {
-          const code = field.field_code?.toUpperCase();
-          if (code === "PHONE" && field.values.length > 0) {
-            phone = normalizePhoneBR(field.values[0].value);
-          }
-          if (code === "EMAIL" && field.values.length > 0) {
-            email = field.values[0].value;
-          }
+      for (const field of contact.custom_fields_values) {
+        const code = field.field_code?.toUpperCase();
+        if (code === "PHONE" && field.values.length > 0) {
+          phone = normalizePhoneBR(field.values[0].value);
         }
-
-        if (phone || email) {
-          await prisma.lead.update({
-            where: { id: lead.id },
-            data: { ...(phone ? { phone } : {}), ...(email ? { email } : {}) },
-          });
-          totalUpdated++;
+        if (code === "EMAIL" && field.values.length > 0) {
+          email = field.values[0].value;
         }
-
-        // Rate limit: 100ms between requests to avoid Kommo API limits
-        await new Promise((r) => setTimeout(r, 100));
-      } catch (err) {
-        totalErrors++;
-        console.error(`[reprocess-phones] Lead ${lead.id} error:`, err);
       }
+
+      if (phone || email) {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { ...(phone ? { phone } : {}), ...(email ? { email } : {}) },
+        });
+        totalUpdated++;
+      }
+
+      await new Promise((r) => setTimeout(r, 100));
+    } catch (err) {
+      totalErrors++;
+      console.error(`[reprocess-phones] Lead ${lead.id} error:`, err);
     }
   }
 
