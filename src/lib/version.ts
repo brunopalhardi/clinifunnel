@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.11.1";
+export const APP_VERSION = "0.12.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.12.0",
+    date: "2026-04-16",
+    type: "minor",
+    changes: [
+      "Multi-tenant: campo role no User (super_admin, clinic_admin, user)",
+      "Auth guard: API routes validam que user tem acesso a clinica solicitada",
+      "Super admin pode trocar entre clinicas via selector no header",
+      "clinic_admin e user so acessam dados da propria clinica",
+      "Seguranca: requests para clinicId nao autorizado retornam 403",
+    ],
+  },
   {
     version: "0.11.1",
     date: "2026-04-12",

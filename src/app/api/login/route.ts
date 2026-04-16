@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       sub: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       clinicId: user.clinicId,
       clinicName: user.clinic.name,
     },

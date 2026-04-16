@@ -46,6 +46,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
           clinicId: user.clinicId,
           clinicName: user.clinic.name,
         };
@@ -56,6 +57,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.role = (user as { role: string }).role;
         token.clinicId = (user as { clinicId: string }).clinicId;
         token.clinicName = (user as { clinicName: string }).clinicName;
       }
@@ -64,6 +66,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id: string }).id = token.sub as string;
+        (session.user as { role: string }).role = token.role as string;
         (session.user as { clinicId: string }).clinicId =
           token.clinicId as string;
         (session.user as { clinicName: string }).clinicName =

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useClinic } from "@/hooks/use-clinic";
 
 const pageNames: Record<string, string> = {
   "/dashboard": "Visao Geral",
@@ -17,6 +18,7 @@ const pageNames: Record<string, string> = {
 export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const { clinic, clinics, isSuperAdmin, selectClinic } = useClinic();
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
 
@@ -42,9 +44,21 @@ export function Header() {
   return (
     <header className="flex h-14 items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-sm px-6">
       <div className="flex items-center gap-2 text-sm">
-        <span className="font-display font-semibold">
-          {session?.user?.clinicName ?? "Dashboard"}
-        </span>
+        {isSuperAdmin && clinics.length > 1 ? (
+          <select
+            value={clinic?.id ?? ""}
+            onChange={(e) => selectClinic(e.target.value)}
+            className="font-display font-semibold bg-transparent border border-border/50 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gold/50"
+          >
+            {clinics.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        ) : (
+          <span className="font-display font-semibold">
+            {clinic?.name ?? "Dashboard"}
+          </span>
+        )}
         <span className="text-muted-foreground/40">/</span>
         <span className="text-muted-foreground">{pageName}</span>
       </div>
