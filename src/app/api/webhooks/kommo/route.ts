@@ -5,7 +5,7 @@ import { KommoClient } from "@/lib/kommo/client";
 import { extractUTMsFromCustomFields, extractCanalProspeccao, extractAppointmentFields } from "@/lib/kommo/utm";
 import { classifyChannel } from "@/lib/utils/utm";
 import { normalizePhoneBR } from "@/lib/utils/phone";
-import { createPatientQueue } from "@/workers/create-patient";
+import { getCreatePatientQueue } from "@/lib/queues";
 
 async function extractContact(
   kommoClient: KommoClient,
@@ -105,7 +105,7 @@ async function processLead(
 
   // Enqueue patient creation when lead reaches "Agendado"
   if (isAgendamento && !lead.patientId) {
-    await createPatientQueue.add(
+    await getCreatePatientQueue().add(
       "create-patient",
       { leadId: lead.id },
       { jobId: `patient-${lead.id}`, attempts: 3, backoff: { type: "exponential", delay: 5000 } }

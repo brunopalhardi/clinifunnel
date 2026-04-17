@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { processProcedureQueue } from "@/workers/process-procedure";
+import { getProcessProcedureQueue } from "@/lib/queues";
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       // Extract procedure data — handle multiple possible payload shapes
       const data = payload.data ?? payload;
 
-      await processProcedureQueue.add(
+      await getProcessProcedureQueue().add(
         "process-procedure",
         {
           clinicId: clinic.id,

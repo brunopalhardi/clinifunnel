@@ -4,8 +4,7 @@ import { KommoClient } from "@/lib/kommo/client";
 import { normalizePhoneBR } from "@/lib/utils/phone";
 import { matchLeadToPatient, linkLeadToPatient } from "@/lib/matching/lead-patient";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
-import { matchLeadsQueue } from "@/workers/match-leads";
-import { syncClinicorpQueue } from "@/workers/sync-clinicorp";
+import { getMatchLeadsQueue, getSyncClinicorpQueue } from "@/lib/queues";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +24,12 @@ export async function POST(request: NextRequest) {
   const jobs: string[] = [];
 
   if (type === "all" || type === "match") {
-    await matchLeadsQueue.add("match-leads", { clinicId }, { removeOnComplete: 100 });
+    await getMatchLeadsQueue().add("match-leads", { clinicId }, { removeOnComplete: 100 });
     jobs.push("match-leads");
   }
 
   if (type === "all" || type === "clinicorp") {
-    await syncClinicorpQueue.add("sync-clinicorp", { clinicId }, { removeOnComplete: 100 });
+    await getSyncClinicorpQueue().add("sync-clinicorp", { clinicId }, { removeOnComplete: 100 });
     jobs.push("sync-clinicorp");
   }
 
