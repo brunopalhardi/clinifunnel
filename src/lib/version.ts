@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.13.0";
+export const APP_VERSION = "0.13.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.13.1",
+    date: "2026-04-17",
+    type: "patch",
+    changes: [
+      "Fix: adicionar no-cache em /dashboard, /login e / para evitar Cloudflare CDN servir HTML antigo",
+      "Fix: command_timeout do deploy aumentado para 40m (build no VPS pode demorar >20m)",
+    ],
+  },
   {
     version: "0.13.0",
     date: "2026-04-16",
