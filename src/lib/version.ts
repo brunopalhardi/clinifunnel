@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.13.1";
+export const APP_VERSION = "0.13.2";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.13.2",
+    date: "2026-04-17",
+    type: "patch",
+    changes: [
+      "Fix: forcar dynamic rendering em /dashboard/* e /login para Cloudflare nao cachear HTML",
+      "Paginas antes estavam como static (prerendered) e recebiam s-maxage=31536000",
+    ],
+  },
   {
     version: "0.13.1",
     date: "2026-04-17",
