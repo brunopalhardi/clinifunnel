@@ -13,6 +13,7 @@ const navItems = [
   { href: "/dashboard/procedures", label: "Procedimentos", icon: "ClipboardCheck" },
   { href: "/dashboard/ltv", label: "LTV & ROAS", icon: "TrendingUp" },
   { href: "/dashboard/patients", label: "Pacientes", icon: "UserCheck" },
+  { href: "/dashboard/financeiro", label: "Financeiro", icon: "DollarSign" },
   { href: "/dashboard/settings", label: "Configuracoes", icon: "Settings" },
 ];
 
@@ -23,6 +24,7 @@ const iconMap: Record<string, string> = {
   ClipboardCheck: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6m-5 4 2 2 4-4",
   TrendingUp: "M22 7l-8.5 8.5-5-5L2 17",
   UserCheck: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM16 11l2 2 4-4",
+  DollarSign: "M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
   Terminal: "m4 17 6-6-6-6m8 14h6",
   Settings: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
 };

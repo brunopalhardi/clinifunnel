@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.14.0";
+export const APP_VERSION = "0.15.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.15.0",
+    date: "2026-04-27",
+    type: "minor",
+    changes: [
+      "Nova aba Financeiro: caixa total da clinica (todos procedimentos)",
+      "KPIs: receita confirmada, ticket medio, pacientes ativos, pipeline pendente",
+      "Receita diaria, top 10 procedimentos, distribuicao por status",
+    ],
+  },
   {
     version: "0.14.0",
     date: "2026-04-27",
