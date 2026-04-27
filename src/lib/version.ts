@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.15.1";
+export const APP_VERSION = "0.15.2";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.15.2",
+    date: "2026-04-27",
+    type: "patch",
+    changes: [
+      "DateFilter premium: calendario customizado com tema dark/gold (sem mais o feio nativo)",
+      "Range selection: clica no inicio + clica no fim, com hover preview do range",
+      "Layout reorganizado: atalhos a esquerda, calendario a direita",
+    ],
+  },
   {
     version: "0.15.1",
     date: "2026-04-27",
