@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.16.0";
+export const APP_VERSION = "0.16.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.16.1",
+    date: "2026-04-27",
+    type: "patch",
+    changes: [
+      "Fix: barras menores ficavam invisiveis (4px), agora minimo 6% da altura",
+      "Fix: labels de data agora aparecem horizontais embaixo das barras",
+      "Tooltip de receita aparece em destaque acima da barra ao passar o mouse",
+    ],
+  },
   {
     version: "0.16.0",
     date: "2026-04-27",
