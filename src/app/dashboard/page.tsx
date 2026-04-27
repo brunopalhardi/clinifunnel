@@ -12,6 +12,8 @@ interface DashboardData {
   compareceram: number;
   procedimentos: number;
   totalRevenue: number;
+  procedimentosClinica: number;
+  receitaClinica: number;
   totalSpend: number;
   cpl: number | null;
   conversionRate: number;
@@ -27,7 +29,7 @@ const fmtK = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : fmt(v);
 
 const empty: DashboardData = {
   totalLeads: 0, campaignLeads: 0, organicLeads: 0, agendamentos: 0,
-  compareceram: 0, procedimentos: 0, totalRevenue: 0, totalSpend: 0, cpl: null,
+  compareceram: 0, procedimentos: 0, totalRevenue: 0, procedimentosClinica: 0, receitaClinica: 0, totalSpend: 0, cpl: null,
   conversionRate: 0, revenueChart: [], topProcedures: [], channelPerformance: [],
   canalBreakdown: [],
 };
@@ -111,12 +113,14 @@ export default function DashboardPage() {
         <KpiCard
           label="Procedimentos fechados"
           value={d.procedimentos}
+          breakdown={d.procedimentosClinica > d.procedimentos ? `Clinica: ${d.procedimentosClinica} (total)` : undefined}
           icon={<CheckIcon />}
         />
         <KpiCard
-          label="Receita gerada"
+          label="Receita do funil"
           value={d.totalRevenue}
           isCurrency
+          breakdown={d.receitaClinica > d.totalRevenue ? `Clinica: ${fmtK(d.receitaClinica)} (total)` : undefined}
           icon={<DollarIcon />}
           highlight
         />

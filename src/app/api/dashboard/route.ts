@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
     agendamentos,
     compareceram,
     procedureAgg,
+    totalProcedureAgg,
     adSpendAgg,
     topProcedures,
     canalBreakdown,
@@ -88,8 +89,19 @@ export async function GET(request: NextRequest) {
         patient: { procedures: { some: {} } },
       },
     }),
+    // Procedures DO FUNIL (apenas pacientes vinculados a leads)
     prisma.procedure.aggregate({
       where: funnelProcedureFilter,
+      _count: { id: true },
+      _sum: { value: true },
+    }),
+    // Procedures TOTAIS da clinica (independente de funil)
+    prisma.procedure.aggregate({
+      where: {
+        clinicId,
+        status: { in: ["completed", "approved"] },
+        ...procedureDateFilter,
+      },
       _count: { id: true },
       _sum: { value: true },
     }),
@@ -151,6 +163,8 @@ export async function GET(request: NextRequest) {
   const organicLeads = totalLeads - campaignLeads;
   const procedimentos = procedureAgg._count.id;
   const totalRevenue = procedureAgg._sum.value ?? 0;
+  const procedimentosClinica = totalProcedureAgg._count.id;
+  const receitaClinica = totalProcedureAgg._sum.value ?? 0;
   const totalSpend = adSpendAgg._sum.spend ?? 0;
   const cpl = campaignLeads > 0 && totalSpend > 0 ? totalSpend / campaignLeads : null;
 
@@ -202,6 +216,8 @@ export async function GET(request: NextRequest) {
       compareceram,
       procedimentos,
       totalRevenue,
+      procedimentosClinica,
+      receitaClinica,
       totalSpend,
       cpl,
       conversionRate: totalLeads > 0 ? (agendamentos / totalLeads) * 100 : 0,
