@@ -19,5 +19,6 @@ export const config = {
     "/api/webhook-logs/:path*",
     "/api/patients/:path*",
     "/api/reminders/:path*",
+    "/api/financeiro/:path*",
   ],
 };
