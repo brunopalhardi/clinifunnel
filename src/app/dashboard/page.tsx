@@ -17,7 +17,8 @@ interface DashboardData {
   totalSpend: number;
   cpl: number | null;
   conversionRate: number;
-  revenueChart: { day: string; value: number }[];
+  revenueChart: { day: string; iso?: string; value: number }[];
+  revenueGranularity?: "day" | "week" | "month";
   topProcedures: { name: string; count: number; revenue: number; ticketMedio: number }[];
   channelPerformance: { channel: string; spend: number; impressions: number; clicks: number }[];
   canalBreakdown: { canal: string; count: number }[];
@@ -157,18 +158,42 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Revenue by day */}
+        {/* Revenue Timeline */}
         <div className="rounded-xl bg-card p-6 glass-border">
-          <h2 className="font-display text-lg font-semibold mb-5">Receita por periodo</h2>
-          <div className="flex items-end gap-2 h-48">
-            {d.revenueChart.map((r) => (
-              <div key={r.day} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-[10px] text-muted-foreground">{r.value > 0 ? fmtK(r.value) : ""}</span>
-                <div className="w-full rounded-t-md bg-success/80 transition-all duration-500" style={{ height: `${maxRevenue > 0 ? (r.value / maxRevenue) * 140 : 4}px`, minHeight: r.value > 0 ? "8px" : "2px" }} />
-                <span className="text-[11px] text-muted-foreground">{r.day}</span>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-display text-lg font-semibold">Receita por periodo</h2>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">
+              {d.revenueGranularity === "day" && "Por dia"}
+              {d.revenueGranularity === "week" && "Por semana"}
+              {d.revenueGranularity === "month" && "Por mes"}
+            </span>
           </div>
+          {d.revenueChart.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem receita no periodo.</p>
+          ) : (
+            <div className="overflow-x-auto pb-2">
+              <div className="flex items-end gap-1 h-48 min-w-full" style={{ minWidth: `${Math.max(d.revenueChart.length * 32, 100)}px` }}>
+                {d.revenueChart.map((r, idx) => (
+                  <div key={`${r.day}-${idx}`} className="flex flex-1 min-w-[28px] flex-col items-center gap-1 group relative">
+                    <span className="text-[9px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 whitespace-nowrap">
+                      {fmtK(r.value)}
+                    </span>
+                    <div
+                      className="w-full rounded-t-md bg-success/80 hover:bg-success transition-all duration-500"
+                      style={{
+                        height: `${maxRevenue > 0 ? (r.value / maxRevenue) * 150 : 4}px`,
+                        minHeight: r.value > 0 ? "4px" : "2px",
+                      }}
+                      title={`${r.day}: ${fmt(r.value)}`}
+                    />
+                    <span className="text-[9px] text-muted-foreground rotate-[-45deg] origin-top-left whitespace-nowrap mt-1 ml-2">
+                      {r.day}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

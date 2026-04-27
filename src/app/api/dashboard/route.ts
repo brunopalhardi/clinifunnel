@@ -4,6 +4,20 @@ import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 
+function formatBucketLabel(bucket: Date, granularity: "day" | "week" | "month"): string {
+  const d = new Date(bucket);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  if (granularity === "month") {
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    return `${months[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+  }
+  if (granularity === "week") {
+    return `${day}/${month}`;
+  }
+  return `${day}/${month}`;
+}
+
 export async function GET(request: NextRequest) {
   let clinicId: string;
   try {
@@ -127,7 +141,17 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  // Revenue by day of week (only funnel-linked procedures)
+  // Decidir granularity (dia/semana/mes) baseado no range
+  const fromDate = from ? new Date(from) : null;
+  const toDate = to ? new Date(to) : null;
+  const rangeDays = fromDate && toDate
+    ? Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24))
+    : 30;
+  const granularity: "day" | "week" | "month" =
+    rangeDays <= 31 ? "day" : rangeDays <= 90 ? "week" : "month";
+  const truncFn = granularity === "day" ? "day" : granularity === "week" ? "week" : "month";
+
+  // Revenue timeline (only funnel-linked procedures)
   const dateParams: string[] = [clinicId];
   let leadSubquery = `SELECT 1 FROM "Lead" l WHERE l."patientId" = pt.id`;
   if (clinic?.pipelineId) {
@@ -149,14 +173,14 @@ export async function GET(request: NextRequest) {
     dateConditions += ` AND p."createdAt" <= $${dateParams.length}::timestamp`;
   }
 
-  const revenueByDay = await prisma.$queryRawUnsafe<Array<{ day: number; total: number }>>(
-    `SELECT EXTRACT(DOW FROM p."createdAt") as day, SUM(p.value) as total
+  const revenueTimeline = await prisma.$queryRawUnsafe<Array<{ bucket: Date; total: number }>>(
+    `SELECT date_trunc('${truncFn}', p."createdAt") as bucket, SUM(p.value)::float as total
      FROM "Procedure" p
      INNER JOIN "Patient" pt ON p."patientId" = pt.id
      WHERE p."clinicId" = $1
        AND p.status IN ('completed', 'approved')
        ${dateConditions}
-     GROUP BY day ORDER BY day`,
+     GROUP BY bucket ORDER BY bucket ASC`,
     ...dateParams
   );
 
@@ -168,12 +192,12 @@ export async function GET(request: NextRequest) {
   const totalSpend = adSpendAgg._sum.spend ?? 0;
   const cpl = campaignLeads > 0 && totalSpend > 0 ? totalSpend / campaignLeads : null;
 
-  // Revenue by day of week
-  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
-  const revenueChart = dayNames.map((name, i) => {
-    const found = revenueByDay.find((r) => Number(r.day) === i);
-    return { day: name, value: found ? Number(found.total) : 0 };
-  });
+  // Revenue chart: timeline (dia / semana / mes)
+  const revenueChart = revenueTimeline.map((r) => ({
+    day: formatBucketLabel(r.bucket, granularity),
+    iso: new Date(r.bucket).toISOString(),
+    value: Number(r.total),
+  }));
 
   // Top procedures formatted
   const topProcs = topProcedures.map((p) => ({
@@ -222,6 +246,7 @@ export async function GET(request: NextRequest) {
       cpl,
       conversionRate: totalLeads > 0 ? (agendamentos / totalLeads) * 100 : 0,
       revenueChart,
+      revenueGranularity: granularity,
       topProcedures: topProcs,
       channelPerformance,
       canalBreakdown: canalBreakdown.map((c) => ({
