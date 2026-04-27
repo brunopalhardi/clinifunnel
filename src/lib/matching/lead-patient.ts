@@ -1,22 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { Lead, Patient } from "@prisma/client";
+import { phoneMatchKey } from "@/lib/utils/phone";
 
 export async function matchLeadToPatient(
   lead: Lead
 ): Promise<Patient | null> {
-  // 1. Match by phone (last 8 digits to handle format differences)
-  if (lead.phone) {
-    const digits = lead.phone.replace(/\D/g, "");
-    const last8 = digits.slice(-8);
-    if (last8.length === 8) {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          clinicId: lead.clinicId,
-          phone: { endsWith: last8 },
-        },
-      });
-      if (patient) return patient;
-    }
+  // 1. Match by phone using normalized key (DDD + last 8 digits)
+  const leadKey = phoneMatchKey(lead.phone);
+  if (leadKey) {
+    const patients = await prisma.patient.findMany({
+      where: { clinicId: lead.clinicId },
+    });
+    const match = patients.find((p) => phoneMatchKey(p.phone) === leadKey);
+    if (match) return match;
   }
 
   // 2. Match by email (if both have it)
@@ -46,23 +42,23 @@ export async function linkLeadToPatient(
 export async function matchPatientToLeads(
   patient: { id: string; clinicId: string; phone: string | null }
 ): Promise<number> {
-  if (!patient.phone) return 0;
-
-  const digits = patient.phone.replace(/\D/g, "");
-  const last8 = digits.slice(-8);
-  if (last8.length < 8) return 0;
+  const patientKey = phoneMatchKey(patient.phone);
+  if (!patientKey) return 0;
 
   const unmatchedLeads = await prisma.lead.findMany({
     where: {
       clinicId: patient.clinicId,
       patientId: null,
-      phone: { endsWith: last8 },
     },
   });
 
+  let count = 0;
   for (const lead of unmatchedLeads) {
-    await linkLeadToPatient(lead.id, patient.id);
+    if (phoneMatchKey(lead.phone) === patientKey) {
+      await linkLeadToPatient(lead.id, patient.id);
+      count++;
+    }
   }
 
-  return unmatchedLeads.length;
+  return count;
 }

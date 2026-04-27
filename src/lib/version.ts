@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.13.2";
+export const APP_VERSION = "0.14.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.14.0",
+    date: "2026-04-27",
+    type: "minor",
+    changes: [
+      "Matching de telefones agora normaliza o nono digito brasileiro (DDD + ultimos 8 digitos)",
+      "Dashboard mostra Receita do funil + Receita total da clinica em paralelo",
+      "Card 'Procedimentos fechados' inclui breakdown com total da clinica",
+    ],
+  },
   {
     version: "0.13.2",
     date: "2026-04-17",
