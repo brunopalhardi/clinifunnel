@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.15.2";
+export const APP_VERSION = "0.16.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.16.0",
+    date: "2026-04-27",
+    type: "minor",
+    changes: [
+      "Receita por periodo: troca grafico fixo de 7 dias da semana por timeline real",
+      "Granularity automatica: <=31 dias por dia, <=90 dias por semana, >90 dias por mes",
+      "Tooltip com receita exata, scroll horizontal quando muitos pontos",
+      "Label dinamico mostrando granularity ativo (Por dia/semana/mes)",
+    ],
+  },
   {
     version: "0.15.2",
     date: "2026-04-27",
