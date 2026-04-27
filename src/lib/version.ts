@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.15.0";
+export const APP_VERSION = "0.15.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.15.1",
+    date: "2026-04-27",
+    type: "patch",
+    changes: [
+      "DateFilter modernizado: popover unico com presets (Hoje, Ontem, 7d, 30d, 90d, Este mes, Mes passado)",
+      "Fix: 'Ate' agora pega ate o fim do dia (23:59:59) em vez de 00:00:00",
+      "Fix: datas tratadas em horario local (nao UTC), evitando off-by-one",
+      "Custom range com inputs de data + botao 'Aplicar periodo'",
+    ],
+  },
   {
     version: "0.15.0",
     date: "2026-04-27",
