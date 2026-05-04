@@ -67,8 +67,11 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[ENG-0] Padrao de engenharia + visibilidade de versao** — PR #_TBD_ — v0.17.0
-  CLAUDE.md reforcado, PR template, CI workflow, deploy com healthcheck, IMPROVEMENTS.md, versao no login, pagina /dashboard/changelog, rota /api/health.
+- **[ENG-0.1] Workflows com workflow_dispatch + recovery** — PR #_TBD_ — v0.17.1
+  Adicionado `workflow_dispatch:` em ci.yml e deploy.yml. Deploy aceita input skip-wait-ci para emergencia. Regra 7.1 no CLAUDE.md exige dispatch manual em todo workflow critico (resposta a degradacao de webhook do GitHub que travou o deploy de v0.17.0).
+
+- **[ENG-0] Padrao de engenharia + visibilidade de versao** — PR #47 — v0.17.0
+  CLAUDE.md reforcado, PR template, CI workflow, deploy com healthcheck, IMPROVEMENTS.md, versao no login, pagina /changelog publica, rota /api/health.
 
 ---
 

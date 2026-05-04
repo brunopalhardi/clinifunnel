@@ -3,11 +3,21 @@ name: Deploy to VPS
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip-wait-ci:
+        description: "Pular o gate de CI (apenas em emergencia, ex: webhook do GitHub degradado)"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   wait-ci:
     name: Wait CI
     runs-on: ubuntu-latest
+    # Em workflow_dispatch com skip-wait-ci=true, pula o gate (uso emergencial
+    # quando webhook do GitHub estah degradado e CI nao foi disparado).
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.skip-wait-ci != 'true' }}
     steps:
       - name: Wait for CI workflow
         uses: lewagon/wait-on-check-action@v1.3.4
@@ -20,6 +30,9 @@ jobs:
 
   deploy:
     needs: wait-ci
+    # Necessario porque com `if` no wait-ci, o needs pode resolver para `skipped`
+    # em vez de `success`. Aceita ambos.
+    if: ${{ always() && (needs.wait-ci.result == 'success' || needs.wait-ci.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
