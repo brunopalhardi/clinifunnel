@@ -102,6 +102,13 @@ Para mudancas de UI: testar no browser local (`npm run dev`) e descrever no PR o
 - Worker novo: registrar em `src/workers/index.ts` com graceful shutdown.
 - Queue nova: factory em `src/lib/queues.ts`.
 
+### 7.1 CI/CD e workflows
+
+- **Todo workflow critico DEVE ter `workflow_dispatch:`** alem dos triggers automaticos. Webhooks do GitHub falham (degradacao parcial acontece algumas vezes por ano) e perdem eventos de push. Sem dispatch manual, deploy fica preso.
+- Disparo manual: `gh workflow run <workflow.yml> --ref main` (nao usa webhook, vai direto pro scheduler).
+- `deploy.yml` aceita input `skip-wait-ci=true` apenas em emergencia documentada (webhook degradado ou CI ja validado em outro PR).
+- Apos cada PR mergeado, conferir que o run de deploy foi disparado (`gh run list --branch main --limit 3`). Se nao disparou em 5 min, suspeitar de degradacao do GitHub e usar dispatch manual.
+
 ### 8. Seguranca
 
 - TypeScript strict: sem `any` injustificado, sem `!` desnecessario.
@@ -162,6 +169,12 @@ npm run lint && npx tsc --noEmit && npm run build
 git worktree list
 git worktree add -b feat/x ../clinifunnel-feat-x main
 git worktree remove ../clinifunnel-feat-x
+
+# CI/CD - dispatch manual (em caso de webhook degradado do GitHub)
+gh workflow run ci.yml --ref main
+gh workflow run deploy.yml --ref main
+gh workflow run deploy.yml --ref main -f skip-wait-ci=true   # emergencia
+gh run list --branch main --limit 5                          # status
 ```
 
 ---
@@ -183,7 +196,7 @@ src/
     redis.ts
     auth.ts, auth-guard.ts
     queues.ts
-    version.ts          # APP_VERSION + CHANGELOG (renderizado em /dashboard/changelog)
+    version.ts          # APP_VERSION + CHANGELOG (renderizado em /changelog publico)
     matching/           # lead <-> patient
     kommo/              # client + types
     clinicorp/          # client + types

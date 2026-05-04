@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.17.0";
+export const APP_VERSION = "0.17.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.17.1",
+    date: "2026-05-04",
+    type: "patch",
+    changes: [
+      "Workflows com workflow_dispatch: permite disparo manual via 'gh workflow run' quando webhook do GitHub esta degradado",
+      "deploy.yml aceita input skip-wait-ci=true para emergencia (uso documentado)",
+      "CLAUDE.md regra 7.1: todo workflow critico deve ter workflow_dispatch + comandos de dispatch nos comandos uteis",
+      "Fix: caminho do changelog em CLAUDE.md (publico /changelog, nao /dashboard/changelog)",
+    ],
+  },
   {
     version: "0.17.0",
     date: "2026-05-04",
