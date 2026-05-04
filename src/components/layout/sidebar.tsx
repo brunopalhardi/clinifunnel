@@ -98,9 +98,12 @@ export function Sidebar() {
         </button>
 
         <div className="px-3">
-          <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/30">
-            CliniFunnel v{APP_VERSION}
-          </p>
+          <Link
+            href="/changelog"
+            className="block text-[10px] uppercase tracking-wider text-sidebar-foreground/30 transition-colors hover:text-sidebar-foreground/60"
+          >
+            CliniFunnel v{APP_VERSION} · novidades
+          </Link>
         </div>
       </div>
     </aside>

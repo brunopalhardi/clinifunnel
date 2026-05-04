@@ -1,75 +1,203 @@
 # CLAUDE.md — CliniFunnel
 
-> URL Produção: https://clinifunnel.koaai.com.br
-> Deploy: auto via GitHub Actions (push to main)
+> URL Producao: https://clinifunnel.koaai.com.br
+> Deploy: auto via GitHub Actions (push em `main`)
 
 ## Stack
-- **Framework**: Next.js 14 (App Router) + TypeScript (strict)
+
+- **Framework**: Next.js 14 (App Router) + TypeScript strict
 - **UI**: Tailwind CSS + shadcn/ui
 - **Database**: PostgreSQL (Prisma ORM)
 - **Fila/Jobs**: BullMQ + Redis
-- **Deploy**: Docker + GitHub Actions → VPS
+- **Auth**: NextAuth (Credentials + JWT)
+- **Deploy**: Docker + GitHub Actions -> VPS
 
-## Versionamento (Semantic Versioning)
+---
 
-Toda mudanca que vai para producao DEVE ter bump de versao em:
-1. `package.json` → campo `"version"`
-2. `src/lib/version.ts` → constante `APP_VERSION` + entrada no `CHANGELOG`
+## Padrao de Engenharia (OBRIGATORIO)
 
-| Tipo | Bump | Quando usar |
-|------|------|-------------|
-| Major | X.0.0 | Breaking change |
-| Minor | 0.X.0 | Feature nova |
-| Patch | 0.0.X | Bug fix |
+Estas regras sao validadas em revisao de PR. Quebrar qualquer uma delas e motivo de pedir rework.
 
-## Git Workflow (OBRIGATORIO)
+### 1. Worktree por tarefa
 
-1. NUNCA commitar direto na `main` — sempre via feature branch → PR → squash merge
-2. NUNCA reusar branch — cada fix/feature tem sua propria branch
-3. SEMPRE bumpar versao antes de abrir PR
-4. SEMPRE usar squash merge
+Toda feature/fix sai em **worktree dedicada**, nunca no clone principal.
 
-### Nomenclatura de branches
-```
-feat/nome-da-feature
-fix/descricao-do-bug
-chore/descricao
-```
-
-### Fluxo
 ```bash
-git checkout main && git pull origin main
-git checkout -b feat/minha-feature
-# desenvolver, commitar
-git push -u origin feat/minha-feature
-gh pr create --title "feat: descricao" --body "..."
-gh pr merge --squash
-git checkout main && git pull origin main
+# A partir do clone principal em main atualizado
+git fetch origin && git checkout main && git pull origin main
+git worktree add -b feat/nome-da-feature ../clinifunnel-feat-nome main
+cd ../clinifunnel-feat-nome
 ```
+
+Por que: isola a feature, permite rodar varios trabalhos em paralelo, evita commits acidentais no clone principal.
+
+Ao terminar e mergear o PR:
+```bash
+cd <clone-principal>
+git worktree remove ../clinifunnel-feat-nome
+git branch -d feat/nome-da-feature  # ou -D se ja foi squash-merged
+```
+
+### 2. Branch e PR
+
+- **NUNCA** commitar direto em `main`. **NUNCA** `git push origin main`.
+- Cada fix/feature tem branch propria. Branch nao se reusa.
+- Nomenclatura:
+  ```
+  feat/<descricao-curta>     # feature nova (bump minor)
+  fix/<descricao-curta>      # bug fix (bump patch)
+  chore/<descricao-curta>    # processo/infra/docs (geralmente patch)
+  refactor/<descricao-curta> # mudanca interna sem feature/fix (patch)
+  ```
+- Sempre PR -> revisao -> **squash merge**. Sem merge commits.
+- **NUNCA** usar `gh pr merge --admin` ou `--no-verify` para forcar.
+- Aguardar **CI verde** antes de mergear.
+
+### 3. Versionamento (Semantic Versioning)
+
+Toda mudanca que vai para producao DEVE ter bump de versao em **dois arquivos**:
+
+1. `package.json` -> campo `"version"`
+2. `src/lib/version.ts` -> constante `APP_VERSION` + nova entrada no array `CHANGELOG`
+
+| Tipo  | Bump  | Quando usar |
+|-------|-------|-------------|
+| Major | X.0.0 | Breaking change (raro) |
+| Minor | 0.X.0 | Feature nova ou mudanca de processo |
+| Patch | 0.0.X | Bug fix, refactor sem mudanca de comportamento |
+
+A entrada do `CHANGELOG` deve usar pt-BR e listar mudancas em bullets curtos. Manter o estilo das entradas anteriores.
+
+### 4. Backlog rastreavel
+
+- Toda PR referencia um item de [`docs/IMPROVEMENTS.md`](docs/IMPROVEMENTS.md).
+- Se a tarefa nao tem item, **abrir o item primeiro** (PR separado ou no proprio PR, mas registrado).
+- Mover o item de "Em andamento" -> "Concluidos" como parte do PR (com link pro PR e versao).
+
+### 5. Validacao antes de marcar pronto
+
+Antes de abrir/atualizar PR, rodar **localmente**:
+
+```bash
+npm ci
+npx prisma generate
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+Se algum desses falhar, **nao abrir PR**. Resolver antes. O CI roda os mesmos comandos — quebrar CI no proprio PR e perda de tempo.
+
+Para mudancas de UI: testar no browser local (`npm run dev`) e descrever no PR o que foi testado. Type check e build NAO substituem teste de feature.
+
+### 6. Banco e migrations
+
+- Migrations em desenvolvimento: `npx prisma migrate dev --name descricao_curta`.
+- Producao roda `prisma migrate deploy` no `docker-entrypoint.sh` automaticamente. Nao rodar `migrate dev` em producao.
+- Migration destrutiva (drop column, rename, mudanca de tipo com perda) exige aviso explicito no corpo do PR + plano de rollback.
+
+### 7. Webhooks e jobs
+
+- Webhooks: responder 200 rapido (<2s), processar async via BullMQ.
+- Worker novo: registrar em `src/workers/index.ts` com graceful shutdown.
+- Queue nova: factory em `src/lib/queues.ts`.
+
+### 8. Seguranca
+
+- TypeScript strict: sem `any` injustificado, sem `!` desnecessario.
+- Variaveis sensiveis: nunca hardcode, sempre via `env` ou banco.
+- Tokens de integracao no DB devem ser tratados como secret (mascarar em GET, nao logar payload com token).
+- Multi-tenant: toda query DB filtra por `clinicId`. Toda API route valida acesso via `auth-guard`.
+
+### 9. Convencoes de codigo
+
+- Imports: `@/` para paths absolutos.
+- Componentes: PascalCase.
+- API routes (pasta): kebab-case.
+- Funcoes: camelCase, verbos descritivos.
+- Mensagens de commit: pt-BR, formato `tipo: descricao` (ex: `feat: adiciona pagina de changelog`).
+
+### 10. O que NAO fazer
+
+- Nao desabilitar regra de lint/tsc para "fazer passar". Se a regra esta errada, abrir PR de chore alterando a regra.
+- Nao adicionar `// @ts-ignore` ou `// eslint-disable-next-line` sem comentario explicando motivo + link de issue.
+- Nao mexer em `.env`, secrets de GitHub, config de VPS sem instrucao explicita.
+- Nao fazer "drive-by refactors" no meio de uma feature. PR pequeno e focado.
+- Nao deletar codigo desconhecido sem entender. Investigar `git blame` e changelog primeiro.
+
+---
+
+## Branch Protection (configuracao manual no GitHub)
+
+Em `Settings > Branches > main`, exigir:
+
+- [x] Require a pull request before merging
+- [x] Require approvals (1)
+- [x] Require status checks to pass before merging
+  - [x] `ci` (workflow `.github/workflows/ci.yml`)
+- [x] Require branches to be up to date before merging
+- [x] Do not allow bypassing the above settings (inclusive admin)
+- [ ] Allow force pushes — **DESLIGADO**
+- [ ] Allow deletions — **DESLIGADO**
+
+---
 
 ## Comandos uteis
 
 ```bash
 # Dev
 docker compose -f docker-compose.dev.yml up -d   # Postgres + Redis
-npm run dev                                        # Next.js dev server
+npm run dev                                      # Next.js dev
+npm run workers                                  # workers BullMQ
 
 # Database
-npx prisma migrate dev                            # Criar/aplicar migrations
-npx prisma studio                                 # GUI do banco
-npx prisma generate                               # Gerar client
+npx prisma migrate dev --name <nome>             # criar/aplicar migration local
+npx prisma studio                                # GUI do banco
+npx prisma generate                              # gerar client
 
-# Build
-npm run build                                      # Build producao
+# Validacao pre-PR
+npm run lint && npx tsc --noEmit && npm run build
+
+# Worktree
+git worktree list
+git worktree add -b feat/x ../clinifunnel-feat-x main
+git worktree remove ../clinifunnel-feat-x
 ```
 
-## Convencoes
+---
 
-- TypeScript strict: sem `any`, sem `!` desnecessarios
-- Imports: usar `@/` para paths absolutos
-- Componentes: PascalCase
-- API routes: kebab-case
-- Funcoes: camelCase, verbos descritivos
-- Webhooks: sempre responder 200 rapido, processar async via BullMQ
-- Variaveis sensiveis: nunca hardcode, sempre via env ou banco
-# test
+## Estrutura
+
+```
+src/
+  app/
+    api/                # API routes (kebab-case)
+    dashboard/          # paginas autenticadas
+    login/
+  components/
+    ui/                 # primitives (shadcn)
+    layout/             # sidebar, header
+    dashboard/          # feature components
+  lib/
+    prisma.ts
+    redis.ts
+    auth.ts, auth-guard.ts
+    queues.ts
+    version.ts          # APP_VERSION + CHANGELOG (renderizado em /dashboard/changelog)
+    matching/           # lead <-> patient
+    kommo/              # client + types
+    clinicorp/          # client + types
+    ads/                # meta + google
+  workers/              # BullMQ workers
+prisma/
+  schema.prisma
+  migrations/
+  seed.ts
+docs/
+  IMPROVEMENTS.md       # backlog
+.github/
+  workflows/
+    ci.yml              # lint + tsc + build em PR
+    deploy.yml          # SSH deploy em push main
+  PULL_REQUEST_TEMPLATE.md
+```
