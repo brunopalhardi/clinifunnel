@@ -8,13 +8,16 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Em andamento
 
-### Infraestrutura
+_(vazio — adicionar quando comecar trabalho)_
 
-- **[INFRA-1] Migracao Fase 1: dockerizar app + Docker Swarm + Traefik**
-  Substituir setup atual (PM2 nativo + nginx-proxy container) por docker stack no Swarm com Traefik. PG e Redis continuam nativos do host (acessados via host.docker.internal). Build da imagem em GHA, push pra GHCR, deploy via SSH `docker stack deploy`.
-  Eixo: infra · Bump: spans 0.18.0 -> 0.20.1
-  Sub-tarefas: PR1 health (0.18.0) #49 · PR2 dockerize+stack (0.19.0) #50 · PR3 GHCR+deploy (0.20.0) · PR4 docs+cutover (0.20.1)
-  Fase 2 (futuro): PG + Redis dentro do swarm como services.
+### Proxima Fase (planejada, nao iniciada)
+
+- **[INFRA-2] Fase 2: PG + Redis dentro do Swarm + secrets**
+  Migrar Postgres e Redis nativos do host para services do swarm. Substituir env_file por docker secrets. Avaliar healthcheck 503 com >=2 replicas web (failover). Subir replicas pra ter rolling update real.
+  Eixo: infra · Bump: spans em multiplos PRs
+
+- **[INFRA-3] Build em registry cache + redutor de tempo de build**
+  Hoje primeiro build leva 10-15min. Otimizar: BuildKit inline cache + multi-arch (se necessario). Considerar dependencias-only stage com hash de package-lock.
 
 ---
 
@@ -74,7 +77,10 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Concluidos
 
-- **[ENG-0.1] Workflows com workflow_dispatch + recovery** — PR #_TBD_ — v0.17.1
+- **[INFRA-1] Migracao Fase 1: dockerizar app + Docker Swarm + Traefik** — PRs #49 #50 #51 #52 — v0.18.0 → v0.20.1
+  App migrado de PM2 nativo + nginx-proxy para docker stack no Swarm com Traefik. Build da imagem em GHA, push GHCR (privado), deploy via `docker stack deploy --with-registry-auth`. Healthcheck robusto pingando DB+Redis. PG e Redis continuam nativos no host (via host.docker.internal). Runbook de cutover em `docs/CUTOVER.md`.
+
+- **[ENG-0.1] Workflows com workflow_dispatch + recovery** — PR #48 — v0.17.1
   Adicionado `workflow_dispatch:` em ci.yml e deploy.yml. Deploy aceita input skip-wait-ci para emergencia. Regra 7.1 no CLAUDE.md exige dispatch manual em todo workflow critico (resposta a degradacao de webhook do GitHub que travou o deploy de v0.17.0).
 
 - **[ENG-0] Padrao de engenharia + visibilidade de versao** — PR #47 — v0.17.0
