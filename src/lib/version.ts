@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.18.0";
+export const APP_VERSION = "0.19.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,21 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.19.0",
+    date: "2026-05-04",
+    type: "minor",
+    changes: [
+      "Dockerfile refatorado: tini para signal handling, wget para healthcheck, remocao de copias redundantes de node_modules",
+      "HEALTHCHECK no Dockerfile bate em /api/health a cada 30s",
+      "docker-entrypoint.sh com log estruturado JSON e tratamento de erro explicito em prisma migrate",
+      "docker-stack.yml novo (substitui docker-compose.prod.yml): swarm 3.8 com Traefik labels, healthcheck no service web, update_config start-first com rollback automatico",
+      "Workers usam stop-first (evita 2 workers concorrendo na mesma queue BullMQ) e healthcheck disable",
+      "Limites de recursos: web 600M, workers 200M (ajustado para VPS apertada)",
+      ".env.production.example com vars necessarias (DB/Redis via host.docker.internal na FASE 1)",
+      "docker-compose.prod.yml removido — Swarm ja existe na VPS, vamos usar",
+    ],
+  },
   {
     version: "0.18.0",
     date: "2026-05-04",

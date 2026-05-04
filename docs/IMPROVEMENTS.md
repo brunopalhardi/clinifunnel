@@ -13,7 +13,7 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 - **[INFRA-1] Migracao Fase 1: dockerizar app + Docker Swarm + Traefik**
   Substituir setup atual (PM2 nativo + nginx-proxy container) por docker stack no Swarm com Traefik. PG e Redis continuam nativos do host (acessados via host.docker.internal). Build da imagem em GHA, push pra GHCR, deploy via SSH `docker stack deploy`.
   Eixo: infra · Bump: spans 0.18.0 -> 0.20.1
-  Sub-tarefas: PR1 health (0.18.0) · PR2 dockerize+stack (0.19.0) · PR3 GHCR+deploy (0.20.0) · PR4 docs+cutover (0.20.1)
+  Sub-tarefas: PR1 health (0.18.0) #49 · PR2 dockerize+stack (0.19.0) #50 · PR3 GHCR+deploy (0.20.0) · PR4 docs+cutover (0.20.1)
   Fase 2 (futuro): PG + Redis dentro do swarm como services.
 
 ---
