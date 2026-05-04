@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.16.1";
+export const APP_VERSION = "0.17.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.17.0",
+    date: "2026-05-04",
+    type: "minor",
+    changes: [
+      "Padrao de engenharia: CLAUDE.md reforcado (worktree obrigatoria, build local pre-PR, no merge direto em main)",
+      "PR template com checklist obrigatorio (bump, lint, tsc, build, IMPROVEMENTS.md)",
+      "Workflow CI: lint + tsc + build em cada PR e push (.github/workflows/ci.yml)",
+      "Deploy aguarda CI verde + healthcheck pos-deploy em /api/health",
+      "Backlog de melhorias rastreavel em docs/IMPROVEMENTS.md (5 eixos: seguranca, qualidade, observabilidade, multi-tenant, features)",
+      "Versao visivel no rodape do login com link para /changelog",
+      "Pagina publica /changelog renderizando o CHANGELOG tipado (antes vivia so no codigo)",
+      "Sidebar: link da versao agora abre /changelog",
+      "Rota /api/health retornando status, versao e timestamp (usada pelo deploy)",
+    ],
+  },
   {
     version: "0.16.1",
     date: "2026-04-27",

@@ -1,11 +1,13 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { APP_VERSION } from "@/lib/version";
 
 export default function LoginPage() {
   return (
@@ -50,7 +52,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="relative flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">CliniFunnel</CardTitle>
@@ -91,6 +93,14 @@ function LoginForm() {
           </form>
         </CardContent>
       </Card>
+      <footer className="absolute bottom-4 left-0 right-0 flex justify-center">
+        <Link
+          href="/changelog"
+          className="text-[11px] uppercase tracking-wider text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+        >
+          CliniFunnel v{APP_VERSION} · novidades
+        </Link>
+      </footer>
     </div>
   );
 }
