@@ -8,7 +8,13 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Em andamento
 
-_(vazio — adicionar quando comecar trabalho)_
+### Infraestrutura
+
+- **[INFRA-1] Migracao Fase 1: dockerizar app + Docker Swarm + Traefik**
+  Substituir setup atual (PM2 nativo + nginx-proxy container) por docker stack no Swarm com Traefik. PG e Redis continuam nativos do host (acessados via host.docker.internal). Build da imagem em GHA, push pra GHCR, deploy via SSH `docker stack deploy`.
+  Eixo: infra · Bump: spans 0.18.0 -> 0.20.1
+  Sub-tarefas: PR1 health (0.18.0) · PR2 dockerize+stack (0.19.0) · PR3 GHCR+deploy (0.20.0) · PR4 docs+cutover (0.20.1)
+  Fase 2 (futuro): PG + Redis dentro do swarm como services.
 
 ---
 
@@ -49,9 +55,10 @@ _(vazio — adicionar quando comecar trabalho)_
   Endpoint `/api/admin/queues` (super-admin only) com tamanho de cada fila, jobs falhados, tempo medio. Painel simples no `/dashboard/logs`.
   Eixo: observabilidade · Bump: minor
 
-- **[OBS-3] Healthcheck robusto**
-  Expandir `/api/health` para verificar DB (ping Prisma), Redis e ultimo job processado. Usado pelo deploy + monitoring externo.
+- **[OBS-3.1] Health avancado: ultimo job processado**
+  Expandir `/api/health` para tambem reportar status das filas BullMQ (ultimo job processado por queue, jobs falhados nas ultimas 24h). Util pra detectar workers travados antes do usuario reclamar.
   Eixo: observabilidade · Bump: patch
+  Nota: depende de [OBS-2] (metricas de fila) — fazer junto.
 
 ### Features
 
