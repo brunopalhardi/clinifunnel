@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.17.1";
+export const APP_VERSION = "0.18.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.18.0",
+    date: "2026-05-04",
+    type: "minor",
+    changes: [
+      "/api/health expandido: agora pinga Postgres (SELECT 1) e Redis (PING) com timeout de 800ms cada",
+      "Resposta inclui campos db e redis (ok|down) e status agregado (ok|degraded)",
+      "Sempre retorna 200 — Traefik usa o body pra decidir, evita downtime artificial em deploy single-replica",
+      "Preparacao para Fase 1 da migracao Swarm: usado pelo healthcheck do docker service",
+    ],
+  },
   {
     version: "0.17.1",
     date: "2026-05-04",
