@@ -10,11 +10,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: "0.20.1",
-    date: "2026-05-04",
+    date: "2026-05-05",
     type: "patch",
     changes: [
       "docs: arquitetura de deploy Swarm documentada no CLAUDE.md (componentes, comandos, FASE 1 vs FASE 2)",
       "docs: runbook de cutover em docs/CUTOVER.md com pre-requisitos, janela e rollback",
+      "fix: .env.production.example sem aspas (docker stack deploy nao consome aspas como compose) + warning explicito",
+      "fix: runbook documenta o quirk e fornece sed pra corrigir env existente",
       "CLAUDE.md regra 7.1 atualizada: PM2 e nginx-proxy DEPRECATED",
       "Comandos uteis incluem operacao do dia-a-dia do swarm (logs, rollback, ps)",
       "IMPROVEMENTS.md fecha [INFRA-1] e abre [INFRA-2] (Fase 2 PG/Redis no swarm) e [INFRA-3] (build cache)",

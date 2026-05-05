@@ -54,6 +54,14 @@ Confirmar:
 - `REDIS_URL` aponta pra `host.docker.internal:6379` (NAO `localhost`)
 - `NEXTAUTH_URL` = `https://clinifunnel.koaai.com.br` (https, nao http)
 - `NEXTAUTH_SECRET` = mesmo valor do .env atual (senao todas as sessoes invalidadas)
+- **NAO USE ASPAS nos valores**. `docker stack deploy` mantém aspas literalmente como parte do valor (diferente do compose). `KEY=valor` certo, `KEY="valor"` quebra Prisma e tudo que parseia URL.
+
+Pra remover aspas de um arquivo existente:
+```bash
+sudo cp /opt/clinifunnel/.env.production /opt/clinifunnel/.env.production.bak
+sudo sed -i 's/^\([A-Z_][A-Z0-9_]*\)="\(.*\)"$/\1=\2/' /opt/clinifunnel/.env.production
+sudo diff /opt/clinifunnel/.env.production.bak /opt/clinifunnel/.env.production | head -20
+```
 
 ### 5. Validar que PRs estao mergeados
 
