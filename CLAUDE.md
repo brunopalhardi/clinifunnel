@@ -1,7 +1,7 @@
 # CLAUDE.md — CliniFunnel
 
 > URL Producao: https://clinifunnel.koaai.com.br
-> Deploy: auto via GitHub Actions (push em `main`)
+> Deploy: auto via GitHub Actions (push em `main`) — pipeline build GHCR + docker stack deploy
 
 ## Stack
 
@@ -10,7 +10,36 @@
 - **Database**: PostgreSQL (Prisma ORM)
 - **Fila/Jobs**: BullMQ + Redis
 - **Auth**: NextAuth (Credentials + JWT)
-- **Deploy**: Docker + GitHub Actions -> VPS
+- **Deploy**: Docker Swarm + Traefik na VPS, imagem em GHCR
+
+## Arquitetura de Deploy
+
+```
+GitHub push main
+    -> CI (lint+tsc+build)                  [.github/workflows/ci.yml]
+    -> Build + push GHCR                    [.github/workflows/deploy.yml job: build]
+       imagem: ghcr.io/brunopalhardi/clinifunnel:latest + :sha-XXXXXXX (privada)
+    -> SSH na VPS + docker stack deploy     [job: deploy]
+       stack: clinifunnel  (services: web, workers)
+    -> Healthcheck pos-deploy               [job: healthcheck]
+       GET https://clinifunnel.koaai.com.br/api/health  ->  {status: "ok"|"degraded"}
+```
+
+### Componentes na VPS (FASE 1)
+
+| Componente | Estado | Como roda |
+|---|---|---|
+| Traefik | ja existente no swarm | provider=docker swarmMode, network_swarm_public, letsencryptresolver |
+| **clinifunnel_web** | service do swarm | imagem GHCR, replicas=1, Koa-Manager01, expoe 3000 internamente, Traefik faz front |
+| **clinifunnel_workers** | service do swarm | mesma imagem, command tsx workers, sem porta exposta |
+| Postgres | **nativo do host** | acessado via host.docker.internal:5432 |
+| Redis | **nativo do host** | acessado via host.docker.internal:6379 |
+
+### FASE 2 (futuro, nao implementado)
+
+- Migrar Postgres e Redis para services do swarm
+- Substituir env_file por docker secrets
+- Avaliar healthcheck 503 com >1 replica
 
 ---
 
@@ -104,6 +133,7 @@ Para mudancas de UI: testar no browser local (`npm run dev`) e descrever no PR o
 
 ### 7.1 CI/CD e workflows
 
+- **PM2 e nginx-proxy (setup antigo) sao DEPRECATED**. App roda como `docker stack` no Swarm com Traefik na frente. `ecosystem.config.js` e qualquer config de nginx-proxy do clinifunnel sao zumbis — nao mexer.
 - **Todo workflow critico DEVE ter `workflow_dispatch:`** alem dos triggers automaticos. Webhooks do GitHub falham (degradacao parcial acontece algumas vezes por ano) e perdem eventos de push. Sem dispatch manual, deploy fica preso.
 - Disparo manual: `gh workflow run <workflow.yml> --ref main` (nao usa webhook, vai direto pro scheduler).
 - `deploy.yml` aceita input `skip-wait-ci=true` apenas em emergencia documentada (webhook degradado ou CI ja validado em outro PR).
@@ -175,6 +205,19 @@ gh workflow run ci.yml --ref main
 gh workflow run deploy.yml --ref main
 gh workflow run deploy.yml --ref main -f skip-wait-ci=true   # emergencia
 gh run list --branch main --limit 5                          # status
+
+# Producao na VPS (executar via SSH no manager)
+docker stack ps clinifunnel                                  # status replicas
+docker service ls --filter name=clinifunnel_                 # services do stack
+docker service logs -f clinifunnel_web                       # logs do web
+docker service logs -f clinifunnel_workers                   # logs dos workers
+docker service rollback clinifunnel_web                      # rollback web
+docker service rollback clinifunnel_workers                  # rollback workers
+docker service inspect clinifunnel_web --pretty             # config detalhada
+docker stack rm clinifunnel                                  # remover stack inteiro
+gh workflow run deploy.yml --ref main
+gh workflow run deploy.yml --ref main -f skip-wait-ci=true   # emergencia
+gh run list --branch main --limit 5                          # status
 ```
 
 ---
@@ -211,6 +254,6 @@ docs/
 .github/
   workflows/
     ci.yml              # lint + tsc + build em PR
-    deploy.yml          # SSH deploy em push main
+    deploy.yml          # build GHCR + docker stack deploy
   PULL_REQUEST_TEMPLATE.md
 ```
