@@ -1,0 +1,101 @@
+# Docker Swarm stack file para CliniFunnel.
+#
+# Deploy: docker stack deploy -c docker-stack.yml clinifunnel --with-registry-auth
+#
+# Pre-requisitos na VPS:
+#   1. Swarm inicializado (este host eh manager)
+#   2. Network overlay externa "network_swarm_public" criada (Traefik usa)
+#   3. Imagem ja publicada no GHCR (workflow ci/cd faz)
+#   4. Arquivo .env.production no mesmo diretorio do docker-stack.yml
+#   5. Login GHCR: echo $GHCR_TOKEN | docker login ghcr.io -u <user> --password-stdin
+#
+# FASE 1: Postgres e Redis sao nativos do host. Acessamos via host.docker.internal.
+# FASE 2 (futuro): mover Postgres e Redis para services do swarm + secrets.
+
+version: "3.8"
+
+services:
+  web:
+    image: ghcr.io/brunopalhardi/clinifunnel:latest
+    env_file:
+      - ./.env.production
+    extra_hosts:
+      # Permite que DATABASE_URL e REDIS_URL apontem para servicos nativos do
+      # host. Funciona em Docker 20.10+ e Swarm 28+.
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          # PG e Redis estao no manager (FASE 1) — web precisa estar la junto.
+          - node.hostname == Koa-Manager01
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+        monitor: 60s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 600M
+        reservations:
+          memory: 300M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=network_swarm_public"
+        - "traefik.http.routers.clinifunnel.rule=Host(`clinifunnel.koaai.com.br`)"
+        - "traefik.http.routers.clinifunnel.entrypoints=websecure"
+        - "traefik.http.routers.clinifunnel.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.clinifunnel.loadbalancer.server.port=3000"
+
+  workers:
+    image: ghcr.io/brunopalhardi/clinifunnel:latest
+    command: ["npx", "tsx", "src/workers/index.ts"]
+    env_file:
+      - ./.env.production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Workers nao expoem porta. Desabilita HEALTHCHECK herdado da imagem
+    # (que bate em /api/health, irrelevante aqui).
+    healthcheck:
+      disable: true
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == Koa-Manager01
+      update_config:
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 100M
+
+networks:
+  network_swarm_public:
+    external: true
