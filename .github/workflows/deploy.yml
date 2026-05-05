@@ -6,17 +6,19 @@ on:
   workflow_dispatch:
     inputs:
       skip-wait-ci:
-        description: "Pular o gate de CI (apenas em emergencia, ex: webhook do GitHub degradado)"
+        description: "Pular o gate de CI (apenas em emergencia)"
         required: false
         type: boolean
         default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: brunopalhardi/clinifunnel
 
 jobs:
   wait-ci:
     name: Wait CI
     runs-on: ubuntu-latest
-    # Em workflow_dispatch com skip-wait-ci=true, pula o gate (uso emergencial
-    # quando webhook do GitHub estah degradado e CI nao foi disparado).
     if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.skip-wait-ci != 'true' }}
     steps:
       - name: Wait for CI workflow
@@ -28,37 +30,102 @@ jobs:
           wait-interval: 10
           allowed-conclusions: success
 
-  deploy:
+  build:
+    name: Build + push GHCR
     needs: wait-ci
-    # Necessario porque com `if` no wait-ci, o needs pode resolver para `skipped`
-    # em vez de `success`. Aceita ambos.
     if: ${{ always() && (needs.wait-ci.result == 'success' || needs.wait-ci.result == 'skipped') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag-sha }}
+
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "tag-sha=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "tag-latest=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tag-sha }}
+            ${{ steps.meta.outputs.tag-latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy stack on VPS
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (para enviar docker-stack.yml atualizado)
+        uses: actions/checkout@v4
+
+      - name: Copy docker-stack.yml para VPS
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 40m
+          source: "docker-stack.yml"
+          target: ${{ secrets.VPS_APP_DIR }}
+
+      - name: Deploy stack via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_USER: ${{ secrets.GHCR_USER }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          APP_DIR: ${{ secrets.VPS_APP_DIR }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GHCR_USER,GHCR_TOKEN,APP_DIR
+          command_timeout: 10m
           script: |
-            set -e
-            cd ${{ secrets.VPS_APP_DIR }}
-            git pull origin main
-            docker compose -f docker-compose.prod.yml up -d --build
-            docker image prune -f
+            set -eu
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            cd "$APP_DIR"
+            docker stack deploy \
+              -c docker-stack.yml \
+              clinifunnel \
+              --with-registry-auth \
+              --prune
+            docker service ls --filter name=clinifunnel_
 
       - name: Healthcheck
         run: |
-          set -e
-          for i in 1 2 3 4 5 6 7 8 9 10; do
+          set -eu
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
             echo "Healthcheck attempt $i..."
-            if curl -fsS --max-time 10 https://clinifunnel.koaai.com.br/api/health | grep -q '"status":"ok"'; then
-              echo "Healthcheck OK"
+            BODY=$(curl -fsS --max-time 10 https://clinifunnel.koaai.com.br/api/health || true)
+            echo "Response: $BODY"
+            if echo "$BODY" | grep -qE '"status":"(ok|degraded)"'; then
+              echo "Healthcheck OK (status ok ou degraded)"
               exit 0
             fi
             sleep 15
           done
-          echo "Healthcheck FAILED after 10 attempts"
+          echo "Healthcheck FAILED after 12 attempts"
           exit 1

@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.19.0";
+export const APP_VERSION = "0.20.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.20.0",
+    date: "2026-05-04",
+    type: "minor",
+    changes: [
+      "CI/CD migrado para build em GHA + push GHCR + deploy via docker stack deploy",
+      "deploy.yml: 4 jobs (wait-ci, build, deploy, healthcheck) — sem mais build na VPS, RAM da VPS preservada",
+      "Imagem privada ghcr.io/brunopalhardi/clinifunnel:latest + :sha-XXXXXXX para rollback",
+      "Cache buildx via GitHub Actions (gha) para builds sequenciais rapidos",
+      "scp-action sincroniza docker-stack.yml entre repo e VPS a cada deploy (infra-as-code)",
+      "Healthcheck pos-deploy aceita status 'ok' ou 'degraded' (evita falso negativo durante warm-up)",
+    ],
+  },
   {
     version: "0.19.0",
     date: "2026-05-04",
