@@ -25,9 +25,17 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Seguranca
 
-- **[SEC-2] Auditoria de isolamento multi-tenant**
-  Garantir que toda API route e toda query Prisma filtra `clinicId` e valida via `auth-guard`. Catalogo de rotas + script grep + testes basicos.
+- **[SEC-2.1] WebhookLog com clinicId**
+  Adicionar coluna `clinicId` ao schema `WebhookLog` (migration) + parser que extrai clinic do payload (subdomain Kommo, sourceClinicId Clinicorp) preenche na criacao. /api/webhook-logs filtra por clinica e clinic_admin volta a ter acesso (hoje restrito a super_admin pelo SEC-2).
   Eixo: seguranca · Bump: minor
+
+- **[SEC-2.2] Validar autenticidade dos webhooks de entrada**
+  Confirmar que payload de Kommo/Clinicorp nao pode ser forjado pra atribuir leads/procedimentos a outra clinica. Hoje matching e por subdomain (Kommo) ou businessId (Clinicorp). Considerar HMAC compartilhado por clinica.
+  Eixo: seguranca · Bump: minor
+
+- **[SEC-2.3] Prisma extension que rejeita queries multi-tenant sem clinicId**
+  Defesa em profundidade: extension lanca erro se findFirst/findMany em Lead/Patient/Procedure/AdCampaignData nao incluir `clinicId` no `where`. Forca correcao em build/test, evita regressoes humanas. Trade-off: complexidade da extension.
+  Eixo: seguranca · Bump: patch (refactor)
 
 - **[SEC-3] Retencao de WebhookLog**
   `WebhookLog.payload` e Json cru, sem TTL. DB infla rapido. Worker semanal removendo logs >90 dias (ou config por clinica).
@@ -91,7 +99,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[SEC-1] Criptografia at-rest dos tokens de integracao** — PR #_TBD_ — v0.21.0
+- **[SEC-2] Auditoria de isolamento multi-tenant** — PR #_TBD_ — v0.22.0
+  Catalogo de todas as 26 rotas API em `docs/MULTITENANT-AUDIT.md`. 2 bugs criticos fixados: `/api/patients/[id]` agora filtra por clinicId (era cross-tenant trivial), `/api/webhook-logs` restrito a super_admin (era vazamento de payloads de outras clinicas para clinic_admin). Confirmado HMAC-protection do state em OAuth callbacks. Geradas 3 sub-issues SEC-2.1/2.2/2.3 pra continuidade.
+
+- **[SEC-1] Criptografia at-rest dos tokens de integracao** — PRs #54 #55 — v0.21.0 → v0.21.1
   Tokens Kommo/Clinicorp/Meta/Google encriptados com AES-256-GCM via `INTEGRATION_TOKENS_KEY`. Prisma `$extends` faz encrypt automatico em writes e decrypt automatico em reads — invisivel pros 14 callsites existentes. Lazy migration (plaintext legado lido como esta, re-encriptado no proximo write) + script one-shot em `prisma/scripts/encrypt-existing-tokens.ts`. App fail-fast no boot se a chave nao estiver setada.
 
 - **[INFRA-1] Migracao Fase 1: dockerizar app + Docker Swarm + Traefik** — PRs #49 #50 #51 #52 — v0.18.0 → v0.20.1
