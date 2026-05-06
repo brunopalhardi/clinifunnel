@@ -33,10 +33,6 @@ _(vazio — adicionar quando comecar trabalho)_
   Defesa em profundidade: extension lanca erro se findFirst/findMany em Lead/Patient/Procedure/AdCampaignData nao incluir `clinicId` no `where`. Forca correcao em build/test, evita regressoes humanas. Trade-off: complexidade da extension.
   Eixo: seguranca · Bump: patch (refactor)
 
-- **[SEC-3] Retencao de WebhookLog**
-  `WebhookLog.payload` e Json cru, sem TTL. DB infla rapido. Worker semanal removendo logs >90 dias (ou config por clinica).
-  Eixo: seguranca · Bump: minor
-
 ### Arquitetura
 
 - **[ARCH-1] Estrutura modular + feature flags**
@@ -84,7 +80,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[SEC-2.1] WebhookLog com clinicId** — PR #_TBD_ — v0.29.0
+- **[SEC-3] Retencao de WebhookLog** — PR #_TBD_ — v0.30.0
+  Worker `webhook-log-cleanup` (BullMQ repeat cron `0 3 * * 0` = dom 03:00 UTC) deleta logs com mais de `WEBHOOK_LOG_RETENTION_DAYS` (default 90, env override; <=0 desabilita). Batching de 5000 por execucao pra evitar transacao longa. Adicionado a QUEUE_NAMES — aparece automaticamente em /api/admin/queues e painel /dashboard/logs.
+
+- **[SEC-2.1] WebhookLog com clinicId** — PR #65 — v0.29.0
   Migration adiciona coluna `clinicId` (nullable). Webhook handlers Kommo/Clinicorp populam apos identificar a clinica. /api/webhook-logs filtra por clinica: super_admin ve tudo (incluindo legacy nulls), clinic_admin so a propria, user bloqueado. Index composto (clinicId, createdAt) pra perf de listagem por clinica. Resolve o vazamento documentado no SEC-2.
 
 - **[USR-1.3] RBAC granular por modulo (foundation)** — PR #64 — v0.28.0
