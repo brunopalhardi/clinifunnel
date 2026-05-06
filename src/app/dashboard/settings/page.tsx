@@ -210,7 +210,13 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Configuracoes</h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <a
+            href="/dashboard/settings/users"
+            className="text-sm font-medium text-gold hover:underline"
+          >
+            Gerenciar usuarios →
+          </a>
           {settings.hasKommo && <Badge variant="default">Kommo</Badge>}
           {settings.hasClinicorp && <Badge variant="default">Clinicorp</Badge>}
           {settings.hasMeta && <Badge variant="default">Meta Ads</Badge>}
