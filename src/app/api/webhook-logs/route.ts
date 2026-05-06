@@ -11,8 +11,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
   }
 
-  // Webhook logs são visíveis apenas para clinic_admin e super_admin
-  if (session.user.role === "user") {
+  // WebhookLog ainda nao tem coluna clinicId (payload e Json cru). Sem isso
+  // nao conseguimos isolar logs por clinica. Antes desta auditoria, clinic_admin
+  // de qualquer clinica via logs de TODAS as clinicas — vazamento de payloads.
+  // Restringimos ao super_admin ate [SEC-2.1] adicionar clinicId no schema.
+  if (session.user.role !== "super_admin") {
     return NextResponse.json({ error: "Sem permissao" }, { status: 403 });
   }
 

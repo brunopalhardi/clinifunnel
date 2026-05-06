@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { AuthError, getAuthorizedClinicId } from "@/lib/auth-guard";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const patient = await prisma.patient.findUnique({
-    where: { id: params.id },
+  let clinicId: string;
+  try {
+    ({ clinicId } = await getAuthorizedClinicId(request));
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    throw e;
+  }
+
+  // findFirst com clinicId garante que paciente da Clinic A nao seja acessado
+  // por user da Clinic B (mesmo conhecendo o id do paciente).
+  const patient = await prisma.patient.findFirst({
+    where: { id: params.id, clinicId },
     include: {
       leads: {
         select: {

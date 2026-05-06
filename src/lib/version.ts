@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.21.1";
+export const APP_VERSION = "0.22.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.22.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "Auditoria multi-tenant: catalogo de todas as 26 rotas API em docs/MULTITENANT-AUDIT.md",
+      "fix CRITICO: /api/patients/[id] agora filtra por clinicId (antes findUnique so por id permitia cross-tenant access)",
+      "fix: /api/webhook-logs restrito a super_admin ate WebhookLog ter coluna clinicId (issue [SEC-2.1] aberta)",
+      "Documentado checklist pra novas rotas + grep checks pra nao regredir",
+      "Confirmado HMAC-protection do state em OAuth callbacks (Google Ads, Meta) — sem patch necessario",
+    ],
+  },
   {
     version: "0.21.1",
     date: "2026-05-06",
