@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.27.0";
+export const APP_VERSION = "0.27.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.27.1",
+    date: "2026-05-06",
+    type: "patch",
+    changes: [
+      "docs: ONBOARDING.md (setup local + workflow + checklist nova rota/worker + debug)",
+      "docs: DECISIONS.md em formato ADR — 11 decisoes arquiteturais documentadas com WHY + alternativas rejeitadas",
+      "CLAUDE.md ganha bloco 'Documentos auxiliares' apontando pros 5 docs canonicos",
+    ],
+  },
   {
     version: "0.27.0",
     date: "2026-05-06",

@@ -43,6 +43,18 @@ GitHub push main
 
 ---
 
+## Documentos auxiliares (ler em ordem ao entrar no projeto)
+
+| Doc | Pra que |
+|---|---|
+| [`docs/ONBOARDING.md`](docs/ONBOARDING.md) | Setup local, fluxo de trabalho, checklist pra adicionar rota/worker, debug |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADRs — decisoes arquiteturais com WHY (por que Swarm, por que cripto AES, por que pino, etc) |
+| [`docs/IMPROVEMENTS.md`](docs/IMPROVEMENTS.md) | Backlog rastreado por eixo (em andamento / proximos / concluidos) |
+| [`docs/CUTOVER.md`](docs/CUTOVER.md) | Runbook de deploy, rollback e operacao do dia-a-dia na VPS |
+| [`docs/MULTITENANT-AUDIT.md`](docs/MULTITENANT-AUDIT.md) | Catalogo de todas as rotas API + checklist anti-cross-tenant |
+
+---
+
 ## Padrao de Engenharia (OBRIGATORIO)
 
 Estas regras sao validadas em revisao de PR. Quebrar qualquer uma delas e motivo de pedir rework.
