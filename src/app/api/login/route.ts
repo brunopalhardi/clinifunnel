@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       role: user.role,
       clinicId: user.clinicId,
       clinicName: user.clinic.name,
+      mustChangePassword: user.mustChangePassword,
     },
     secret,
     maxAge: 30 * 24 * 60 * 60, // 30 days

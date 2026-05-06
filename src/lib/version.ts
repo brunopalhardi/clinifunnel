@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.25.1";
+export const APP_VERSION = "0.26.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,23 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.26.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "USR-1 foundation: criacao manual de usuarios (sem convite por email) + senha temporaria + forca troca no primeiro login",
+      "Schema: User.mustChangePassword (Boolean) + User.permissions (Json?) — migration aplicada via prisma migrate deploy",
+      "src/lib/users.ts: generateTemporaryPassword (12 chars cripto-random, charset sem 0/O/1/l/I) + hashPassword + verifyPassword + createUserWithTempPassword + resetUserPasswordToTemp + changeOwnPassword",
+      "POST /api/users (clinic_admin/super_admin) cria usuario e retorna senha temp UMA UNICA VEZ",
+      "POST /api/users/[id]/reset-password (admin) gera nova senha temp + reaplica flag",
+      "POST /api/auth/change-password (qualquer user) troca propria senha exigindo a atual",
+      "Middleware: redireciona pra /dashboard/change-password se mustChangePassword=true (so libera change-pw page e api + logout)",
+      "Pagina /dashboard/change-password com formulario simples + signOut apos sucesso pra reciclar session",
+      "auth.ts e next-auth.d.ts incluem mustChangePassword na session",
+      "Logs estruturados em todas as rotas (criado/resetado/trocado) com userId, sem expor passwords (redact ja cobre)",
+    ],
+  },
   {
     version: "0.25.1",
     date: "2026-05-06",

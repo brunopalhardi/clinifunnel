@@ -16,7 +16,9 @@ describe("OAuth state HMAC anti-CSRF", () => {
 
   it("retorna null se signature foi modificada (tampering)", () => {
     const state = generateOAuthState("clinic-y");
-    const tampered = state.slice(0, -1) + "0"; // troca ultimo char da signature
+    // HMAC produz hex (0-9a-f). Usar "z" garante char diferente do original
+    // (antes usava "0" que coincidia ~6% das vezes em CI = flake).
+    const tampered = state.slice(0, -1) + "z";
     expect(verifyOAuthState(tampered)).toBeNull();
   });
 

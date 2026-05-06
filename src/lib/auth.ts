@@ -2,6 +2,9 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "auth" });
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,35 +16,31 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("[auth] Missing credentials");
+          log.info("missing credentials");
           return null;
         }
 
-        console.log("[auth] Login attempt:", credentials.email);
-
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: credentials.email.toLowerCase().trim() },
           include: { clinic: { select: { id: true, name: true } } },
         });
 
         if (!user) {
-          console.log("[auth] User not found:", credentials.email);
+          log.info({ email: credentials.email }, "user not found");
           return null;
         }
-
-        console.log("[auth] User found:", user.email, "id:", user.id);
 
         const valid = await bcrypt.compare(
           credentials.password,
-          user.passwordHash
+          user.passwordHash,
         );
 
         if (!valid) {
-          console.log("[auth] Invalid password for:", credentials.email);
+          log.info({ userId: user.id }, "invalid password");
           return null;
         }
 
-        console.log("[auth] Login success:", credentials.email);
+        log.info({ userId: user.id }, "login success");
         return {
           id: user.id,
           email: user.email,
@@ -49,28 +48,41 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           clinicId: user.clinicId,
           clinicName: user.clinic.name,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = (user as { role: string }).role;
         token.clinicId = (user as { clinicId: string }).clinicId;
         token.clinicName = (user as { clinicName: string }).clinicName;
+        token.mustChangePassword = (
+          user as { mustChangePassword: boolean }
+        ).mustChangePassword;
+      }
+      // Quando user troca senha (POST /api/auth/change-password), chama
+      // signIn com trigger=update — refazemos load do DB pra refletir flag.
+      if (trigger === "update" && token.sub) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { mustChangePassword: true },
+        });
+        if (fresh) token.mustChangePassword = fresh.mustChangePassword;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id: string }).id = token.sub as string;
-        (session.user as { role: string }).role = token.role as string;
-        (session.user as { clinicId: string }).clinicId =
-          token.clinicId as string;
-        (session.user as { clinicName: string }).clinicName =
-          token.clinicName as string;
+        const u = session.user as Record<string, unknown>;
+        u.id = token.sub as string;
+        u.role = token.role as string;
+        u.clinicId = token.clinicId as string;
+        u.clinicName = token.clinicName as string;
+        u.mustChangePassword = (token.mustChangePassword as boolean) ?? false;
       }
       return session;
     },
