@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { logger } from "@/lib/logger";
 import { createPatientWorker } from "./create-patient";
 import { processProcedureWorker } from "./process-procedure";
 import { matchLeadsWorker } from "./match-leads";
@@ -7,18 +8,21 @@ import { syncMetaAdsWorker } from "./sync-meta-ads";
 import { syncGoogleAdsWorker } from "./sync-google-ads";
 import { checkRemindersWorker } from "./check-reminders";
 
-console.log("[workers] Starting CliniFunnel workers...");
-console.log("[workers] create-patient worker ready");
-console.log("[workers] process-procedure worker ready");
-console.log("[workers] match-leads worker ready");
-console.log("[workers] sync-clinicorp worker ready");
-console.log("[workers] sync-meta-ads worker ready");
-console.log("[workers] sync-google-ads worker ready");
-console.log("[workers] check-reminders worker ready");
+const log = logger.child({ scope: "workers" });
 
-// Graceful shutdown
+const WORKERS = [
+  "create-patient",
+  "process-procedure",
+  "match-leads",
+  "sync-clinicorp",
+  "sync-meta-ads",
+  "sync-google-ads",
+  "check-reminders",
+];
+log.info({ workers: WORKERS }, "starting CliniFunnel workers");
+
 const shutdown = async () => {
-  console.log("[workers] Shutting down...");
+  log.info("shutting down");
   await Promise.all([
     createPatientWorker.close(),
     processProcedureWorker.close(),

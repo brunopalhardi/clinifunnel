@@ -1,4 +1,8 @@
 import { Queue, Worker } from "bullmq";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "match-leads" });
+
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { matchLeadToPatient, linkLeadToPatient } from "@/lib/matching/lead-patient";
@@ -26,13 +30,14 @@ export const matchLeadsWorker = new Worker(
       }
     }
 
-    console.log(
-      `[match-leads] Processed ${unmatchedLeads.length} leads, matched ${matched}`
+    log.info(
+      { processed: unmatchedLeads.length, matched },
+      "leads processed",
     );
   },
   { connection: redis }
 );
 
 matchLeadsWorker.on("failed", (job, err) => {
-  console.error(`[match-leads] Job ${job?.id} failed:`, err.message);
+  log.error({ jobId: job?.id, err: err.message }, "job failed");
 });

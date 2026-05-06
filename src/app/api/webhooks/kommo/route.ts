@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "webhook-kommo" });
 import { parseKommoWebhook } from "@/lib/kommo/webhooks";
 import { KommoClient } from "@/lib/kommo/client";
 import { extractUTMsFromCustomFields, extractCanalProspeccao, extractAppointmentFields } from "@/lib/kommo/utm";
@@ -35,7 +38,7 @@ async function extractContact(
       }
     }
   } catch (err) {
-    console.error(`[kommo] Failed to fetch contact ${contacts[0].id}:`, err);
+    log.error({ contactId: contacts[0].id, err }, "failed to fetch contact");
   }
 
   return { phone, email };
@@ -189,7 +192,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Kommo webhook error:", error);
+    log.error({ err: error }, "webhook handler error");
 
     if (logId) {
       await prisma.webhookLog.update({

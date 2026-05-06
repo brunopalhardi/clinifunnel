@@ -1,4 +1,8 @@
 import { Worker, Queue } from "bullmq";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "sync-meta-ads" });
+
 import { prisma } from "@/lib/prisma";
 import { MetaAdsClient, MetaApiError } from "@/lib/ads/meta-client";
 import { redis } from "@/lib/redis";
@@ -17,7 +21,7 @@ syncMetaAdsQueue.add("sync", {}, {
 export const syncMetaAdsWorker = new Worker(
   QUEUE_NAME,
   async () => {
-    console.log("[sync-meta-ads] Starting sync...");
+    log.info("starting sync");
 
     const clinics = await prisma.clinic.findMany({
       where: { metaAccessToken: { not: null } },
@@ -30,7 +34,7 @@ export const syncMetaAdsWorker = new Worker(
     });
 
     if (clinics.length === 0) {
-      console.log("[sync-meta-ads] No clinics with Meta connected");
+      log.info("no clinics with Meta connected");
       return;
     }
 
@@ -42,7 +46,7 @@ export const syncMetaAdsWorker = new Worker(
             (clinic.metaTokenExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
 
           if (daysUntilExpiry < 0) {
-            console.log(`[sync-meta-ads] Token expired for clinic ${clinic.id}, clearing`);
+            log.info({ clinicId: clinic.id }, "token expired, clearing");
             await prisma.clinic.update({
               where: { id: clinic.id },
               data: { metaAccessToken: null, metaTokenExpiresAt: null },
@@ -51,7 +55,7 @@ export const syncMetaAdsWorker = new Worker(
           }
 
           if (daysUntilExpiry < 10) {
-            console.log(`[sync-meta-ads] Refreshing token for clinic ${clinic.id} (${daysUntilExpiry.toFixed(0)}d left)`);
+            log.info({ clinicId: clinic.id, daysUntilExpiry: Math.round(daysUntilExpiry) }, "refreshing token");
             const { accessToken, expiresIn } =
               await MetaAdsClient.refreshLongLivedToken(clinic.metaAccessToken!);
             await prisma.clinic.update({
@@ -110,21 +114,21 @@ export const syncMetaAdsWorker = new Worker(
           upserted++;
         }
 
-        console.log(`[sync-meta-ads] Clinic ${clinic.id}: ${upserted} rows upserted`);
+        log.info({ clinicId: clinic.id, upserted }, "rows upserted");
       } catch (err) {
         if (err instanceof MetaApiError && err.isAuthError) {
-          console.error(`[sync-meta-ads] Auth error for clinic ${clinic.id}, clearing token`);
+          log.error("Auth error for clinic ${clinic.id}, clearing token");
           await prisma.clinic.update({
             where: { id: clinic.id },
             data: { metaAccessToken: null, metaTokenExpiresAt: null },
           });
         } else {
-          console.error(`[sync-meta-ads] Error for clinic ${clinic.id}:`, err);
+          log.error({ clinicId: clinic.id, err }, "sync error for clinic");
         }
       }
     }
 
-    console.log("[sync-meta-ads] Sync complete");
+    log.info("sync complete");
   },
   { connection: redis }
 );

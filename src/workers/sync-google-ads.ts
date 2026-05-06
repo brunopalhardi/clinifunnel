@@ -1,4 +1,8 @@
 import { Worker, Queue } from "bullmq";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "sync-google-ads" });
+
 import { prisma } from "@/lib/prisma";
 import { GoogleAdsClient, GoogleAdsApiError } from "@/lib/ads/google-ads-client";
 import { redis } from "@/lib/redis";
@@ -17,7 +21,7 @@ syncGoogleAdsQueue.add("sync", {}, {
 export const syncGoogleAdsWorker = new Worker(
   QUEUE_NAME,
   async () => {
-    console.log("[sync-google-ads] Starting sync...");
+    log.info("starting sync");
 
     const clinics = await prisma.clinic.findMany({
       where: { googleAdsRefreshToken: { not: null } },
@@ -29,7 +33,7 @@ export const syncGoogleAdsWorker = new Worker(
     });
 
     if (clinics.length === 0) {
-      console.log("[sync-google-ads] No clinics with Google Ads connected");
+      log.info("no clinics with Google Ads connected");
       return;
     }
 
@@ -79,21 +83,21 @@ export const syncGoogleAdsWorker = new Worker(
           upserted++;
         }
 
-        console.log(`[sync-google-ads] Clinic ${clinic.id}: ${upserted} rows upserted`);
+        log.info({ clinicId: clinic.id, upserted }, "rows upserted");
       } catch (err) {
         if (err instanceof GoogleAdsApiError && err.isAuthError) {
-          console.error(`[sync-google-ads] Auth error for clinic ${clinic.id}, clearing token`);
+          log.error("Auth error for clinic ${clinic.id}, clearing token");
           await prisma.clinic.update({
             where: { id: clinic.id },
             data: { googleAdsRefreshToken: null },
           });
         } else {
-          console.error(`[sync-google-ads] Error for clinic ${clinic.id}:`, err);
+          log.error({ clinicId: clinic.id, err }, "sync error for clinic");
         }
       }
     }
 
-    console.log("[sync-google-ads] Sync complete");
+    log.info("sync complete");
   },
   { connection: redis }
 );
