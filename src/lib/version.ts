@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.21.0";
+export const APP_VERSION = "0.21.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.21.1",
+    date: "2026-05-06",
+    type: "patch",
+    changes: [
+      "fix: assertKeyAvailable() so roda fora do phase-production-build do Next",
+      "Build do v0.21.0 quebrava no docker build porque next collect-page-data importa /api routes que importam @/lib/prisma -> assertKeyAvailable -> throw (chave nao esta no build context, deliberadamente)",
+      "Em runtime (next start ou workers tsx) NEXT_PHASE != phase-production-build, validacao continua acontecendo",
+    ],
+  },
   {
     version: "0.21.0",
     date: "2026-05-06",
