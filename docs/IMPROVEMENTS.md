@@ -25,11 +25,6 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Seguranca
 
-- **[SEC-1] Criptografia de tokens de integracao no DB**
-  Tokens de Kommo, Clinicorp, Meta, Google Ads ficam em texto claro nas colunas do `Clinic`. Mascarados no GET, mas vazamento de DB = vazamento de todas as integracoes.
-  Proposta: criptografar com AES-256-GCM usando chave em env (`INTEGRATION_TOKENS_KEY`), helpers `encrypt()` / `decrypt()` em `src/lib/crypto.ts`, migration que reescreve colunas existentes.
-  Eixo: seguranca · Bump: minor
-
 - **[SEC-2] Auditoria de isolamento multi-tenant**
   Garantir que toda API route e toda query Prisma filtra `clinicId` e valida via `auth-guard`. Catalogo de rotas + script grep + testes basicos.
   Eixo: seguranca · Bump: minor
@@ -37,6 +32,25 @@ _(vazio — adicionar quando comecar trabalho)_
 - **[SEC-3] Retencao de WebhookLog**
   `WebhookLog.payload` e Json cru, sem TTL. DB infla rapido. Worker semanal removendo logs >90 dias (ou config por clinica).
   Eixo: seguranca · Bump: minor
+
+### Arquitetura
+
+- **[ARCH-1] Estrutura modular + feature flags**
+  Reorganizar codigo em modulos coesos (auth, leads, patients, ads, billing, etc) com fronteiras claras. Adicionar feature flags por modulo/clinica (tabela `FeatureFlag` ou config em env) pra liberar features pra clinicas especificas em rollout incremental.
+  Eixo: arquitetura · Bump: spans em multiplos PRs (vai mexer em quase tudo)
+
+### Usuarios e RBAC
+
+- **[USR-1] CRUD de usuarios manual + permissoes por modulo**
+  Hoje so existe `User.role` (super_admin/clinic_admin/user). Expandir para:
+  - Admin cria usuarios manualmente (sem convite por email/Resend) — formulario de "novo usuario" no painel
+  - Senha temporaria gerada na criacao + flag `mustChangePassword=true`
+  - No primeiro login, app forca troca de senha antes de liberar dashboard
+  - Admin pode resetar senha (gera nova temporaria + reaplica flag)
+  - Permissoes granulares por modulo/CRUD: `User -> permissions: { leads: ['read','write'], patients: ['read'], ads: [] }`
+  - UI de gerenciamento de usuarios e permissoes em /dashboard/settings/users
+  Depende de [ARCH-1] estar comecada (modulos definidos).
+  Eixo: usuarios · Bump: minor (iterativo — pode ser quebrado em sub-PRs)
 
 ### Qualidade
 
@@ -76,6 +90,9 @@ _(vazio — adicionar quando comecar trabalho)_
 ---
 
 ## Concluidos
+
+- **[SEC-1] Criptografia at-rest dos tokens de integracao** — PR #_TBD_ — v0.21.0
+  Tokens Kommo/Clinicorp/Meta/Google encriptados com AES-256-GCM via `INTEGRATION_TOKENS_KEY`. Prisma `$extends` faz encrypt automatico em writes e decrypt automatico em reads — invisivel pros 14 callsites existentes. Lazy migration (plaintext legado lido como esta, re-encriptado no proximo write) + script one-shot em `prisma/scripts/encrypt-existing-tokens.ts`. App fail-fast no boot se a chave nao estiver setada.
 
 - **[INFRA-1] Migracao Fase 1: dockerizar app + Docker Swarm + Traefik** — PRs #49 #50 #51 #52 — v0.18.0 → v0.20.1
   App migrado de PM2 nativo + nginx-proxy para docker stack no Swarm com Traefik. Build da imagem em GHA, push GHCR (privado), deploy via `docker stack deploy --with-registry-auth`. Healthcheck robusto pingando DB+Redis. PG e Redis continuam nativos no host (via host.docker.internal). Runbook de cutover em `docs/CUTOVER.md`.

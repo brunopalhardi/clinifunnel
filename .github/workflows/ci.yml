@@ -18,6 +18,9 @@ jobs:
       REDIS_URL: "redis://localhost:6379"
       NEXTAUTH_SECRET: "ci-dummy-secret-not-used-at-runtime"
       NEXTAUTH_URL: "http://localhost:3000"
+      # Chave dummy fixa apenas pra build/tsc nao quebrarem (assertKeyAvailable()
+      # no module load). 32 bytes em base64. NAO usar em producao.
+      INTEGRATION_TOKENS_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
     steps:
       - name: Checkout
