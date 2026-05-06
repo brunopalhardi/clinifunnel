@@ -1,9 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { assertKeyAvailable, decrypt, encrypt } from "./crypto";
 
-// Validacao fail-fast no boot. Sem INTEGRATION_TOKENS_KEY o app nao sobe —
-// melhor crashar cedo do que tentar gravar token e falhar no meio do request.
-assertKeyAvailable();
+// Validacao fail-fast no boot — exceto durante `next build`, que pre-renderiza
+// rotas (importando esse modulo) sem ter a chave disponivel no build context.
+// Em runtime (next start, workers tsx) NEXT_PHASE !== "phase-production-build",
+// entao a validacao roda e o app crash a no boot se a chave faltar.
+if (process.env.NEXT_PHASE !== "phase-production-build") {
+  assertKeyAvailable();
+}
 
 // Campos sensiveis em Clinic. Encriptados automaticamente no write,
 // decriptados automaticamente no read via $extends.
