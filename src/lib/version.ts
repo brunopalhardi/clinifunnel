@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.25.0";
+export const APP_VERSION = "0.25.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.25.1",
+    date: "2026-05-06",
+    type: "patch",
+    changes: [
+      "/api/health expandido com campo `queues`: por fila waiting/failed counts + lastCompletedAt + lastFailedAt",
+      "Reusa getAllQueues() exposto em [OBS-2]; timeout de 800ms; falha silenciosa retorna queues:null sem afetar o status agregado",
+      "Status (ok|degraded) continua baseado SO em db+redis — worker travado nao tira a replica do pool do Traefik",
+      "Util pra detectar workers travados externamente (ex: lastCompletedAt > 1h E waiting > 0)",
+    ],
+  },
   {
     version: "0.25.0",
     date: "2026-05-06",
