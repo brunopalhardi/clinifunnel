@@ -20,5 +20,6 @@ export const config = {
     "/api/patients/:path*",
     "/api/reminders/:path*",
     "/api/financeiro/:path*",
+    "/api/admin/:path*",
   ],
 };

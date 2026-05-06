@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { QueueMetricsPanel } from "@/components/dashboard/queue-metrics-panel";
 
 interface WebhookLog {
   id: string;
@@ -52,6 +53,10 @@ export default function LogsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Painel de filas BullMQ — so renderiza pra super_admin (endpoint
+          retorna 403 pros demais e o componente esconde). */}
+      <QueueMetricsPanel />
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Webhook Logs</h1>
         <div className="flex gap-2">

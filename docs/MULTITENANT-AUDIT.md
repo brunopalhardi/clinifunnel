@@ -37,13 +37,14 @@ Toda rota que toca dados por clinica DEVE chamar essa funcao e usar o `clinicId`
 | `/api/reminders` | OK |
 | `/api/sync` | OK |
 
-### ✅ Auth check explicito (nao usa helper, mas implementa logica equivalente) (3)
+### ✅ Auth check explicito (nao usa helper, mas implementa logica equivalente) (4)
 
 | Rota | Pattern |
 |------|---------|
 | `/api/clinics` (GET/POST) | `super_admin` lista/cria todas; clinic_admin/user lista so a sua |
 | `/api/clinics/[id]` (GET/PUT) | `super_admin` ou `id === session.user.clinicId` |
 | `/api/auth/google-ads` + `/api/auth/meta` | Pega `clinicId` direto da `session`, nao aceita override |
+| `/api/admin/queues` (GET) | **super_admin only** — metricas BullMQ sao globais (volume de jobs vazaria entre clinicas se exposto a clinic_admin) |
 
 ### ✅ Publicas/auth-handlers (nao precisam guard) (7)
 
