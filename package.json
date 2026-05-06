@@ -1,6 +1,6 @@
 {
   "name": "clinifunnel",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "workers": "tsx --tsconfig tsconfig.json src/workers/index.ts",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "encrypt-tokens": "tsx prisma/scripts/encrypt-existing-tokens.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

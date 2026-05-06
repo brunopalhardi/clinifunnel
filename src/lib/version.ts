@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.20.1";
+export const APP_VERSION = "0.21.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.21.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "Tokens de integracao (Kommo, Clinicorp, Meta, Google) agora sao criptografados em repouso (AES-256-GCM)",
+      "Novo src/lib/crypto.ts com encrypt/decrypt usando chave em INTEGRATION_TOKENS_KEY",
+      "Prisma client extendido ($extends): encrypt automatico em writes e decrypt automatico em reads de Clinic",
+      "Lazy migrate: tokens em texto claro continuam sendo lidos (compat) e sao re-encriptados no proximo write",
+      "Script prisma/scripts/encrypt-existing-tokens.ts faz one-shot de migration nos clinics existentes",
+      "Boot fail-fast: app nao sobe sem INTEGRATION_TOKENS_KEY definida (validacao em src/lib/prisma.ts)",
+    ],
+  },
   {
     version: "0.20.1",
     date: "2026-05-05",
