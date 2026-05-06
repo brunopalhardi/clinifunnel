@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.26.0";
+export const APP_VERSION = "0.27.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.27.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "USR-1.2: UI admin de usuarios em /dashboard/settings/users",
+      "Tabela de usuarios da clinica com badges de role e status (senha pendente vs ativo)",
+      "Formulario novo usuario inline (email + nome + role)",
+      "Apos create/reset: card destacado com senha temporaria + botao copiar (UMA UNICA exibicao com aviso 'nao sera mostrada de novo')",
+      "Botao Resetar senha por linha (bloqueado pra super_admin)",
+      "Link 'Gerenciar usuarios' no header da /dashboard/settings",
+      "UI esconde silenciosa pra clinic_admin/user via 403 do backend (fonte de verdade)",
+    ],
+  },
   {
     version: "0.26.0",
     date: "2026-05-06",

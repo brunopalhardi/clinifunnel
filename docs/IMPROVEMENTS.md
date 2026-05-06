@@ -49,8 +49,8 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Usuarios e RBAC
 
-- **[USR-1.2] UI admin de usuarios em /dashboard/settings/users**
-  Depende de [USR-1] foundation (ja pronta). Adicionar: tabela de usuarios da clinica, formulario "novo usuario" (mostra senha temporaria gerada apos sucesso), botao "resetar senha" por linha, opcionalmente DELETE/PATCH.
+- **[USR-1.2.1] DELETE/PATCH de usuarios**
+  UI ja existe ([USR-1.2]); falta endpoint+botao pra remover/editar role+nome. Considerar soft-delete (campo deletedAt) pra preservar audit trail vs hard-delete.
   Eixo: usuarios · Bump: minor
 
 - **[USR-1.3] RBAC enforcement por modulo (User.permissions)**
@@ -88,7 +88,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[USR-1] foundation: criacao manual + senha temp + force change** — PR #_TBD_ — v0.26.0
+- **[USR-1.2] UI admin de usuarios** — PR #_TBD_ — v0.27.0
+  /dashboard/settings/users com tabela, formulario create, botao reset por linha. Apos create/reset: card destacado com senha temporaria + copy + warning (mostra UMA UNICA vez). Link no header de /dashboard/settings. UI esconde silenciosa pra nao-admin via 403 do backend.
+
+- **[USR-1] foundation: criacao manual + senha temp + force change** — PR #61 — v0.26.0
   Schema: User.mustChangePassword + User.permissions (Json?). Helpers em src/lib/users.ts (generate temp pw cripto-random, hash, verify, create, reset, change). API: POST /api/users (admin cria), POST /api/users/[id]/reset-password (admin reseta), POST /api/auth/change-password (user troca). Middleware redireciona pra /dashboard/change-password se mustChangePassword=true. Pagina change-password com signOut apos sucesso pra reciclar session. UI admin (USR-1.2) e RBAC enforcement (USR-1.3) abertas como follow-ups.
 
 - **[OBS-3.1] Health avancado com status de filas** — PR #60 — v0.25.1
