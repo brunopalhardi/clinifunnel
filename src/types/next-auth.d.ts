@@ -9,6 +9,7 @@ declare module "next-auth" {
       role: string;
       clinicId: string;
       clinicName: string;
+      mustChangePassword: boolean;
     };
   }
 
@@ -16,6 +17,7 @@ declare module "next-auth" {
     role: string;
     clinicId: string;
     clinicName: string;
+    mustChangePassword: boolean;
   }
 }
 
@@ -24,5 +26,6 @@ declare module "next-auth/jwt" {
     role: string;
     clinicId: string;
     clinicName: string;
+    mustChangePassword: boolean;
   }
 }

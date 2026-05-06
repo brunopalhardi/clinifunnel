@@ -8,15 +8,20 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String   @default("user")
-  clinicId     String
-  clinic       Clinic   @relation(fields: [clinicId], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  passwordHash        String
+  name                String
+  role                String   @default("user")
+  clinicId            String
+  clinic              Clinic   @relation(fields: [clinicId], references: [id])
+  // Set true quando admin cria/reseta — forca troca de senha no proximo login.
+  mustChangePassword  Boolean  @default(false)
+  // Permissoes granulares por modulo. Estrutura: { leads: ["read","write"], patients: ["read"], ... }
+  // null = role decide (super_admin/clinic_admin/user). Usado em [USR-1] PR de RBAC.
+  permissions         Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([clinicId])
 }

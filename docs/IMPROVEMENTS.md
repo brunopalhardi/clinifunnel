@@ -49,16 +49,13 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Usuarios e RBAC
 
-- **[USR-1] CRUD de usuarios manual + permissoes por modulo**
-  Hoje so existe `User.role` (super_admin/clinic_admin/user). Expandir para:
-  - Admin cria usuarios manualmente (sem convite por email/Resend) — formulario de "novo usuario" no painel
-  - Senha temporaria gerada na criacao + flag `mustChangePassword=true`
-  - No primeiro login, app forca troca de senha antes de liberar dashboard
-  - Admin pode resetar senha (gera nova temporaria + reaplica flag)
-  - Permissoes granulares por modulo/CRUD: `User -> permissions: { leads: ['read','write'], patients: ['read'], ads: [] }`
-  - UI de gerenciamento de usuarios e permissoes em /dashboard/settings/users
-  Depende de [ARCH-1] estar comecada (modulos definidos).
-  Eixo: usuarios · Bump: minor (iterativo — pode ser quebrado em sub-PRs)
+- **[USR-1.2] UI admin de usuarios em /dashboard/settings/users**
+  Depende de [USR-1] foundation (ja pronta). Adicionar: tabela de usuarios da clinica, formulario "novo usuario" (mostra senha temporaria gerada apos sucesso), botao "resetar senha" por linha, opcionalmente DELETE/PATCH.
+  Eixo: usuarios · Bump: minor
+
+- **[USR-1.3] RBAC enforcement por modulo (User.permissions)**
+  Depende de [USR-1] foundation (coluna `permissions` ja existe). Definir lista canonica de modulos (leads, patients, campaigns, procedures, ltv, financeiro, settings, logs). Helper `canAccess(user, module, action)`. Aplicar em rotas API e em conditional rendering no dashboard. UI em /dashboard/settings/users/[id]/permissions pra editar.
+  Eixo: usuarios · Bump: minor
 
 ### Qualidade
 
@@ -91,7 +88,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[OBS-3.1] Health avancado com status de filas** — PR #_TBD_ — v0.25.1
+- **[USR-1] foundation: criacao manual + senha temp + force change** — PR #_TBD_ — v0.26.0
+  Schema: User.mustChangePassword + User.permissions (Json?). Helpers em src/lib/users.ts (generate temp pw cripto-random, hash, verify, create, reset, change). API: POST /api/users (admin cria), POST /api/users/[id]/reset-password (admin reseta), POST /api/auth/change-password (user troca). Middleware redireciona pra /dashboard/change-password se mustChangePassword=true. Pagina change-password com signOut apos sucesso pra reciclar session. UI admin (USR-1.2) e RBAC enforcement (USR-1.3) abertas como follow-ups.
+
+- **[OBS-3.1] Health avancado com status de filas** — PR #60 — v0.25.1
   /api/health agora inclui campo `queues` com waiting/failed counts + lastCompletedAt/lastFailedAt por fila. Reusa getAllQueues() de [OBS-2]. Status agregado (ok|degraded) continua baseado so em db+redis — worker travado nao tira replica do pool. Falha silenciosa em queues:null se Redis estiver sob stress.
 
 - **[OBS-2] Metricas de fila BullMQ** — PR #59 — v0.25.0

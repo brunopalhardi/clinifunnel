@@ -37,7 +37,7 @@ Toda rota que toca dados por clinica DEVE chamar essa funcao e usar o `clinicId`
 | `/api/reminders` | OK |
 | `/api/sync` | OK |
 
-### ✅ Auth check explicito (nao usa helper, mas implementa logica equivalente) (4)
+### ✅ Auth check explicito (nao usa helper, mas implementa logica equivalente) (7)
 
 | Rota | Pattern |
 |------|---------|
@@ -45,6 +45,9 @@ Toda rota que toca dados por clinica DEVE chamar essa funcao e usar o `clinicId`
 | `/api/clinics/[id]` (GET/PUT) | `super_admin` ou `id === session.user.clinicId` |
 | `/api/auth/google-ads` + `/api/auth/meta` | Pega `clinicId` direto da `session`, nao aceita override |
 | `/api/admin/queues` (GET) | **super_admin only** — metricas BullMQ sao globais (volume de jobs vazaria entre clinicas se exposto a clinic_admin) |
+| `/api/users` (GET/POST) | clinic_admin/super_admin. GET filtra por clinicId (super_admin pode `?clinicId=`). POST: clinic_admin so cria role=user na propria clinica; super_admin pode em qualquer mas nao cria super_admin via API |
+| `/api/users/[id]/reset-password` (POST) | clinic_admin so reseta usuarios da propria clinica e nao reseta admins. super_admin reseta qualquer exceto outro super_admin. Self-reset bloqueado (use change-password) |
+| `/api/auth/change-password` (POST) | qualquer user autenticado. Exige senha atual. Limpa flag mustChangePassword |
 
 ### ✅ Publicas/auth-handlers (nao precisam guard) (7)
 
