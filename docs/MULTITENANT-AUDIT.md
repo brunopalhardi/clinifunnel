@@ -66,7 +66,7 @@ Toda rota que toca dados por clinica DEVE chamar essa funcao e usar o `clinicId`
 | Rota | Bug | Fix |
 |------|-----|-----|
 | `/api/patients/[id]` GET | `findUnique({ where: { id } })` sem clinicId. Qualquer user autenticado podia ler paciente de qualquer clinica conhecendo o id. | Trocado para `findFirst({ where: { id, clinicId } })` apos `getAuthorizedClinicId`. Retorna 404 se paciente nao pertence a clinica do requester. |
-| `/api/webhook-logs` GET | `findMany` sem clinicId. `clinic_admin` de qualquer clinica via logs de TODAS as clinicas (vazamento de payloads). | Restricao temporaria a `super_admin` only. **Issue [SEC-2.1] aberta para fix definitivo** (adicionar coluna `clinicId` ao schema `WebhookLog` e filtrar). |
+| `/api/webhook-logs` GET | `findMany` sem clinicId. `clinic_admin` de qualquer clinica via logs de TODAS as clinicas (vazamento de payloads). | Resolvido em [SEC-2.1] (v0.29.0): coluna `clinicId` adicionada ao schema, populada pelos webhook handlers ao identificar a clinica. Rota filtra por `clinicId` (super_admin ve tudo + legacy nulls; clinic_admin so a propria; user bloqueado). |
 
 ### Workers (BullMQ)
 

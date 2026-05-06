@@ -168,5 +168,10 @@ model WebhookLog {
   payload   Json
   status    String   @default("received") // "received" | "processed" | "error"
   error     String?
+  // Nullable: webhooks chegam antes de identificar a clinica; e legacy entries
+  // pre-[SEC-2.1] nao tem esse campo. Quando identificavel, populado pelo handler.
+  clinicId  String?
   createdAt DateTime @default(now())
+
+  @@index([clinicId, createdAt])
 }

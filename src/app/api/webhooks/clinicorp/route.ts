@@ -53,6 +53,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // [SEC-2.1] Vincula log a clinica identificada — clinic_admin podera ver.
+    await prisma.webhookLog.update({
+      where: { id: logEntry.id },
+      data: { clinicId: clinic.id },
+    });
+
     if (!clinic.clinicorpWebhookEnabled) {
       await prisma.webhookLog.update({
         where: { id: logEntry.id },
