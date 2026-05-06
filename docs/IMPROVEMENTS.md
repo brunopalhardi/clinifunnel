@@ -25,10 +25,6 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Seguranca
 
-- **[SEC-2.1] WebhookLog com clinicId**
-  Adicionar coluna `clinicId` ao schema `WebhookLog` (migration) + parser que extrai clinic do payload (subdomain Kommo, sourceClinicId Clinicorp) preenche na criacao. /api/webhook-logs filtra por clinica e clinic_admin volta a ter acesso (hoje restrito a super_admin pelo SEC-2).
-  Eixo: seguranca · Bump: minor
-
 - **[SEC-2.2] Validar autenticidade dos webhooks de entrada**
   Confirmar que payload de Kommo/Clinicorp nao pode ser forjado pra atribuir leads/procedimentos a outra clinica. Hoje matching e por subdomain (Kommo) ou businessId (Clinicorp). Considerar HMAC compartilhado por clinica.
   Eixo: seguranca · Bump: minor
@@ -88,7 +84,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[USR-1.3] RBAC granular por modulo (foundation)** — PR #_TBD_ — v0.28.0
+- **[SEC-2.1] WebhookLog com clinicId** — PR #_TBD_ — v0.29.0
+  Migration adiciona coluna `clinicId` (nullable). Webhook handlers Kommo/Clinicorp populam apos identificar a clinica. /api/webhook-logs filtra por clinica: super_admin ve tudo (incluindo legacy nulls), clinic_admin so a propria, user bloqueado. Index composto (clinicId, createdAt) pra perf de listagem por clinica. Resolve o vazamento documentado no SEC-2.
+
+- **[USR-1.3] RBAC granular por modulo (foundation)** — PR #64 — v0.28.0
   src/lib/permissions.ts com 10 modulos canonicos x 3 actions, modelo hibrido (role baseline + User.permissions sobrescreve). PUT /api/users/[id]/permissions, UI checkbox grid em /dashboard/settings/users/[id]/permissions, hook useCanAccess. Aplicado em /api/sync. Foundation pronta — outras rotas seguem em [USR-1.3.1].
 
 - **[USR-1.2] UI admin de usuarios** — PR #62 — v0.27.0

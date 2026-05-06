@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.28.0";
+export const APP_VERSION = "0.29.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.29.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "SEC-2.1: WebhookLog ganha coluna clinicId (nullable) + index composto (clinicId, createdAt)",
+      "Webhook handlers Kommo/Clinicorp populam clinicId apos identificar clinica",
+      "/api/webhook-logs filtra por clinica: super_admin ve tudo + legacy nulls; clinic_admin so a propria; user bloqueado",
+      "Resolve vazamento original do SEC-2 (clinic_admin via logs cross-tenant)",
+      "Migration: prisma/migrations/20260506160000_webhooklog_clinicid",
+      "Legacy entries (sem clinicId) ficam invisiveis pra clinic_admin — alternativa de mostrar reabriria o vazamento",
+    ],
+  },
   {
     version: "0.28.0",
     date: "2026-05-06",
