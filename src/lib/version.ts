@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.27.1";
+export const APP_VERSION = "0.28.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,24 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.28.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "USR-1.3: RBAC granular por modulo (foundation)",
+      "src/lib/permissions.ts: 10 modulos canonicos (leads, patients, campaigns, procedures, ltv, financeiro, logs, settings, users, ads) x 3 actions (read, write, delete)",
+      "Modelo hibrido: role da baseline (super_admin tudo, clinic_admin quase tudo exceto delete users, user leitura operacional). User.permissions sobrescreve quando definido",
+      "super_admin sempre passa (lockout protection mesmo com permissions vazia)",
+      "PUT /api/users/[id]/permissions com sanitizacao de input (so modulos+actions canonicos)",
+      "UI /dashboard/settings/users/[id]/permissions: radio baseline-vs-custom + grid de checkbox por modulo/action",
+      "Botao Permissoes na tabela de users",
+      "Hook useCanAccess(module, action) pra UI hide (defesa em profundidade — server e a verdade)",
+      "RBAC aplicado em /api/sync (settings:write — usa tokens de integracao)",
+      "permissions na session via JWT (auth.ts atualizado, login route route alinhada, types augmented)",
+      "Tests: src/lib/permissions.test.ts (15 tests cobrindo super_admin, baselines, override explicit, sanitizacao)",
+    ],
+  },
   {
     version: "0.27.1",
     date: "2026-05-06",

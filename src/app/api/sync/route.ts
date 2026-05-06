@@ -5,6 +5,9 @@ import { normalizePhoneBR } from "@/lib/utils/phone";
 import { matchLeadToPatient, linkLeadToPatient } from "@/lib/matching/lead-patient";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
 import { getMatchLeadsQueue, getSyncClinicorpQueue } from "@/lib/queues";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { PermissionDeniedError, requirePermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +21,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
+  }
+
+  // RBAC: sync usa tokens de integracao = write em settings.
+  const session = await getServerSession(authOptions);
+  try {
+    if (session?.user) requirePermission(session.user, "settings", "write");
+  } catch (e) {
+    if (e instanceof PermissionDeniedError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    throw e;
   }
 
   const { type } = await request.json();
