@@ -49,6 +49,7 @@ export const authOptions: NextAuthOptions = {
           clinicId: user.clinicId,
           clinicName: user.clinic.name,
           mustChangePassword: user.mustChangePassword,
+          permissions: (user.permissions as never) ?? null,
         };
       },
     }),
@@ -57,21 +58,30 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, trigger }) {
       if (user) {
-        token.role = (user as { role: string }).role;
-        token.clinicId = (user as { clinicId: string }).clinicId;
-        token.clinicName = (user as { clinicName: string }).clinicName;
-        token.mustChangePassword = (
-          user as { mustChangePassword: boolean }
-        ).mustChangePassword;
+        const u = user as {
+          role: string;
+          clinicId: string;
+          clinicName: string;
+          mustChangePassword: boolean;
+          permissions: unknown;
+        };
+        token.role = u.role;
+        token.clinicId = u.clinicId;
+        token.clinicName = u.clinicName;
+        token.mustChangePassword = u.mustChangePassword;
+        token.permissions = (u.permissions as never) ?? null;
       }
-      // Quando user troca senha (POST /api/auth/change-password), chama
-      // signIn com trigger=update — refazemos load do DB pra refletir flag.
+      // Quando user troca senha ou tem permissions atualizadas pelo admin,
+      // refaz load do DB. Permissions e cache leve no token, atualiza on update.
       if (trigger === "update" && token.sub) {
         const fresh = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { mustChangePassword: true },
+          select: { mustChangePassword: true, permissions: true },
         });
-        if (fresh) token.mustChangePassword = fresh.mustChangePassword;
+        if (fresh) {
+          token.mustChangePassword = fresh.mustChangePassword;
+          token.permissions = (fresh.permissions as never) ?? null;
+        }
       }
       return token;
     },
@@ -83,6 +93,7 @@ export const authOptions: NextAuthOptions = {
         u.clinicId = token.clinicId as string;
         u.clinicName = token.clinicName as string;
         u.mustChangePassword = (token.mustChangePassword as boolean) ?? false;
+        u.permissions = (token.permissions as never) ?? null;
       }
       return session;
     },

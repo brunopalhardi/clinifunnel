@@ -53,9 +53,9 @@ _(vazio — adicionar quando comecar trabalho)_
   UI ja existe ([USR-1.2]); falta endpoint+botao pra remover/editar role+nome. Considerar soft-delete (campo deletedAt) pra preservar audit trail vs hard-delete.
   Eixo: usuarios · Bump: minor
 
-- **[USR-1.3] RBAC enforcement por modulo (User.permissions)**
-  Depende de [USR-1] foundation (coluna `permissions` ja existe). Definir lista canonica de modulos (leads, patients, campaigns, procedures, ltv, financeiro, settings, logs). Helper `canAccess(user, module, action)`. Aplicar em rotas API e em conditional rendering no dashboard. UI em /dashboard/settings/users/[id]/permissions pra editar.
-  Eixo: usuarios · Bump: minor
+- **[USR-1.3.1] Aplicar requirePermission em todas as rotas API**
+  USR-1.3 fez foundation + aplicou em /api/sync. Resta aplicar em /api/leads (read), /api/patients (read+write), /api/procedures (read+write), /api/campaigns (read), /api/ltv (read), /api/financeiro (read), /api/ads/* (write), /api/settings (write), /api/clinics (write). Conditional rendering no dashboard com useCanAccess.
+  Eixo: usuarios · Bump: minor (incremental)
 
 ### Qualidade
 
@@ -88,7 +88,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[USR-1.2] UI admin de usuarios** — PR #_TBD_ — v0.27.0
+- **[USR-1.3] RBAC granular por modulo (foundation)** — PR #_TBD_ — v0.28.0
+  src/lib/permissions.ts com 10 modulos canonicos x 3 actions, modelo hibrido (role baseline + User.permissions sobrescreve). PUT /api/users/[id]/permissions, UI checkbox grid em /dashboard/settings/users/[id]/permissions, hook useCanAccess. Aplicado em /api/sync. Foundation pronta — outras rotas seguem em [USR-1.3.1].
+
+- **[USR-1.2] UI admin de usuarios** — PR #62 — v0.27.0
   /dashboard/settings/users com tabela, formulario create, botao reset por linha. Apos create/reset: card destacado com senha temporaria + copy + warning (mostra UMA UNICA vez). Link no header de /dashboard/settings. UI esconde silenciosa pra nao-admin via 403 do backend.
 
 - **[USR-1] foundation: criacao manual + senha temp + force change** — PR #61 — v0.26.0

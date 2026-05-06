@@ -1,4 +1,5 @@
 import "next-auth";
+import type { Permissions } from "@/lib/permissions";
 
 declare module "next-auth" {
   interface Session {
@@ -10,6 +11,7 @@ declare module "next-auth" {
       clinicId: string;
       clinicName: string;
       mustChangePassword: boolean;
+      permissions: Permissions | null;
     };
   }
 
@@ -18,6 +20,7 @@ declare module "next-auth" {
     clinicId: string;
     clinicName: string;
     mustChangePassword: boolean;
+    permissions: Permissions | null;
   }
 }
 
@@ -27,5 +30,6 @@ declare module "next-auth/jwt" {
     clinicId: string;
     clinicName: string;
     mustChangePassword: boolean;
+    permissions: Permissions | null;
   }
 }

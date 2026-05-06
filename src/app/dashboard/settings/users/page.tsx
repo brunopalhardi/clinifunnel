@@ -322,19 +322,28 @@ export default function UsersAdminPage() {
                         {new Date(u.createdAt).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={resettingId === u.id || u.role === "super_admin"}
-                          onClick={() => onReset(u)}
-                          title={
-                            u.role === "super_admin"
-                              ? "Nao e possivel resetar senha de super_admin via UI"
-                              : "Gerar nova senha temporaria"
-                          }
-                        >
-                          {resettingId === u.id ? "..." : "Resetar senha"}
-                        </Button>
+                        <div className="flex flex-wrap gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={resettingId === u.id || u.role === "super_admin"}
+                            onClick={() => onReset(u)}
+                            title={
+                              u.role === "super_admin"
+                                ? "Nao e possivel resetar senha de super_admin via UI"
+                                : "Gerar nova senha temporaria"
+                            }
+                          >
+                            {resettingId === u.id ? "..." : "Resetar senha"}
+                          </Button>
+                          {u.role !== "super_admin" && (
+                            <Link href={`/dashboard/settings/users/${u.id}/permissions`}>
+                              <Button variant="outline" size="sm">
+                                Permissoes
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
