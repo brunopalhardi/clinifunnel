@@ -62,9 +62,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Qualidade
 
-- **[QA-1] Fundacao de testes**
-  Sem testes hoje. Setup Vitest + DB de teste isolado (`postgres://test`) + cobertura inicial das areas criticas: matching telefone (`src/lib/matching/`), webhooks Kommo/Clinicorp, auth-guard, normalizacao UTM.
+- **[QA-1.1] Integration tests com Postgres real**
+  Vitest + Postgres service no GitHub Actions + transactional rollback per test. Cobrir: cross-tenant via auth-guard + Prisma findFirst (regressao do bug fixado em SEC-2), webhooks Kommo/Clinicorp end-to-end, lazy migration de tokens cifrados ($extends + decrypt no read).
   Eixo: qualidade · Bump: minor
+  Nota: depende de [QA-1] (ja pronta — vitest config + 51 unit tests).
 
 - **[QA-2] Lint mais rigoroso**
   Adicionar regras: `@typescript-eslint/no-explicit-any`, `no-floating-promises`, `prefer-nullish-coalescing`. Corrigir violacoes existentes.
@@ -99,7 +100,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[SEC-2] Auditoria de isolamento multi-tenant** — PR #_TBD_ — v0.22.0
+- **[QA-1] Fundacao de testes (Vitest)** — PR #_TBD_ — v0.23.0
+  Vitest + 51 unit tests cobrindo crypto (encrypt/decrypt round-trip + tampering), phone (matching com nono digito), utm (classifyChannel + tags), OAuth state (HMAC anti-CSRF + expiracao), auth-guard (super_admin/clinic_admin/user com mocked session). CI roda npm test entre tsc e build. Foundation pronta — adicionar tests pra novas features eh trivial. Integration tests com Postgres ficam pra [QA-1.1].
+
+- **[SEC-2] Auditoria de isolamento multi-tenant** — PR #56 — v0.22.0
   Catalogo de todas as 26 rotas API em `docs/MULTITENANT-AUDIT.md`. 2 bugs criticos fixados: `/api/patients/[id]` agora filtra por clinicId (era cross-tenant trivial), `/api/webhook-logs` restrito a super_admin (era vazamento de payloads de outras clinicas para clinic_admin). Confirmado HMAC-protection do state em OAuth callbacks. Geradas 3 sub-issues SEC-2.1/2.2/2.3 pra continuidade.
 
 - **[SEC-1] Criptografia at-rest dos tokens de integracao** — PRs #54 #55 — v0.21.0 → v0.21.1

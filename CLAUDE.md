@@ -112,6 +112,7 @@ npm ci
 npx prisma generate
 npm run lint
 npx tsc --noEmit
+npm test
 npm run build
 ```
 
@@ -193,7 +194,7 @@ npx prisma studio                                # GUI do banco
 npx prisma generate                              # gerar client
 
 # Validacao pre-PR
-npm run lint && npx tsc --noEmit && npm run build
+npm run lint && npx tsc --noEmit && npm test && npm run build
 
 # Worktree
 git worktree list
