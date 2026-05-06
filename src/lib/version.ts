@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.29.0";
+export const APP_VERSION = "0.30.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.30.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "SEC-3: worker webhook-log-cleanup com retencao configuravel",
+      "Default 90 dias (env WEBHOOK_LOG_RETENTION_DAYS); <= 0 desabilita",
+      "Cron weekly (dom 03:00 UTC), batch 5000 logs por execucao",
+      "Adicionado a QUEUE_NAMES — aparece automaticamente em /api/admin/queues e no painel /dashboard/logs",
+      "Registrado em src/workers/index.ts com graceful shutdown",
+    ],
+  },
   {
     version: "0.29.0",
     date: "2026-05-06",

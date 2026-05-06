@@ -43,6 +43,7 @@ export const QUEUE_NAMES = [
   "sync-meta-ads",
   "sync-google-ads",
   "check-reminders",
+  "webhook-log-cleanup",
 ] as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[number];
