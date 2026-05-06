@@ -77,10 +77,6 @@ _(vazio — adicionar quando comecar trabalho)_
   Logs estruturados (OBS-1) cobrem workers e webhooks. Falta correlation id automatico — cada request HTTP gera um requestId que se propaga via AsyncLocalStorage por toda chamada subsequente, incluindo workers enfileirados pelo request. Permite trace distribuido sem APM.
   Eixo: observabilidade · Bump: minor
 
-- **[OBS-3.1] Health avancado: ultimo job processado**
-  Expandir `/api/health` para tambem reportar status das filas BullMQ (ultimo job processado por queue, jobs falhados nas ultimas 24h). Util pra detectar workers travados antes do usuario reclamar. Aproveitar getAllQueues() ja exposto em [OBS-2].
-  Eixo: observabilidade · Bump: patch
-
 ### Features
 
 - **[FEAT-1] Canal WhatsApp**
@@ -95,7 +91,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[OBS-2] Metricas de fila BullMQ** — PR #_TBD_ — v0.25.0
+- **[OBS-3.1] Health avancado com status de filas** — PR #_TBD_ — v0.25.1
+  /api/health agora inclui campo `queues` com waiting/failed counts + lastCompletedAt/lastFailedAt por fila. Reusa getAllQueues() de [OBS-2]. Status agregado (ok|degraded) continua baseado so em db+redis — worker travado nao tira replica do pool. Falha silenciosa em queues:null se Redis estiver sob stress.
+
+- **[OBS-2] Metricas de fila BullMQ** — PR #59 — v0.25.0
   Endpoint /api/admin/queues (super_admin only) retorna counts (waiting/active/completed/failed/delayed/paused) + tempo medio dos ultimos 20 jobs + ultimo OK/fail por fila. Componente QueueMetricsPanel no /dashboard/logs com refresh 10s e cards coloridos por estado (vermelho=falhas, ambar=pendente, neutro=idle). Lista canonica de filas em src/lib/queues.ts (QUEUE_NAMES + getAllQueues()) pra reuso por OBS-3.1. Middleware /api/admin/* protegido. Catalogo da rota em MULTITENANT-AUDIT.md (super_admin only — filas sao globais, expor pra clinic_admin vazaria volume entre clinicas).
 
 - **[OBS-1] Logs estruturados (pino)** — PR #58 — v0.24.0
