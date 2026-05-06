@@ -1,5 +1,8 @@
 import { ClinicorpClient } from "./client";
 import { CreateAppointmentPayload } from "./types";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "clinicorp-appointment" });
 
 export async function createAppointmentInClinicorp(
   client: ClinicorpClient,
@@ -34,14 +37,15 @@ export async function createAppointmentInClinicorp(
 
   try {
     const appointment = await client.createAppointment(payload);
-    console.log(
-      `[clinicorp-appointment] Created for ${params.patientName} on ${params.date} at ${params.time}`
+    log.info(
+      { patientId: params.patientId, date: params.date, time: params.time },
+      "appointment created",
     );
     return appointment;
   } catch (error) {
-    console.error(
-      `[clinicorp-appointment] Failed for ${params.patientName}:`,
-      error instanceof Error ? error.message : error
+    log.error(
+      { patientId: params.patientId, err: error instanceof Error ? error.message : error },
+      "failed to create appointment",
     );
     return null;
   }

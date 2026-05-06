@@ -1,4 +1,8 @@
 import { Queue, Worker } from "bullmq";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "check-reminders" });
+
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 
@@ -52,15 +56,15 @@ export const checkRemindersWorker = new Worker(
       if (daysOverdue >= -30) reminderCount++;
     }
 
-    console.log(`[check-reminders] Found ${reminderCount} pending reminders for clinic ${clinicId}`);
+    log.info({ clinicId, reminderCount }, "pending reminders");
   },
   { connection: redis, concurrency: 1 }
 );
 
 checkRemindersWorker.on("completed", (job) => {
-  console.log(`[check-reminders] Job ${job.id} completed`);
+  log.info({ jobId: job.id }, "job completed");
 });
 
 checkRemindersWorker.on("failed", (job, err) => {
-  console.error(`[check-reminders] Job ${job?.id} failed:`, err.message);
+  log.error({ jobId: job?.id, err: err.message }, "job failed");
 });

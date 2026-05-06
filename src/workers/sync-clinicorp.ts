@@ -1,4 +1,8 @@
 import { Queue, Worker } from "bullmq";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "sync-clinicorp" });
+
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { ClinicorpClient } from "@/lib/clinicorp/client";
@@ -51,7 +55,7 @@ export const syncClinicorpWorker = new Worker(
           clinicId: clinic.clinicorpBusinessId,
         });
 
-        console.log(`[sync-clinicorp] Clinic ${clinic.name}: ${estimates.length} estimates`);
+        log.info({ clinicId: clinic.id, estimates: estimates.length }, "estimates fetched");
 
         let patientsCreated = 0;
         let proceduresCreated = 0;
@@ -129,11 +133,12 @@ export const syncClinicorpWorker = new Worker(
           }
         }
 
-        console.log(
-          `[sync-clinicorp] Done: ${patientsCreated} patients created, ${proceduresCreated} procedures created, ${proceduresUpdated} updated`
+        log.info(
+          { patientsCreated, proceduresCreated, proceduresUpdated },
+          "sync done",
         );
       } catch (error) {
-        console.error(`[sync-clinicorp] Error syncing clinic ${clinic.id}:`, error);
+        log.error({ clinicId: clinic.id, err: error }, "sync error for clinic");
       }
     }
   },
@@ -141,5 +146,5 @@ export const syncClinicorpWorker = new Worker(
 );
 
 syncClinicorpWorker.on("failed", (job, err) => {
-  console.error(`[sync-clinicorp] Job ${job?.id} failed:`, err.message);
+  log.error({ jobId: job?.id, err: err.message }, "job failed");
 });

@@ -1,4 +1,8 @@
 import { Queue, Worker } from "bullmq";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "process-procedure" });
+
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneBR } from "@/lib/utils/phone";
@@ -60,16 +64,18 @@ export const processProcedureWorker = new Worker<ProcedureJobData>(
             : null,
         },
       });
-      console.log(
-        `[process-procedure] Created local patient: ${patient.name}`
+      log.info(
+        { patientId: patient.id, clinicId },
+        "local patient created",
       );
     }
 
     // 2. Auto-match: vincular paciente a leads existentes por telefone
     const matchedCount = await matchPatientToLeads(patient);
     if (matchedCount > 0) {
-      console.log(
-        `[process-procedure] Auto-matched ${matchedCount} lead(s) to patient ${patient.name}`
+      log.info(
+        { patientId: patient.id, matchedCount },
+        "auto-matched leads to patient",
       );
     }
 
@@ -137,8 +143,15 @@ export const processProcedureWorker = new Worker<ProcedureJobData>(
       });
     }
 
-    console.log(
-      `[process-procedure] ${event}: ${payload.procedureName} for ${patient.name} (${normalizedStatus}, R$ ${payload.value ?? 0})`
+    log.info(
+      {
+        event,
+        procedureName: payload.procedureName,
+        patientId: patient.id,
+        status: normalizedStatus,
+        value: payload.value ?? 0,
+      },
+      "procedure processed",
     );
   },
   {
@@ -160,9 +173,9 @@ async function findProcedureId(
 }
 
 processProcedureWorker.on("completed", (job) => {
-  console.log(`[process-procedure] Job ${job.id} completed`);
+  log.info({ jobId: job.id }, "job completed");
 });
 
 processProcedureWorker.on("failed", (job, err) => {
-  console.error(`[process-procedure] Job ${job?.id} failed:`, err.message);
+  log.error({ jobId: job?.id, err: err.message }, "job failed");
 });

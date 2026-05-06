@@ -1,6 +1,9 @@
 import { Queue, Worker } from "bullmq";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "create-patient" });
 import {
   matchLeadToPatient,
   linkLeadToPatient,
@@ -37,8 +40,9 @@ export const createPatientWorker = new Worker(
         where: { id: lead.id },
         data: { isNewPatient: false },
       });
-      console.log(
-        `[create-patient] Lead ${lead.name} matched to existing patient ${existingPatient.name} (returning)`
+      log.info(
+        { leadId: lead.id, patientId: existingPatient.id, clinicId: lead.clinicId },
+        "lead matched to existing patient (returning)",
       );
       return;
     }
@@ -46,8 +50,9 @@ export const createPatientWorker = new Worker(
     // 2. If clinic has Clinicorp configured AND auto-create enabled
     const { clinic } = lead;
     if (!clinic.clinicorpUser || !clinic.clinicorpToken) {
-      console.log(
-        `[create-patient] Clinic ${clinic.name} has no Clinicorp config, skipping`
+      log.info(
+        { clinicId: clinic.id },
+        "clinic without clinicorp config, skipping",
       );
       return;
     }
@@ -74,13 +79,15 @@ export const createPatientWorker = new Worker(
       where: { id: lead.id },
       data: { isNewPatient: !existsInClinicorp },
     });
-    console.log(
-      `[create-patient] Lead "${lead.name}" classified as ${existsInClinicorp ? "RETURNING" : "NEW"} patient`
+    log.info(
+      { leadId: lead.id, classification: existsInClinicorp ? "returning" : "new" },
+      "lead classified",
     );
 
     if (!clinic.clinicorpAutoCreatePatient) {
-      console.log(
-        `[create-patient] Clinic ${clinic.name} has auto-create disabled, skipping Clinicorp`
+      log.info(
+        { clinicId: clinic.id },
+        "auto-create disabled, skipping clinicorp",
       );
       return;
     }
@@ -92,8 +99,9 @@ export const createPatientWorker = new Worker(
     if (!lead.email) missingFields.push("email");
 
     if (missingFields.length > 0) {
-      console.warn(
-        `[create-patient] Lead "${lead.name}" missing: ${missingFields.join(", ")}. Skipping Clinicorp.`
+      log.warn(
+        { leadId: lead.id, missingFields },
+        "missing required fields, skipping clinicorp",
       );
       if (lead.phone || lead.email) {
         const localPatient = await prisma.patient.create({
@@ -136,8 +144,13 @@ export const createPatientWorker = new Worker(
     );
 
     await linkLeadToPatient(lead.id, patient.id);
-    console.log(
-      `[create-patient] Lead ${lead.name} → Patient ${clinicorpPatient.Name} (Clinicorp #${clinicorpPatient.id})`
+    log.info(
+      {
+        leadId: lead.id,
+        patientId: patient.id,
+        clinicorpPatientId: clinicorpPatient.id,
+      },
+      "lead linked to clinicorp patient",
     );
 
     // Create appointment if we have date/time data
@@ -170,8 +183,9 @@ export const createPatientWorker = new Worker(
           });
         }
       } else {
-        console.warn(
-          `[create-patient] Cannot create appointment for "${lead.name}": missing businessId or professionalId`
+        log.warn(
+          { leadId: lead.id, hasBusinessId: !!businessId, hasProfessionalId: !!professionalId },
+          "cannot create appointment: missing businessId or professionalId",
         );
       }
     }
@@ -180,9 +194,9 @@ export const createPatientWorker = new Worker(
 );
 
 createPatientWorker.on("completed", (job) => {
-  console.log(`[create-patient] Job ${job.id} completed`);
+  log.info({ jobId: job.id }, "job completed");
 });
 
 createPatientWorker.on("failed", (job, err) => {
-  console.error(`[create-patient] Job ${job?.id} failed:`, err.message);
+  log.error({ jobId: job?.id, err: err.message }, "job failed");
 });

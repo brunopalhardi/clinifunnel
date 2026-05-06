@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getProcessProcedureQueue } from "@/lib/queues";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ scope: "webhook-clinicorp" });
 
 export async function POST(request: NextRequest) {
   try {
@@ -164,8 +167,9 @@ export async function POST(request: NextRequest) {
             where: { id: patient.leads[0].id },
             data: { agendamentoAt: new Date() },
           });
-          console.log(
-            `[clinicorp-webhook] Updated agendamentoAt for lead ${patient.leads[0].name}`
+          log.info(
+            { leadId: patient.leads[0].id },
+            "updated agendamentoAt for lead",
           );
         }
       }
@@ -178,7 +182,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Clinicorp webhook error:", error);
+    log.error({ err: error }, "webhook handler error");
     return NextResponse.json({ ok: true });
   }
 }

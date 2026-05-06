@@ -73,8 +73,8 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Observabilidade
 
-- **[OBS-1] Logs estruturados**
-  Substituir `console.log` espalhado por logger estruturado (pino) com nivel, contexto (clinicId, leadId) e correlation id. Workers e webhooks como prioridade.
+- **[OBS-1.1] Correlation ID por request (async hooks)**
+  Logs estruturados (OBS-1) cobrem workers e webhooks. Falta correlation id automatico — cada request HTTP gera um requestId que se propaga via AsyncLocalStorage por toda chamada subsequente, incluindo workers enfileirados pelo request. Permite trace distribuido sem APM.
   Eixo: observabilidade · Bump: minor
 
 - **[OBS-2] Metricas de fila BullMQ**
@@ -100,7 +100,10 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
-- **[QA-1] Fundacao de testes (Vitest)** — PR #_TBD_ — v0.23.0
+- **[OBS-1] Logs estruturados (pino)** — PR #58 — v0.24.0
+  src/lib/logger.ts com pino + redact de tokens. 52 console.log/warn/error substituidos em todos os 7 workers, 2 webhooks (Kommo, Clinicorp) e clinicorp/appointment.ts. Padrao: logger.child({ scope: "name" }) + log.info({ contexto }, "mensagem"). Em dev PRETTY_LOGS=1 ativa output colorido; em prod JSON puro pra agregadores. [OBS-1.1] aberta pra correlation id automatico via AsyncLocalStorage.
+
+- **[QA-1] Fundacao de testes (Vitest)** — PR #57 — v0.23.0
   Vitest + 51 unit tests cobrindo crypto (encrypt/decrypt round-trip + tampering), phone (matching com nono digito), utm (classifyChannel + tags), OAuth state (HMAC anti-CSRF + expiracao), auth-guard (super_admin/clinic_admin/user com mocked session). CI roda npm test entre tsc e build. Foundation pronta — adicionar tests pra novas features eh trivial. Integration tests com Postgres ficam pra [QA-1.1].
 
 - **[SEC-2] Auditoria de isolamento multi-tenant** — PR #56 — v0.22.0

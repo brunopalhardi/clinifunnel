@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.23.0";
+export const APP_VERSION = "0.24.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.24.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "Logs estruturados JSON com pino: 52 console.log/warn/error substituidos por logger com scope+contexto",
+      "src/lib/logger.ts com redact paths pra mascarar tokens em logs (kommoToken, NEXTAUTH_SECRET, etc)",
+      "Workers (7) usam logger.child({ scope: 'name' }) — log.info({ leadId, clinicId }, 'msg')",
+      "Webhooks Kommo/Clinicorp e clinicorp/appointment.ts migrados",
+      "Em dev: PRETTY_LOGS=1 ativa pino-pretty colorido. Em prod: JSON puro pra parsing por agregadores",
+      "LOG_LEVEL configuravel (default info)",
+    ],
+  },
   {
     version: "0.23.0",
     date: "2026-05-06",
