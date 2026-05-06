@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.22.0";
+export const APP_VERSION = "0.23.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.23.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "Vitest configurado: 51 unit tests cobrindo crypto, phone, utm, OAuth state HMAC e auth-guard",
+      "CI roda npm test entre tsc e build — falha de teste bloqueia merge",
+      "vitest.config.ts + vitest.setup.ts (env defaults pra testes nao crasharem em modulos com fail-fast)",
+      "Cobertura inicial focada em areas com risco historico: matching telefone (nono digito), criptografia AES-256-GCM (round-trip + tampering), HMAC anti-CSRF do OAuth, isolamento multi-tenant via auth-guard",
+      "Foundation pronta — adicionar tests pra novas features e [QA-1.1] (integration tests com Postgres) seguem incremental",
+    ],
+  },
   {
     version: "0.22.0",
     date: "2026-05-06",
