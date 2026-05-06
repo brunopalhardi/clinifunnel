@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.24.0";
+export const APP_VERSION = "0.25.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.25.0",
+    date: "2026-05-06",
+    type: "minor",
+    changes: [
+      "Endpoint /api/admin/queues (super_admin only) com metricas das 7 filas BullMQ",
+      "Por fila: counts (waiting, active, completed, failed, delayed, paused), tempo medio dos ultimos 20 jobs, ultimo OK e ultimo fail",
+      "Painel QueueMetricsPanel injetado no /dashboard/logs com refresh automatico a cada 10s",
+      "Cards coloridos por estado: vermelho se ha falhas, ambar se ha jobs pendentes, neutro se idle",
+      "Adicionada lista canonica QUEUE_NAMES + getAllQueues() em src/lib/queues.ts pra reuso",
+      "Middleware /api/admin/* protegido (entrar no matcher de auth)",
+    ],
+  },
   {
     version: "0.24.0",
     date: "2026-05-06",
