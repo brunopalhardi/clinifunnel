@@ -68,10 +68,6 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Integracoes
 
-- **[INT-2] Schema + lib do mapeamento de profissionais Kommo->Clinicorp**
-  Adiciona `Clinic.professionalMap` (Json) com pares `nomeKommo -> idClinicorp`. Helper que traduz nome do select Kommo (ATENDIDO POR) pra ID do profissional no Clinicorp. Worker `create-patient` consulta o mapa antes de chamar `createAppointmentInClinicorp`. Sem UI ainda — cadastro via SQL no comeco.
-  Eixo: integracoes · Bump: minor
-
 - **[INT-3] UI de gerenciamento do mapa de profissionais**
   Tela em `/dashboard/settings/clinicorp/professionals` com lista de pares `nome Kommo -> ID Clinicorp`, formulario pra adicionar/editar/remover. Permite super_admin/clinic_admin gerenciar o mapeamento sem mexer em SQL.
   Eixo: integracoes · Bump: minor
@@ -97,6 +93,9 @@ _(vazio — adicionar quando comecar trabalho)_
 ---
 
 ## Concluidos
+
+- **[INT-2] Schema + lib do mapeamento de profissionais Kommo->Clinicorp** — PR #_TBD_ — v0.32.0
+  Coluna `Clinic.professionalMap` (JSONB nullable, migration `20260507150000`). Helper `resolveProfessionalId` (`src/lib/clinicorp/professional-map.ts`) com lookup case e whitespace insensitive. Worker `create-patient` resolve o profissional via mapa antes de chamar Clinicorp; fallback pra ID numerico direto se valor do Kommo ja for digit-only (backwards-compat). Cadastro do mapa via SQL nesta versao — UI vem em INT-3. 11 unit tests novos.
 
 - **[INT-1] Suporte a campo unico datetime no Kommo** — PR #_TBD_ — v0.31.0
   `extractAppointmentFields` agora reconhece campo combinado `DATA E HORA CONSULTA` (Kommo type=date_time). Detecta tanto por `field_type="date_time"` quanto por nome contendo data+consulta+hora. Faz split do unix timestamp em `appointmentDate` (YYYY-MM-DD) + `appointmentTime` (HH:MM) no fuso `America/Sao_Paulo`. Desbloqueia automacao Kommo->Clinicorp end-to-end. 11 unit tests novos cobrindo combined/separados/profissional/edge cases.
