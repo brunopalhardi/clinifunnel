@@ -82,6 +82,40 @@ export interface AppointmentFields {
   appointmentProfId: string | null;
 }
 
+const APPOINTMENT_TZ = "America/Sao_Paulo";
+
+function hasAppointmentNameKeyword(name: string): boolean {
+  return name.includes("data") && (name.includes("consulta") || name.includes("agendamento"));
+}
+
+function hasTimeNameKeyword(name: string): boolean {
+  return name.includes("hora") || name.includes("horario");
+}
+
+function isProfessionalField(name: string, code: string): boolean {
+  return name.includes("profissional") || name.includes("dentista") || code === "professional_id";
+}
+
+function splitUnixTimestampToDateTime(value: string): { date: string; time: string } | null {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  const d = new Date(seconds * 1000);
+  if (Number.isNaN(d.getTime())) return null;
+  const date = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APPOINTMENT_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+  const time = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: APPOINTMENT_TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+  return { date, time };
+}
+
 export function extractAppointmentFields(
   fields: KommoCustomField[] | null | undefined
 ): AppointmentFields {
@@ -95,19 +129,32 @@ export function extractAppointmentFields(
   for (const field of fields) {
     const name = field.field_name?.toLowerCase() ?? "";
     const code = field.field_code?.toLowerCase() ?? "";
+    const type = field.field_type ?? "";
     const value = field.values?.[0]?.value;
     if (!value) continue;
 
-    if (
-      (name.includes("data") && (name.includes("consulta") || name.includes("agendamento"))) ||
-      code === "appointment_date"
-    ) {
+    const isCombinedDateTime =
+      hasAppointmentNameKeyword(name) &&
+      (type === "date_time" || hasTimeNameKeyword(name));
+
+    if (isCombinedDateTime) {
+      const split = splitUnixTimestampToDateTime(value);
+      if (split) {
+        result.appointmentDate = split.date;
+        result.appointmentTime = split.time;
+      } else {
+        result.appointmentDate = value;
+      }
+      continue;
+    }
+
+    if (hasAppointmentNameKeyword(name) || code === "appointment_date") {
       result.appointmentDate = value;
     }
-    if (name.includes("hora") || name.includes("horario") || code === "appointment_time") {
+    if (hasTimeNameKeyword(name) || code === "appointment_time") {
       result.appointmentTime = value;
     }
-    if (name.includes("profissional") || name.includes("dentista") || code === "professional_id") {
+    if (isProfessionalField(name, code)) {
       result.appointmentProfId = value;
     }
   }

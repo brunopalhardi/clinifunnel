@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.30.1";
+export const APP_VERSION = "0.31.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.31.0",
+    date: "2026-05-07",
+    type: "minor",
+    changes: [
+      "INT-1: extractAppointmentFields suporta campo unico datetime (Kommo type=date_time)",
+      "Detecta combinado por nome (data+consulta + hora) ou por field_type=date_time",
+      "Split do unix timestamp em date 'YYYY-MM-DD' + time 'HH:MM' no fuso America/Sao_Paulo",
+      "Backwards-compat: campos separados de data/hora continuam funcionando",
+      "11 unit tests novos cobrindo combined, separados, profissional, edge cases",
+    ],
+  },
   {
     version: "0.30.1",
     date: "2026-05-07",

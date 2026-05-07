@@ -66,6 +66,24 @@ _(vazio — adicionar quando comecar trabalho)_
   Logs estruturados (OBS-1) cobrem workers e webhooks. Falta correlation id automatico — cada request HTTP gera um requestId que se propaga via AsyncLocalStorage por toda chamada subsequente, incluindo workers enfileirados pelo request. Permite trace distribuido sem APM.
   Eixo: observabilidade · Bump: minor
 
+### Integracoes
+
+- **[INT-2] Schema + lib do mapeamento de profissionais Kommo->Clinicorp**
+  Adiciona `Clinic.professionalMap` (Json) com pares `nomeKommo -> idClinicorp`. Helper que traduz nome do select Kommo (ATENDIDO POR) pra ID do profissional no Clinicorp. Worker `create-patient` consulta o mapa antes de chamar `createAppointmentInClinicorp`. Sem UI ainda — cadastro via SQL no comeco.
+  Eixo: integracoes · Bump: minor
+
+- **[INT-3] UI de gerenciamento do mapa de profissionais**
+  Tela em `/dashboard/settings/clinicorp/professionals` com lista de pares `nome Kommo -> ID Clinicorp`, formulario pra adicionar/editar/remover. Permite super_admin/clinic_admin gerenciar o mapeamento sem mexer em SQL.
+  Eixo: integracoes · Bump: minor
+
+- **[INT-4] Tela de Health da automacao Kommo->Clinicorp**
+  Pagina `/dashboard/settings/clinicorp/health` com checklist visual: Kommo OK (token, pipeline, stage), Clinicorp OK (token, businessId), campos no Kommo mapeados (DATA E HORA CONSULTA, ATENDIDO POR), mapeamento de profissionais cadastrado, flag `clinicorpAutoCreatePatient`, ultimos eventos da automacao. Identifica em 1 olhada o que falta pra automacao funcionar 100%.
+  Eixo: integracoes · Bump: minor
+
+- **[INT-5] Sincronizar profissionais do Clinicorp**
+  Botao "Importar profissionais do Clinicorp" na tela INT-3. Puxa lista via API do Clinicorp e pre-preenche entradas do mapa (faltando so casar com nomes do Kommo). Reduz friccao de onboarding pra clinicas novas.
+  Eixo: integracoes · Bump: patch
+
 ### Features
 
 - **[FEAT-1] Canal WhatsApp**
@@ -79,6 +97,9 @@ _(vazio — adicionar quando comecar trabalho)_
 ---
 
 ## Concluidos
+
+- **[INT-1] Suporte a campo unico datetime no Kommo** — PR #_TBD_ — v0.31.0
+  `extractAppointmentFields` agora reconhece campo combinado `DATA E HORA CONSULTA` (Kommo type=date_time). Detecta tanto por `field_type="date_time"` quanto por nome contendo data+consulta+hora. Faz split do unix timestamp em `appointmentDate` (YYYY-MM-DD) + `appointmentTime` (HH:MM) no fuso `America/Sao_Paulo`. Desbloqueia automacao Kommo->Clinicorp end-to-end. 11 unit tests novos cobrindo combined/separados/profissional/edge cases.
 
 - **[UI-1] Receita do funil em verde** — PR #_TBD_ — v0.30.1
   KpiCard de receita no dashboard troca a cor de destaque de gold pra verde (token `success`). Prop `highlight` do KpiCard estendida pra aceitar `"gold" | "green"` (backwards-compatible com boolean).
