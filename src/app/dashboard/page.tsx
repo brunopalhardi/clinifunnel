@@ -123,7 +123,7 @@ export default function DashboardPage() {
           isCurrency
           breakdown={d.receitaClinica > d.totalRevenue ? `Clinica: ${fmtK(d.receitaClinica)} (total)` : undefined}
           icon={<DollarIcon />}
-          highlight
+          highlight="green"
         />
       </div>
 
@@ -314,16 +314,20 @@ export default function DashboardPage() {
 
 function KpiCard({ label, value, isCurrency, breakdown, icon, highlight }: {
   label: string; value: number; isCurrency?: boolean;
-  breakdown?: string; icon: React.ReactNode; highlight?: boolean;
+  breakdown?: string; icon: React.ReactNode; highlight?: boolean | "gold" | "green";
 }) {
   const displayValue = isCurrency ? fmt(value) : String(value);
+  const variant = highlight === "green" ? "green" : highlight ? "gold" : "none";
+  const ringClass = variant === "green" ? "ring-1 ring-success/20" : variant === "gold" ? "ring-1 ring-gold/20" : "";
+  const valueClass = variant === "green" ? "text-success" : variant === "gold" ? "text-gold" : "";
+  const iconClass = variant === "green" ? "bg-success/10 text-success" : "bg-gold/10 text-gold";
   return (
-    <div className={`rounded-xl bg-card p-5 glass-border ${highlight ? "ring-1 ring-gold/20" : ""}`}>
+    <div className={`rounded-xl bg-card p-5 glass-border ${ringClass}`}>
       <div className="flex items-start justify-between mb-3">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10 text-gold">{icon}</div>
+        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconClass}`}>{icon}</div>
       </div>
-      <p className={`font-display text-2xl font-bold ${highlight ? "text-gold" : ""}`}>{displayValue}</p>
+      <p className={`font-display text-2xl font-bold ${valueClass}`}>{displayValue}</p>
       {breakdown && <p className="text-[11px] text-muted-foreground mt-1">{breakdown}</p>}
     </div>
   );
