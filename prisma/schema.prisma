@@ -46,6 +46,9 @@ model Clinic {
   googleAdsCustomerId    String?
   pipelineId       String?
   stageAgendamento String?
+  // Mapeamento ATENDIDO POR (Kommo) -> Dentist_PersonId (Clinicorp).
+  // Estrutura: { "nome no kommo": 12345, ... }. Lookup case/whitespace insensitive em runtime.
+  professionalMap  Json?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   users            User[]

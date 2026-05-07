@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.31.0";
+export const APP_VERSION = "0.32.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.32.0",
+    date: "2026-05-07",
+    type: "minor",
+    changes: [
+      "INT-2: Clinic.professionalMap (Json?) — mapeamento ATENDIDO POR (Kommo) -> Dentist_PersonId (Clinicorp)",
+      "Helper resolveProfessionalId com lookup case e whitespace insensitive",
+      "Worker create-patient resolve profissional via mapa (com fallback pra ID numerico direto)",
+      "Migration adiciona coluna professionalMap (JSONB nullable)",
+      "Cadastro do mapa via SQL nesta versao; UI vem em INT-3",
+      "11 unit tests novos pro helper",
+    ],
+  },
   {
     version: "0.31.0",
     date: "2026-05-07",

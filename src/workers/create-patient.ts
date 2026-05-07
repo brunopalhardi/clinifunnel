@@ -14,6 +14,7 @@ import {
   findOrCreatePatientInClinicorp,
 } from "@/lib/clinicorp/patient";
 import { createAppointmentInClinicorp } from "@/lib/clinicorp/appointment";
+import { resolveProfessionalId } from "@/lib/clinicorp/professional-map";
 
 export const createPatientQueue = new Queue("create-patient", {
   connection: redis,
@@ -158,9 +159,10 @@ export const createPatientWorker = new Worker(
       const businessId = clinic.clinicorpBusinessId
         ? parseInt(clinic.clinicorpBusinessId, 10)
         : null;
-      const professionalId = lead.appointmentProfId
-        ? parseInt(lead.appointmentProfId, 10)
-        : null;
+      const professionalId = resolveProfessionalId(
+        lead.appointmentProfId,
+        clinic.professionalMap,
+      );
 
       if (businessId && professionalId) {
         const appointment = await createAppointmentInClinicorp(
@@ -184,8 +186,15 @@ export const createPatientWorker = new Worker(
         }
       } else {
         log.warn(
-          { leadId: lead.id, hasBusinessId: !!businessId, hasProfessionalId: !!professionalId },
-          "cannot create appointment: missing businessId or professionalId",
+          {
+            leadId: lead.id,
+            hasBusinessId: !!businessId,
+            hasProfessionalId: !!professionalId,
+            kommoProfValue: lead.appointmentProfId,
+          },
+          professionalId === null && lead.appointmentProfId
+            ? "cannot create appointment: ATENDIDO POR sem mapeamento em Clinic.professionalMap"
+            : "cannot create appointment: missing businessId or professionalId",
         );
       }
     }
