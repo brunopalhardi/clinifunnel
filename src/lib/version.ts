@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.30.0";
+export const APP_VERSION = "0.30.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.30.1",
+    date: "2026-05-07",
+    type: "patch",
+    changes: [
+      "UI-1: KpiCard \"Receita do funil\" agora em verde (token success) em vez de gold",
+      "Prop highlight aceita boolean | \"gold\" | \"green\" — backwards-compatible",
+    ],
+  },
   {
     version: "0.30.0",
     date: "2026-05-06",

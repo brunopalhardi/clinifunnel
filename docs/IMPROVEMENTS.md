@@ -80,6 +80,9 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
+- **[UI-1] Receita do funil em verde** — PR #_TBD_ — v0.30.1
+  KpiCard de receita no dashboard troca a cor de destaque de gold pra verde (token `success`). Prop `highlight` do KpiCard estendida pra aceitar `"gold" | "green"` (backwards-compatible com boolean).
+
 - **[SEC-3] Retencao de WebhookLog** — PR #_TBD_ — v0.30.0
   Worker `webhook-log-cleanup` (BullMQ repeat cron `0 3 * * 0` = dom 03:00 UTC) deleta logs com mais de `WEBHOOK_LOG_RETENTION_DAYS` (default 90, env override; <=0 desabilita). Batching de 5000 por execucao pra evitar transacao longa. Adicionado a QUEUE_NAMES — aparece automaticamente em /api/admin/queues e painel /dashboard/logs.
 
