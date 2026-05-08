@@ -8,6 +8,27 @@ export function normalizePhoneBR(phone: string): string {
 }
 
 /**
+ * Formata telefone pra envio ao Clinicorp: somente digitos (DDD + numero),
+ * sem o codigo de pais. Aceita qualquer formato de entrada (+55..., (15)...,
+ * com ou sem hifen/parenteses/espaco).
+ *
+ * Retorna `null` se o numero for invalido (menor que 10 ou maior que 11
+ * digitos apos remover o DDI 55).
+ *
+ * Cuidado especial: nao confunde DDD 55 (Rio Grande do Sul) com DDI 55. Se
+ * o numero tem exatamente 10 ou 11 digitos, mantemos como esta — so faz
+ * strip se o length indicar DDI presente (>= 12 digitos).
+ */
+export function phoneToClinicorp(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  const cleaned =
+    digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
+  if (cleaned.length < 10 || cleaned.length > 11) return null;
+  return cleaned;
+}
+
+/**
  * Retorna a "chave" de matching de um telefone: DDD + últimos 8 dígitos.
  * Lida com a inconsistência do nono dígito brasileiro (alguns sistemas
  * incluem, outros não).

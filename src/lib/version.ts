@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.32.1";
+export const APP_VERSION = "0.32.2";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.32.2",
+    date: "2026-05-08",
+    type: "patch",
+    changes: [
+      "INT-2.2: nome do paciente no Clinicorp vem do contato Kommo (completo) e nao do card (curto)",
+      "INT-2.2: util phoneToClinicorp normaliza telefone antes de mandar pro Clinicorp (remove DDI 55, aceita varios formatos de entrada, preserva DDD 55 do RS)",
+      "Aplicado em criacao de paciente e appointment",
+      "7 unit tests novos cobrindo phoneToClinicorp",
+    ],
+  },
   {
     version: "0.32.1",
     date: "2026-05-08",
