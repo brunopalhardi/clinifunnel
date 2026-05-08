@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.32.2";
+export const APP_VERSION = "0.33.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.33.0",
+    date: "2026-05-08",
+    type: "minor",
+    changes: [
+      "INT-3.1: sync automatico do Clinicorp e match-leads agora rodam a cada 15min (BullMQ repeat). Antes era so manual via botao no dashboard",
+      "Fix: graficos 'Receita por periodo' (Visao Geral) e 'Receita por dia' (Financeiro) agrupam por data real do procedimento (COALESCE(completedAt, createdAt)) em vez de Estimate.CreateDate do Clinicorp",
+      "Filtro de data (from/to) das mesmas queries tambem usa COALESCE pra coerencia com o agrupamento",
+      "Schema: Clinic.lastClinicorpSyncAt e Clinic.lastMatchLeadsAt (DateTime?) — workers atualizam no fim de cada execucao bem sucedida",
+      "Endpoint GET /api/sync/status retorna {lastSyncAt, lastMatchAt} pra clinica autenticada",
+      "Header do dashboard mostra 'Atualizado ha Xmin' ao lado do botao Sincronizar (refresh automatico a cada 60s, repaint da label a cada 30s)",
+      "Migration: prisma/migrations/20260508210000_clinic_sync_timestamps",
+    ],
+  },
   {
     version: "0.32.2",
     date: "2026-05-08",

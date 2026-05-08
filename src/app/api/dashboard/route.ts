@@ -163,18 +163,23 @@ export async function GET(request: NextRequest) {
   } else if (patientType === "returning") {
     leadSubquery += ` AND l."isNewPatient" = false`;
   }
+  // Agrupa pela data REAL do procedimento: completedAt quando existe (data de execucao
+  // vinda do Clinicorp), com fallback pra createdAt. createdAt vem de Estimate.CreateDate
+  // do Clinicorp, que e a data de criacao do orcamento e nao a data do atendimento — usar
+  // so ele empilhava todos os procedimentos no dia em que o sync rodou.
+  const procDateExpr = `COALESCE(p."completedAt", p."createdAt")`;
   let dateConditions = ` AND EXISTS (${leadSubquery})`;
   if (from) {
     dateParams.push(from);
-    dateConditions += ` AND p."createdAt" >= $${dateParams.length}::timestamp`;
+    dateConditions += ` AND ${procDateExpr} >= $${dateParams.length}::timestamp`;
   }
   if (to) {
     dateParams.push(to);
-    dateConditions += ` AND p."createdAt" <= $${dateParams.length}::timestamp`;
+    dateConditions += ` AND ${procDateExpr} <= $${dateParams.length}::timestamp`;
   }
 
   const revenueTimeline = await prisma.$queryRawUnsafe<Array<{ bucket: Date; total: number }>>(
-    `SELECT date_trunc('${truncFn}', p."createdAt") as bucket, SUM(p.value)::float as total
+    `SELECT date_trunc('${truncFn}', ${procDateExpr}) as bucket, SUM(p.value)::float as total
      FROM "Procedure" p
      INNER JOIN "Patient" pt ON p."patientId" = pt.id
      WHERE p."clinicId" = $1

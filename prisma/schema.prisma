@@ -49,6 +49,11 @@ model Clinic {
   // Mapeamento ATENDIDO POR (Kommo) -> Dentist_PersonId (Clinicorp).
   // Estrutura: { "nome no kommo": 12345, ... }. Lookup case/whitespace insensitive em runtime.
   professionalMap  Json?
+  // Timestamps das ultimas execucoes dos jobs periodicos (sync-clinicorp e match-leads).
+  // Atualizados pelos workers no fim de cada execucao bem sucedida. Usados pelo dashboard
+  // pra mostrar "Atualizado ha Xmin" via /api/sync/status.
+  lastClinicorpSyncAt DateTime?
+  lastMatchLeadsAt    DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   users            User[]
