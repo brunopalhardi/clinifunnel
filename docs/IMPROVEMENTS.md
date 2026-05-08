@@ -94,6 +94,9 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
+- **[INT-2.2] Fix de qualidade dos dados pro Clinicorp** — PR #_TBD_ — v0.32.2
+  Nome do paciente agora vem do contato Kommo (completo, ex: "Gabrielle Freitas") e nao do nome do card (frequentemente curto, ex: "Gabrielle" ou "Lead #N"). Util `phoneToClinicorp` normaliza qualquer formato de telefone (`+55..`, `(15)...`, etc) pra digitos puros sem DDI 55, com cuidado pra preservar DDD 55 (RS). Aplicado em paciente e appointment. 7 unit tests novos.
+
 - **[INT-2.1] Fix do teste end-to-end: email opcional + ATENDIDO POR** — PR #_TBD_ — v0.32.1
   Worker create-patient nao exige mais email pra integrar com Clinicorp (Clinicorp aceita criacao sem email; em estetica/odonto e comum lead chegar so com nome+telefone). `extractAppointmentFields` reconhece "ATENDIDO POR" (alem de profissional/dentista/code professional_id) — desbloqueia o pipeline da clinica AD que usa esse nome de campo. Descoberto em teste end-to-end Bruno-teste.
 

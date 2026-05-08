@@ -20,12 +20,16 @@ async function extractContact(
 ) {
   let phone: string | null = null;
   let email: string | null = null;
+  let name: string | null = null;
 
   const contacts = kommoLead._embedded?.contacts;
-  if (!contacts?.length) return { phone, email };
+  if (!contacts?.length) return { phone, email, name };
 
   try {
     const contact = await kommoClient.getContact(contacts[0].id);
+    // Nome do contato (geralmente completo: "Gabrielle Freitas") tende a ser
+    // melhor que o nome do card (curto: "Gabrielle" ou "Lead #N").
+    if (contact.name && contact.name.trim()) name = contact.name.trim();
     if (contact.custom_fields_values) {
       for (const field of contact.custom_fields_values) {
         const code = field.field_code?.toUpperCase();
@@ -41,7 +45,7 @@ async function extractContact(
     log.error({ contactId: contacts[0].id, err }, "failed to fetch contact");
   }
 
-  return { phone, email };
+  return { phone, email, name };
 }
 
 async function processLead(
@@ -65,7 +69,9 @@ async function processLead(
   const canalProspeccao = extractCanalProspeccao(kommoLead.custom_fields_values);
   const appointmentFields = extractAppointmentFields(kommoLead.custom_fields_values);
   const channel = classifyChannel(utms);
-  const { phone, email } = await extractContact(kommoClient, kommoLead);
+  const { phone, email, name: contactName } = await extractContact(kommoClient, kommoLead);
+  // Prefer nome do contato (completo) ao do card (frequentemente curto).
+  const displayName = contactName || kommoLead.name;
 
   const isAgendamento =
     clinic.stageAgendamento && statusId === clinic.stageAgendamento;
@@ -78,7 +84,7 @@ async function processLead(
       },
     },
     update: {
-      name: kommoLead.name,
+      name: displayName,
       phone,
       email,
       ...utms,
@@ -92,7 +98,7 @@ async function processLead(
     create: {
       clinicId: clinic.id,
       kommoLeadId: String(kommoLead.id),
-      name: kommoLead.name,
+      name: displayName,
       phone,
       email,
       ...utms,

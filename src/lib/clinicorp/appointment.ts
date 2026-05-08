@@ -1,6 +1,7 @@
 import { ClinicorpClient } from "./client";
 import { CreateAppointmentPayload } from "./types";
 import { logger } from "@/lib/logger";
+import { phoneToClinicorp } from "@/lib/utils/phone";
 
 const log = logger.child({ scope: "clinicorp-appointment" });
 
@@ -26,7 +27,7 @@ export async function createAppointmentInClinicorp(
   const payload: CreateAppointmentPayload = {
     Patient_PersonId: params.patientId,
     PatientName: params.patientName,
-    MobilePhone: params.phone,
+    MobilePhone: phoneToClinicorp(params.phone) ?? undefined,
     Email: params.email,
     date: params.date,
     fromTime: params.time,

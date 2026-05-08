@@ -1,5 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { formatPhoneBR, normalizePhoneBR, phoneMatchKey } from "./phone";
+import { formatPhoneBR, normalizePhoneBR, phoneMatchKey, phoneToClinicorp } from "./phone";
+
+describe("phoneToClinicorp: formata telefone pra envio ao Clinicorp", () => {
+  it("remove DDI 55 quando presente", () => {
+    expect(phoneToClinicorp("+5515997599933")).toBe("15997599933");
+    expect(phoneToClinicorp("5515997599933")).toBe("15997599933");
+    expect(phoneToClinicorp("+55 15 99759-9933")).toBe("15997599933");
+    expect(phoneToClinicorp("+55 (15) 99759-9933")).toBe("15997599933");
+  });
+
+  it("preserva numero sem DDI", () => {
+    expect(phoneToClinicorp("(15) 99759-9933")).toBe("15997599933");
+    expect(phoneToClinicorp("15997599933")).toBe("15997599933");
+    expect(phoneToClinicorp("(85) 99614-2824")).toBe("85996142824");
+  });
+
+  it("preserva DDD 55 (Rio Grande do Sul)", () => {
+    // 11 digitos: DDD 55 + celular -> NAO faz strip
+    expect(phoneToClinicorp("(55) 99761-1234")).toBe("55997611234");
+    expect(phoneToClinicorp("55997611234")).toBe("55997611234");
+  });
+
+  it("aceita fixo de 10 digitos", () => {
+    expect(phoneToClinicorp("(11) 3456-7890")).toBe("1134567890");
+    expect(phoneToClinicorp("1134567890")).toBe("1134567890");
+  });
+
+  it("retorna null pra entradas invalidas", () => {
+    expect(phoneToClinicorp(null)).toBe(null);
+    expect(phoneToClinicorp(undefined)).toBe(null);
+    expect(phoneToClinicorp("")).toBe(null);
+    expect(phoneToClinicorp("123")).toBe(null);
+    expect(phoneToClinicorp("+55")).toBe(null);
+    expect(phoneToClinicorp("999999999999")).toBe(null); // 12 digitos sem 55
+  });
+
+  it("limpa caracteres nao-numericos antes de processar", () => {
+    expect(phoneToClinicorp("+55  (15)  99759-9933 ")).toBe("15997599933");
+  });
+});
 
 describe("phoneMatchKey: chave para matching de telefones BR", () => {
   // Cenario fundamental: dois sistemas armazenam o mesmo numero de jeitos

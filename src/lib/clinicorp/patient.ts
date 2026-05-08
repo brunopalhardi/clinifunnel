@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ClinicorpClient } from "./client";
 import { ClinicorpPatient, CreatePatientPayload } from "./types";
-import { normalizePhoneBR } from "@/lib/utils/phone";
+import { normalizePhoneBR, phoneToClinicorp } from "@/lib/utils/phone";
 import { utmsToNote } from "@/lib/utils/utm";
 import { UTMData } from "@/types";
 
@@ -52,10 +52,12 @@ export async function findOrCreatePatientInClinicorp(
     canalProspeccao?: string | null;
   }
 ): Promise<ClinicorpPatient> {
+  // Telefone formatado pra Clinicorp: sem DDI (55), 10-11 digitos.
+  const clinicorpPhone = phoneToClinicorp(data.phone);
+
   // Try finding by phone first
-  if (data.phone) {
-    const digits = data.phone.replace(/\D/g, "");
-    const existing = await client.findPatient({ phone: digits });
+  if (clinicorpPhone) {
+    const existing = await client.findPatient({ phone: clinicorpPhone });
     if (existing) return existing;
   }
 
@@ -70,9 +72,7 @@ export async function findOrCreatePatientInClinicorp(
     subscriber_id: subscriberId,
     Name: data.name,
     Email: data.email,
-    MobilePhone: data.phone
-      ? parseInt(data.phone.replace(/\D/g, ""), 10)
-      : undefined,
+    MobilePhone: clinicorpPhone ? parseInt(clinicorpPhone, 10) : undefined,
     Notes: utmsToNote(data.utms, data.canalProspeccao),
     IgnoreSameName: "true",
   };
