@@ -93,27 +93,18 @@ export const createPatientWorker = new Worker(
       return;
     }
 
-    // Validate required fields
+    // Validate required fields. Email NAO e obrigatorio: Clinicorp aceita
+    // criacao sem email, e em estetica/odonto e comum lead chegar so com
+    // nome+telefone.
     const missingFields: string[] = [];
     if (!lead.name || lead.name.trim() === "") missingFields.push("name");
     if (!lead.phone) missingFields.push("phone");
-    if (!lead.email) missingFields.push("email");
 
     if (missingFields.length > 0) {
       log.warn(
         { leadId: lead.id, missingFields },
         "missing required fields, skipping clinicorp",
       );
-      if (lead.phone || lead.email) {
-        const localPatient = await prisma.patient.create({
-          data: {
-            clinicId: lead.clinicId,
-            name: lead.name,
-            phone: lead.phone,
-          },
-        });
-        await linkLeadToPatient(lead.id, localPatient.id);
-      }
       return;
     }
 

@@ -87,13 +87,20 @@ describe("extractAppointmentFields", () => {
     expect(result.appointmentTime).toBe("14:30");
   });
 
-  it("recognizes professional by name (profissional/dentista)", () => {
+  it("recognizes professional by name (profissional/dentista/atendido)", () => {
     expect(
       extractAppointmentFields([field("Profissional", "12345")]).appointmentProfId,
     ).toBe("12345");
     expect(
       extractAppointmentFields([field("Dentista responsavel", "67890")]).appointmentProfId,
     ).toBe("67890");
+    // INT-2.1: ATENDIDO POR usado pela clinica AD precisa bater
+    expect(
+      extractAppointmentFields([field("ATENDIDO POR", "Dra Alexia Duarte")]).appointmentProfId,
+    ).toBe("Dra Alexia Duarte");
+    expect(
+      extractAppointmentFields([field("Atendido por", "Dra Joao")]).appointmentProfId,
+    ).toBe("Dra Joao");
   });
 
   it("recognizes professional by field_code", () => {

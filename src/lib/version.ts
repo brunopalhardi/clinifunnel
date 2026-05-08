@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.32.0";
+export const APP_VERSION = "0.32.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.32.1",
+    date: "2026-05-08",
+    type: "patch",
+    changes: [
+      "INT-2.1 (fix do teste end-to-end): email nao e mais obrigatorio pra criar paciente no Clinicorp (Clinicorp aceita sem email)",
+      "extractAppointmentFields reconhece campo 'ATENDIDO POR' (usado pela clinica AD)",
+      "Matcher do profissional aceita 'profissional', 'dentista', 'atendido' ou code='professional_id'",
+      "2 unit tests novos cobrindo ATENDIDO POR",
+    ],
+  },
   {
     version: "0.32.0",
     date: "2026-05-07",
