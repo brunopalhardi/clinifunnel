@@ -212,6 +212,12 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold">Configuracoes</h1>
         <div className="flex items-center gap-3">
           <a
+            href="/dashboard/settings/clinicorp/professionals"
+            className="text-sm font-medium text-gold hover:underline"
+          >
+            Mapa de profissionais →
+          </a>
+          <a
             href="/dashboard/settings/users"
             className="text-sm font-medium text-gold hover:underline"
           >

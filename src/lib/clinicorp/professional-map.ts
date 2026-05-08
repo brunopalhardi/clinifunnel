@@ -62,3 +62,84 @@ export function resolveProfessionalId(
   }
   return null;
 }
+
+// Forma do input que o frontend manda pro endpoint PUT do mapa. Cada entry
+// representa uma linha da tabela ("nome no Kommo" -> "ID no Clinicorp").
+export interface ProfessionalMapEntry {
+  name: string;
+  id: number | string;
+}
+
+export type ValidateResult =
+  | { ok: true; map: ProfessionalMap }
+  | { ok: false; error: string };
+
+/**
+ * Valida e normaliza um array de entries vindo da UI antes de salvar no DB.
+ *
+ * Regras:
+ * - entries precisa ser array
+ * - cada entry: name nao vazio (apos trim) + id positivo (number ou string numerica)
+ * - sem nome duplicado case/whitespace insensitive (lookup do resolveProfessionalId
+ *   ja e normalizado, manter dois "Dra Alexia" e "Dra. ALEXIA" causa colisao)
+ * - retorna { ok: true, map } com chaves usando o nome ORIGINAL (preserva
+ *   maiusculas/espacos pra exibir na UI), valores convertidos pra number
+ */
+export function validateProfessionalMapInput(input: unknown): ValidateResult {
+  if (!Array.isArray(input)) {
+    return { ok: false, error: "entries deve ser um array" };
+  }
+
+  const map: ProfessionalMap = {};
+  const seenNormalized = new Map<string, string>(); // normalized -> originalName
+
+  for (let i = 0; i < input.length; i++) {
+    const entry = input[i] as Partial<ProfessionalMapEntry> | null | undefined;
+    if (!entry || typeof entry !== "object") {
+      return { ok: false, error: `entry ${i + 1}: formato invalido` };
+    }
+
+    const rawName = typeof entry.name === "string" ? entry.name.trim() : "";
+    if (!rawName) {
+      return { ok: false, error: `entry ${i + 1}: nome obrigatorio` };
+    }
+
+    let id: number;
+    if (typeof entry.id === "number") {
+      id = entry.id;
+    } else if (typeof entry.id === "string") {
+      const parsed = Number(entry.id.trim());
+      if (!Number.isFinite(parsed)) {
+        return { ok: false, error: `entry ${i + 1} ("${rawName}"): ID invalido` };
+      }
+      id = parsed;
+    } else {
+      return { ok: false, error: `entry ${i + 1} ("${rawName}"): ID obrigatorio` };
+    }
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return { ok: false, error: `entry ${i + 1} ("${rawName}"): ID precisa ser inteiro positivo` };
+    }
+
+    const norm = normalize(rawName);
+    const existing = seenNormalized.get(norm);
+    if (existing) {
+      return {
+        ok: false,
+        error: `entry ${i + 1}: nome "${rawName}" duplica "${existing}" (comparacao case/whitespace insensitive)`,
+      };
+    }
+    seenNormalized.set(norm, rawName);
+    map[rawName] = id;
+  }
+
+  return { ok: true, map };
+}
+
+/**
+ * Converte o ProfessionalMap (Record<string, number>) pra array de entries —
+ * formato consumido pela UI (lista de linhas da tabela).
+ */
+export function toEntries(map: ProfessionalMap): ProfessionalMapEntry[] {
+  return Object.entries(map).map(([name, id]) => ({ name, id }));
+}

@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseProfessionalMap, resolveProfessionalId } from "./professional-map";
+import {
+  parseProfessionalMap,
+  resolveProfessionalId,
+  toEntries,
+  validateProfessionalMapInput,
+} from "./professional-map";
 
 describe("parseProfessionalMap", () => {
   it("returns empty object for null/undefined/empty", () => {
@@ -92,5 +97,114 @@ describe("resolveProfessionalId", () => {
   it("rejects negative or zero numeric inputs (looks up as name)", () => {
     expect(resolveProfessionalId("0", map)).toBe(null);
     expect(resolveProfessionalId("-1", map)).toBe(null);
+  });
+});
+
+describe("validateProfessionalMapInput", () => {
+  it("rejects non-array input", () => {
+    expect(validateProfessionalMapInput(null)).toEqual({ ok: false, error: expect.any(String) });
+    expect(validateProfessionalMapInput({})).toEqual({ ok: false, error: expect.any(String) });
+    expect(validateProfessionalMapInput("string")).toEqual({ ok: false, error: expect.any(String) });
+  });
+
+  it("accepts empty array (clears the map)", () => {
+    expect(validateProfessionalMapInput([])).toEqual({ ok: true, map: {} });
+  });
+
+  it("accepts valid entries with numeric id", () => {
+    const result = validateProfessionalMapInput([
+      { name: "Dra. Alexia", id: 12345 },
+      { name: "Dr. Joao", id: 67890 },
+    ]);
+    expect(result).toEqual({ ok: true, map: { "Dra. Alexia": 12345, "Dr. Joao": 67890 } });
+  });
+
+  it("coerces numeric strings to numbers", () => {
+    const result = validateProfessionalMapInput([{ name: "Dra. Alexia", id: "12345" }]);
+    expect(result).toEqual({ ok: true, map: { "Dra. Alexia": 12345 } });
+  });
+
+  it("trims whitespace from names but preserves casing", () => {
+    const result = validateProfessionalMapInput([{ name: "  Dra. Alexia  ", id: 12345 }]);
+    expect(result).toEqual({ ok: true, map: { "Dra. Alexia": 12345 } });
+  });
+
+  it("rejects empty name", () => {
+    expect(validateProfessionalMapInput([{ name: "   ", id: 12345 }])).toEqual({
+      ok: false,
+      error: expect.stringContaining("nome obrigatorio"),
+    });
+  });
+
+  it("rejects missing id", () => {
+    expect(validateProfessionalMapInput([{ name: "Dra. Alexia" }])).toEqual({
+      ok: false,
+      error: expect.stringContaining("ID obrigatorio"),
+    });
+  });
+
+  it("rejects non-numeric id string", () => {
+    expect(validateProfessionalMapInput([{ name: "Dra. Alexia", id: "abc" }])).toEqual({
+      ok: false,
+      error: expect.stringContaining("ID invalido"),
+    });
+  });
+
+  it("rejects zero or negative ids", () => {
+    expect(validateProfessionalMapInput([{ name: "Dra. Alexia", id: 0 }])).toEqual({
+      ok: false,
+      error: expect.stringContaining("inteiro positivo"),
+    });
+    expect(validateProfessionalMapInput([{ name: "Dra. Alexia", id: -1 }])).toEqual({
+      ok: false,
+      error: expect.stringContaining("inteiro positivo"),
+    });
+  });
+
+  it("rejects non-integer ids", () => {
+    expect(validateProfessionalMapInput([{ name: "Dra. Alexia", id: 1.5 }])).toEqual({
+      ok: false,
+      error: expect.stringContaining("inteiro positivo"),
+    });
+  });
+
+  it("rejects duplicates case/whitespace insensitive", () => {
+    const result = validateProfessionalMapInput([
+      { name: "Dra Alexia Duarte", id: 12345 },
+      { name: "DRA ALEXIA DUARTE", id: 67890 },
+    ]);
+    expect(result).toEqual({ ok: false, error: expect.stringContaining("duplica") });
+  });
+
+  it("treats whitespace differences as duplicate", () => {
+    const result = validateProfessionalMapInput([
+      { name: "Dra Alexia", id: 12345 },
+      { name: "Dra  Alexia", id: 67890 }, // double space
+    ]);
+    expect(result).toEqual({ ok: false, error: expect.stringContaining("duplica") });
+  });
+
+  it("rejects malformed entry (not an object)", () => {
+    expect(validateProfessionalMapInput([null])).toEqual({
+      ok: false,
+      error: expect.stringContaining("formato invalido"),
+    });
+    expect(validateProfessionalMapInput(["string"])).toEqual({
+      ok: false,
+      error: expect.stringContaining("formato invalido"),
+    });
+  });
+});
+
+describe("toEntries", () => {
+  it("converts map to array of entries", () => {
+    expect(toEntries({ "Dra. Alexia": 12345, "Dr. Joao": 67890 })).toEqual([
+      { name: "Dra. Alexia", id: 12345 },
+      { name: "Dr. Joao", id: 67890 },
+    ]);
+  });
+
+  it("returns empty array for empty map", () => {
+    expect(toEntries({})).toEqual([]);
   });
 });
