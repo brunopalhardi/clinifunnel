@@ -93,7 +93,12 @@ function hasTimeNameKeyword(name: string): boolean {
 }
 
 function isProfessionalField(name: string, code: string): boolean {
-  return name.includes("profissional") || name.includes("dentista") || code === "professional_id";
+  return (
+    name.includes("profissional") ||
+    name.includes("dentista") ||
+    name.includes("atendido") ||
+    code === "professional_id"
+  );
 }
 
 function splitUnixTimestampToDateTime(value: string): { date: string; time: string } | null {

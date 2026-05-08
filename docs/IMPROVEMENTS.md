@@ -94,6 +94,9 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
+- **[INT-2.1] Fix do teste end-to-end: email opcional + ATENDIDO POR** — PR #_TBD_ — v0.32.1
+  Worker create-patient nao exige mais email pra integrar com Clinicorp (Clinicorp aceita criacao sem email; em estetica/odonto e comum lead chegar so com nome+telefone). `extractAppointmentFields` reconhece "ATENDIDO POR" (alem de profissional/dentista/code professional_id) — desbloqueia o pipeline da clinica AD que usa esse nome de campo. Descoberto em teste end-to-end Bruno-teste.
+
 - **[INT-2] Schema + lib do mapeamento de profissionais Kommo->Clinicorp** — PR #_TBD_ — v0.32.0
   Coluna `Clinic.professionalMap` (JSONB nullable, migration `20260507150000`). Helper `resolveProfessionalId` (`src/lib/clinicorp/professional-map.ts`) com lookup case e whitespace insensitive. Worker `create-patient` resolve o profissional via mapa antes de chamar Clinicorp; fallback pra ID numerico direto se valor do Kommo ja for digit-only (backwards-compat). Cadastro do mapa via SQL nesta versao — UI vem em INT-3. 11 unit tests novos.
 
