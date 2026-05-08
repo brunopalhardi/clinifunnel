@@ -11,6 +11,18 @@ export const syncClinicorpQueue = new Queue("sync-clinicorp", {
   connection: redis,
 });
 
+// Sync periodico a cada 15 minutos. BullMQ deduplica jobs repetidos pela jobId
+// derivada do schedule, entao registrar no boot do worker e idempotente.
+syncClinicorpQueue.add(
+  "sync",
+  {},
+  {
+    repeat: { every: 15 * 60 * 1000 },
+    removeOnComplete: 50,
+    removeOnFail: 50,
+  },
+);
+
 function mapStatus(estimateStatus: string, executed: boolean): string {
   if (executed) return "completed";
   switch (estimateStatus.toUpperCase()) {
@@ -133,8 +145,13 @@ export const syncClinicorpWorker = new Worker(
           }
         }
 
+        await prisma.clinic.update({
+          where: { id: clinic.id },
+          data: { lastClinicorpSyncAt: new Date() },
+        });
+
         log.info(
-          { patientsCreated, proceduresCreated, proceduresUpdated },
+          { clinicId: clinic.id, patientsCreated, proceduresCreated, proceduresUpdated },
           "sync done",
         );
       } catch (error) {

@@ -94,6 +94,9 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
+- **[INT-3.1] Sync automatico + fix do agrupamento por data** — PR #_TBD_ — v0.33.0
+  Workers `sync-clinicorp` e `match-leads` agora registram repeat job a cada 15min no boot (BullMQ repeat — antes so eram disparados pelo botao manual no dashboard, dia 06/05 ficou 24h sem refletir procedimentos novos). Corrigido tambem o agrupamento dos graficos "Receita por periodo" (Visao Geral) e "Receita por dia" (Financeiro): usavam `Procedure.createdAt` que e `Estimate.CreateDate` do Clinicorp (data de criacao do orcamento, nao do atendimento) — empilhava 45 procedures em 2 dias na timeline. Agora usam `COALESCE(completedAt, createdAt)` tanto no GROUP BY quanto no filtro de data, refletindo a data real de execucao. Schema ganhou `Clinic.lastClinicorpSyncAt` e `Clinic.lastMatchLeadsAt`; novo endpoint `GET /api/sync/status` retorna esses timestamps; header do dashboard mostra "Atualizado ha Xmin" ao lado do botao Sincronizar.
+
 - **[INT-2.2] Fix de qualidade dos dados pro Clinicorp** — PR #_TBD_ — v0.32.2
   Nome do paciente agora vem do contato Kommo (completo, ex: "Gabrielle Freitas") e nao do nome do card (frequentemente curto, ex: "Gabrielle" ou "Lead #N"). Util `phoneToClinicorp` normaliza qualquer formato de telefone (`+55..`, `(15)...`, etc) pra digitos puros sem DDI 55, com cuidado pra preservar DDD 55 (RS). Aplicado em paciente e appointment. 7 unit tests novos.
 

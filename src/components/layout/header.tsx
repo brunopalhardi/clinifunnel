@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,61 @@ const pageNames: Record<string, string> = {
   "/dashboard/settings": "Configuracoes",
 };
 
+// Formata diff em "ha Xmin/Xh/Xd". Mostra "agora" pra <60s e "ha mais de Nd" pra grandes.
+function formatRelative(iso: string | null): string | null {
+  if (!iso) return null;
+  const ts = new Date(iso).getTime();
+  if (Number.isNaN(ts)) return null;
+  const diffMs = Date.now() - ts;
+  if (diffMs < 0) return "agora";
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return "agora";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `ha ${min}min`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `ha ${hr}h`;
+  const days = Math.floor(hr / 24);
+  return `ha ${days}d`;
+}
+
 export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const { clinic, clinics, isSuperAdmin, selectClinic } = useClinic();
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  // Tick force re-render do "ha Xmin" sem novo fetch — segundo a cada 30s eh suficiente.
+  const [, setTick] = useState(0);
 
   const pageName = pageNames[pathname] || "Dashboard";
+
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/sync/status", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = await res.json();
+      // O mais recente entre os dois jobs reflete melhor "ultima atualizacao do dashboard"
+      // pra Bruno — ambos rodam juntos a cada 15min de qualquer jeito.
+      const last = [json?.data?.lastSyncAt, json?.data?.lastMatchAt]
+        .filter((x): x is string => Boolean(x))
+        .sort()
+        .pop() ?? null;
+      setLastSyncAt(last);
+    } catch {
+      // silencioso: badge desaparece, nada mais
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSyncStatus();
+    const refetch = setInterval(fetchSyncStatus, 60_000);
+    const repaint = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => {
+      clearInterval(refetch);
+      clearInterval(repaint);
+    };
+  }, [fetchSyncStatus]);
 
   async function handleSync() {
     setSyncing(true);
@@ -34,12 +81,18 @@ export function Header() {
         body: JSON.stringify({ type: "all" }),
       });
       setSyncMsg(res.ok ? "Sincronizado" : "Erro");
+      if (res.ok) {
+        // Espera o worker terminar (~5s suficiente pra updates curtos) antes de re-buscar status.
+        setTimeout(fetchSyncStatus, 5_000);
+      }
     } catch {
       setSyncMsg("Erro");
     }
     setSyncing(false);
     setTimeout(() => setSyncMsg(""), 3000);
   }
+
+  const relative = formatRelative(lastSyncAt);
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-sm px-6">
@@ -65,6 +118,14 @@ export function Header() {
       <div className="flex items-center gap-3">
         {syncMsg && (
           <span className="text-xs text-success">{syncMsg}</span>
+        )}
+        {!syncMsg && relative && (
+          <span
+            className="text-xs text-muted-foreground"
+            title={lastSyncAt ? `Ultima sincronizacao: ${new Date(lastSyncAt).toLocaleString("pt-BR")}` : undefined}
+          >
+            Atualizado {relative}
+          </span>
         )}
         <Button
           variant="outline"

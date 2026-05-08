@@ -11,6 +11,18 @@ export const matchLeadsQueue = new Queue("match-leads", {
   connection: redis,
 });
 
+// Match periodico a cada 15 minutos. Casa novos leads do Kommo a pacientes
+// existentes do Clinicorp sem precisar do botao manual no dashboard.
+matchLeadsQueue.add(
+  "match",
+  {},
+  {
+    repeat: { every: 15 * 60 * 1000 },
+    removeOnComplete: 50,
+    removeOnFail: 50,
+  },
+);
+
 export const matchLeadsWorker = new Worker(
   "match-leads",
   async () => {
@@ -29,6 +41,12 @@ export const matchLeadsWorker = new Worker(
         matched++;
       }
     }
+
+    // Job e global (sem clinicId): considera leads de todas as clinicas. Marca
+    // lastMatchLeadsAt em todas pra refletir que o job rodou — usado pelo
+    // indicador "Atualizado ha Xmin" no header.
+    const now = new Date();
+    await prisma.clinic.updateMany({ data: { lastMatchLeadsAt: now } });
 
     log.info(
       { processed: unmatchedLeads.length, matched },

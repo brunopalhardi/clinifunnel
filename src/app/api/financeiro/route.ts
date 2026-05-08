@@ -83,18 +83,21 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  // Receita por dia (últimos 30 dias se sem filtro, ou range)
+  // Receita por dia (últimos 30 dias se sem filtro, ou range).
+  // Agrupa por completedAt quando existe (data real de execucao vinda do Clinicorp),
+  // com fallback pra createdAt. Mesmo motivo do timeline da Visao Geral.
+  const procDateExpr = `COALESCE("completedAt", "createdAt")`;
   const revenueByDay = await prisma.$queryRawUnsafe<Array<{ day: string; total: number; count: number }>>(
     `SELECT
-       DATE("createdAt") as day,
+       DATE(${procDateExpr}) as day,
        SUM(value)::float as total,
        COUNT(*)::int as count
      FROM "Procedure"
      WHERE "clinicId" = $1
        AND status IN ('completed', 'approved')
-       ${from ? `AND "createdAt" >= $2::timestamp` : ""}
-       ${to ? `AND "createdAt" <= $${from ? "3" : "2"}::timestamp` : ""}
-     GROUP BY DATE("createdAt")
+       ${from ? `AND ${procDateExpr} >= $2::timestamp` : ""}
+       ${to ? `AND ${procDateExpr} <= $${from ? "3" : "2"}::timestamp` : ""}
+     GROUP BY DATE(${procDateExpr})
      ORDER BY day DESC
      LIMIT 60`,
     clinicId,
