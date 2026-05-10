@@ -86,6 +86,9 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
+- **[DASH-2] Fix do filtro de data dos leads** — PR #_TBD_ — v0.37.0
+  Filtro de data de leads (em /api/dashboard, /api/metrics, /api/leads) agora usa `Lead.kommoCreatedAt` (data de criacao no Kommo, fonte de verdade) em vez de `Lead.createdAt` (timestamp de quando o webhook chegou no nosso DB). Bruno reportou que filtro "ultimos 7 dias" mostrava 26 leads no CliniFunnel mas 18 no Kommo — investigacao confirmou: 9 leads "ruidosos" eram leads antigos do Kommo (alguns de marco/2025!) que so chegaram no nosso DB esses dias porque webhook so dispara em mudanca de stage e `@default(now())` marca a primeira insercao. Helper `buildLeadDateFilter` em `src/lib/dashboard-filters.ts` aplica `kommoCreatedAt` com fallback pra `createdAt` em legacy via Prisma OR (sem COALESCE). Listagem de leads tambem ordena por kommoCreatedAt. 5 unit tests novos. NAO toca em filtros de Procedure (so charts foram corrigidos em [INT-3.1]; KPIs de receita ainda usam createdAt — abrir DASH-3 se discrepancia aparecer).
+
 - **[DASH-1] Composicao da receita por origem** — PR #_TBD_ — v0.36.0
   Card novo na Visao Geral mostra de onde vem cada centavo: Captacao (pacientes com lead no `Clinic.pipelineId` — pipeline "QUALIFICACAO DE LEADS/AGENDAMENTO" da AD), Recorrentes (pacientes com lead em outros pipelines do Kommo, principalmente "PACIENTES RECORRENTES"), Walk-ins (pacientes sem lead capturado — entraram direto pelo Clinicorp). Cada bucket: R$, count e %. Surgiu da investigacao de [INT-3.2]: dos 351 procedures da AD, 181 sao Captacao, ~162 sao Recorrentes (de pipelines diferentes do principal), 144 sao Walk-ins. API ganhou `receitaPorOrigem: {captacao, recorrentes, walkIn, total}`. Filtro patientType nao aplica nos buckets (conceito ortogonal — clinica usa pipelines distintos pra cada caso).
 

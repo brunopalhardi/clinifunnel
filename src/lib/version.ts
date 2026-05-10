@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.36.0";
+export const APP_VERSION = "0.37.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.37.0",
+    date: "2026-05-10",
+    type: "minor",
+    changes: [
+      "DASH-2: filtro de data de leads agora usa Lead.kommoCreatedAt (data de criacao no Kommo) em vez de Lead.createdAt (data de insercao no nosso DB)",
+      "Antes: leads antigos do Kommo que mudavam de stage hoje viravam 'novos' nos ultimos 7d porque webhook so dispara em mudanca, e createdAt @default(now()) marca a primeira insercao",
+      "Verificado em prod: filtro 'ultimos 7 dias' mostrava 26 leads (DB), Kommo mostrava 18 leads (kommoCreatedAt) — diferenca de 9 leads ruidosos, alguns criados ha mais de 1 ano no Kommo",
+      "Aplicado em /api/dashboard, /api/metrics e /api/leads via helper buildLeadDateFilter em src/lib/dashboard-filters.ts",
+      "OR no Prisma: usa kommoCreatedAt quando existe; cai pra createdAt apenas em leads legacy com kommoCreatedAt null (hoje 0 leads, mas mantido pra robustez)",
+      "Listagem /api/leads tambem ordena por kommoCreatedAt (mais util que createdAt do DB pra leitura humana)",
+      "5 unit tests novos cobrindo helper",
+    ],
+  },
   {
     version: "0.36.0",
     date: "2026-05-10",
