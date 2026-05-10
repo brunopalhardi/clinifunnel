@@ -86,6 +86,12 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ## Concluidos
 
+- **[DASH-1] Composicao da receita por origem** — PR #_TBD_ — v0.36.0
+  Card novo na Visao Geral mostra de onde vem cada centavo: Captacao (pacientes com lead no `Clinic.pipelineId` — pipeline "QUALIFICACAO DE LEADS/AGENDAMENTO" da AD), Recorrentes (pacientes com lead em outros pipelines do Kommo, principalmente "PACIENTES RECORRENTES"), Walk-ins (pacientes sem lead capturado — entraram direto pelo Clinicorp). Cada bucket: R$, count e %. Surgiu da investigacao de [INT-3.2]: dos 351 procedures da AD, 181 sao Captacao, ~162 sao Recorrentes (de pipelines diferentes do principal), 144 sao Walk-ins. API ganhou `receitaPorOrigem: {captacao, recorrentes, walkIn, total}`. Filtro patientType nao aplica nos buckets (conceito ortogonal — clinica usa pipelines distintos pra cada caso).
+
+- **[INT-3.2] Investigacao dos "78 orfaos"** — sem PR (so investigacao, conclusao em DASH-1) — 2026-05-10
+  Hipotese inicial era "leads legacy com kommoPipelineId errado". Investigacao mostrou: nao sao orfaos, sao procedures de pacientes do pipeline `PACIENTES RECORRENTES` (11651619) e outros pipelines secundarios da AD (13635964 etc). Comportamento atual do dashboard ("Receita do funil" so do pipeline principal) esta CORRETO — leads recorrentes nao deveriam contar como captacao. Mas faltava visibilidade desses 162 procedures na UI: tratado em [DASH-1] com a Composicao da receita.
+
 - **[INT-4] Tela de Health da automacao Kommo->Clinicorp** — PR #_TBD_ — v0.35.0
   Pagina `/dashboard/settings/clinicorp/health` com checklist visual em 1 olhada do que esta OK ou faltando. Cobre: configuracao Kommo (subdomain/token/pipeline/stage), configuracao Clinicorp (user/token/businessId), mapa de profissionais cadastrado, flags `clinicorpAutoCreatePatient` e `clinicorpWebhookEnabled`, sync periodico OK (lastSyncAt/lastMatchAt < 30min), atividade nas 24h (webhooks recebidos por origem, leads e procedures criados), erros recentes em WebhookLog. Validacao opcional dos custom fields no Kommo (DATA E HORA CONSULTA + ATENDIDO POR) carrega em paralelo via `/api/clinics/[id]/health/kommo-fields` com fallback amigavel se Kommo offline ou token expirado. Helper `computeHealthChecks` testavel em `src/lib/clinicorp/health.ts` (4 status: ok/warning/error/info). Reuso dos helpers de detecao (hasAppointmentNameKeyword, hasTimeNameKeyword, isProfessionalField — exportados de `src/lib/kommo/utm.ts`) pra detecao de presenca bater com extracao runtime. 21 unit tests novos.
 
