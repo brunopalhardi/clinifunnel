@@ -68,10 +68,6 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Integracoes
 
-- **[INT-4] Tela de Health da automacao Kommo->Clinicorp**
-  Pagina `/dashboard/settings/clinicorp/health` com checklist visual: Kommo OK (token, pipeline, stage), Clinicorp OK (token, businessId), campos no Kommo mapeados (DATA E HORA CONSULTA, ATENDIDO POR), mapeamento de profissionais cadastrado, flag `clinicorpAutoCreatePatient`, ultimos eventos da automacao. Identifica em 1 olhada o que falta pra automacao funcionar 100%.
-  Eixo: integracoes · Bump: minor
-
 - **[INT-5] Sincronizar profissionais do Clinicorp**
   Botao "Importar profissionais do Clinicorp" na tela INT-3. Puxa lista via API do Clinicorp e pre-preenche entradas do mapa (faltando so casar com nomes do Kommo). Reduz friccao de onboarding pra clinicas novas.
   Eixo: integracoes · Bump: patch
@@ -89,6 +85,9 @@ _(vazio — adicionar quando comecar trabalho)_
 ---
 
 ## Concluidos
+
+- **[INT-4] Tela de Health da automacao Kommo->Clinicorp** — PR #_TBD_ — v0.35.0
+  Pagina `/dashboard/settings/clinicorp/health` com checklist visual em 1 olhada do que esta OK ou faltando. Cobre: configuracao Kommo (subdomain/token/pipeline/stage), configuracao Clinicorp (user/token/businessId), mapa de profissionais cadastrado, flags `clinicorpAutoCreatePatient` e `clinicorpWebhookEnabled`, sync periodico OK (lastSyncAt/lastMatchAt < 30min), atividade nas 24h (webhooks recebidos por origem, leads e procedures criados), erros recentes em WebhookLog. Validacao opcional dos custom fields no Kommo (DATA E HORA CONSULTA + ATENDIDO POR) carrega em paralelo via `/api/clinics/[id]/health/kommo-fields` com fallback amigavel se Kommo offline ou token expirado. Helper `computeHealthChecks` testavel em `src/lib/clinicorp/health.ts` (4 status: ok/warning/error/info). Reuso dos helpers de detecao (hasAppointmentNameKeyword, hasTimeNameKeyword, isProfessionalField — exportados de `src/lib/kommo/utm.ts`) pra detecao de presenca bater com extracao runtime. 21 unit tests novos.
 
 - **[INT-3] UI de gerenciamento do mapa de profissionais** — PR #_TBD_ — v0.34.0
   Tela em `/dashboard/settings/clinicorp/professionals` com tabela editavel (nome no Kommo + ID no Clinicorp), botoes Adicionar/Remover/Cancelar/Salvar. Endpoint `GET/PUT /api/clinics/[id]/professional-map` com RBAC (settings:read e settings:write). Validacao no servidor via helper `validateProfessionalMapInput`: nome nao vazio, ID inteiro positivo, sem duplicado case/whitespace insensitive (mesma regra do `resolveProfessionalId` pra evitar colisao no lookup runtime). Link "Mapa de profissionais →" no header de /dashboard/settings ao lado de "Gerenciar usuarios →". Antes era cadastrado via SQL direto no banco — agora clinic_admin/super_admin gerencia sozinho. 15 unit tests novos. INT-5 ("Importar profissionais do Clinicorp") fica num PR separado depois.

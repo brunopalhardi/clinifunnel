@@ -84,20 +84,26 @@ export interface AppointmentFields {
 
 const APPOINTMENT_TZ = "America/Sao_Paulo";
 
-function hasAppointmentNameKeyword(name: string): boolean {
-  return name.includes("data") && (name.includes("consulta") || name.includes("agendamento"));
+// Exportados pra reuso no health check (INT-4) — manter detecao runtime
+// e detecao de presenca em sync.
+export function hasAppointmentNameKeyword(name: string): boolean {
+  const n = name.toLowerCase();
+  return n.includes("data") && (n.includes("consulta") || n.includes("agendamento"));
 }
 
-function hasTimeNameKeyword(name: string): boolean {
-  return name.includes("hora") || name.includes("horario");
+export function hasTimeNameKeyword(name: string): boolean {
+  const n = name.toLowerCase();
+  return n.includes("hora") || n.includes("horario");
 }
 
-function isProfessionalField(name: string, code: string): boolean {
+export function isProfessionalField(name: string, code: string): boolean {
+  const n = name.toLowerCase();
+  const c = code.toLowerCase();
   return (
-    name.includes("profissional") ||
-    name.includes("dentista") ||
-    name.includes("atendido") ||
-    code === "professional_id"
+    n.includes("profissional") ||
+    n.includes("dentista") ||
+    n.includes("atendido") ||
+    c === "professional_id"
   );
 }
 
