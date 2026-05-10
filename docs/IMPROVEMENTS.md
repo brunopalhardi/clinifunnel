@@ -68,10 +68,6 @@ _(vazio — adicionar quando comecar trabalho)_
 
 ### Integracoes
 
-- **[INT-3] UI de gerenciamento do mapa de profissionais**
-  Tela em `/dashboard/settings/clinicorp/professionals` com lista de pares `nome Kommo -> ID Clinicorp`, formulario pra adicionar/editar/remover. Permite super_admin/clinic_admin gerenciar o mapeamento sem mexer em SQL.
-  Eixo: integracoes · Bump: minor
-
 - **[INT-4] Tela de Health da automacao Kommo->Clinicorp**
   Pagina `/dashboard/settings/clinicorp/health` com checklist visual: Kommo OK (token, pipeline, stage), Clinicorp OK (token, businessId), campos no Kommo mapeados (DATA E HORA CONSULTA, ATENDIDO POR), mapeamento de profissionais cadastrado, flag `clinicorpAutoCreatePatient`, ultimos eventos da automacao. Identifica em 1 olhada o que falta pra automacao funcionar 100%.
   Eixo: integracoes · Bump: minor
@@ -93,6 +89,9 @@ _(vazio — adicionar quando comecar trabalho)_
 ---
 
 ## Concluidos
+
+- **[INT-3] UI de gerenciamento do mapa de profissionais** — PR #_TBD_ — v0.34.0
+  Tela em `/dashboard/settings/clinicorp/professionals` com tabela editavel (nome no Kommo + ID no Clinicorp), botoes Adicionar/Remover/Cancelar/Salvar. Endpoint `GET/PUT /api/clinics/[id]/professional-map` com RBAC (settings:read e settings:write). Validacao no servidor via helper `validateProfessionalMapInput`: nome nao vazio, ID inteiro positivo, sem duplicado case/whitespace insensitive (mesma regra do `resolveProfessionalId` pra evitar colisao no lookup runtime). Link "Mapa de profissionais →" no header de /dashboard/settings ao lado de "Gerenciar usuarios →". Antes era cadastrado via SQL direto no banco — agora clinic_admin/super_admin gerencia sozinho. 15 unit tests novos. INT-5 ("Importar profissionais do Clinicorp") fica num PR separado depois.
 
 - **[INT-3.1] Sync automatico + fix do agrupamento por data** — PR #_TBD_ — v0.33.0
   Workers `sync-clinicorp` e `match-leads` agora registram repeat job a cada 15min no boot (BullMQ repeat — antes so eram disparados pelo botao manual no dashboard, dia 06/05 ficou 24h sem refletir procedimentos novos). Corrigido tambem o agrupamento dos graficos "Receita por periodo" (Visao Geral) e "Receita por dia" (Financeiro): usavam `Procedure.createdAt` que e `Estimate.CreateDate` do Clinicorp (data de criacao do orcamento, nao do atendimento) — empilhava 45 procedures em 2 dias na timeline. Agora usam `COALESCE(completedAt, createdAt)` tanto no GROUP BY quanto no filtro de data, refletindo a data real de execucao. Schema ganhou `Clinic.lastClinicorpSyncAt` e `Clinic.lastMatchLeadsAt`; novo endpoint `GET /api/sync/status` retorna esses timestamps; header do dashboard mostra "Atualizado ha Xmin" ao lado do botao Sincronizar.

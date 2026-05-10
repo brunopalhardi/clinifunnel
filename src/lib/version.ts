@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.33.0";
+export const APP_VERSION = "0.34.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.34.0",
+    date: "2026-05-08",
+    type: "minor",
+    changes: [
+      "INT-3: UI pra gerenciar o mapa de profissionais Kommo->Clinicorp em /dashboard/settings/clinicorp/professionals (antes so via SQL direto)",
+      "Tabela editavel: linha por profissional com nome (Kommo) + ID (Clinicorp), botoes Adicionar/Remover/Cancelar/Salvar",
+      "Endpoint GET/PUT /api/clinics/[id]/professional-map com RBAC (settings:read e settings:write)",
+      "Validacao no servidor: nome nao vazio, ID inteiro positivo, sem duplicado case/whitespace insensitive",
+      "Helper validateProfessionalMapInput em src/lib/clinicorp/professional-map.ts (testavel)",
+      "Link 'Mapa de profissionais →' no header da pagina /dashboard/settings",
+      "15 unit tests novos cobrindo validacao + dedup + edge cases",
+    ],
+  },
   {
     version: "0.33.0",
     date: "2026-05-08",
