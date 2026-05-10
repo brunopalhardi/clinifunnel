@@ -81,6 +81,44 @@ export async function GET(request: NextRequest) {
 
   const leadWhere = { clinicId, ...pipelineFilter, ...patientTypeFilter, ...dateFilter };
 
+  // DASH-1: 3 buckets de origem da receita.
+  // Captacao: pacientes com lead no pipelineId atual (= mesmo dataset do "Receita do funil").
+  // Recorrentes: pacientes com lead em outros pipelines, sem nenhum lead no principal.
+  // Walk-ins: pacientes sem lead nenhum.
+  // OBS: NAO usa patientTypeFilter porque "novo vs existente" eh ortogonal a "captacao
+  // vs recorrente vs walk-in" (clinica AD usa pipelines distintos pra cada caso).
+  const procedureBaseStatus = { in: ["completed", "approved"] };
+
+  const captacaoWhere = clinic?.pipelineId
+    ? {
+        clinicId,
+        status: procedureBaseStatus,
+        patient: { leads: { some: { kommoPipelineId: clinic.pipelineId } } },
+        ...procedureDateFilter,
+      }
+    : null;
+
+  const recorrentesWhere = clinic?.pipelineId
+    ? {
+        clinicId,
+        status: procedureBaseStatus,
+        AND: [
+          { patient: { leads: { some: { kommoPipelineId: { not: clinic.pipelineId } } } } },
+          { patient: { leads: { none: { kommoPipelineId: clinic.pipelineId } } } },
+        ],
+        ...procedureDateFilter,
+      }
+    : null;
+
+  const walkInWhere = {
+    clinicId,
+    status: procedureBaseStatus,
+    patient: { leads: { none: {} } },
+    ...procedureDateFilter,
+  };
+
+  const emptyAgg = { _count: { id: 0 }, _sum: { value: 0 } };
+
   const [
     totalLeads,
     campaignLeads,
@@ -91,6 +129,9 @@ export async function GET(request: NextRequest) {
     adSpendAgg,
     topProcedures,
     canalBreakdown,
+    captacaoAgg,
+    recorrentesAgg,
+    walkInAgg,
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
@@ -113,7 +154,7 @@ export async function GET(request: NextRequest) {
     prisma.procedure.aggregate({
       where: {
         clinicId,
-        status: { in: ["completed", "approved"] },
+        status: procedureBaseStatus,
         ...procedureDateFilter,
       },
       _count: { id: true },
@@ -139,6 +180,13 @@ export async function GET(request: NextRequest) {
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
     }),
+    captacaoWhere
+      ? prisma.procedure.aggregate({ where: captacaoWhere, _count: { id: true }, _sum: { value: true } })
+      : Promise.resolve(emptyAgg),
+    recorrentesWhere
+      ? prisma.procedure.aggregate({ where: recorrentesWhere, _count: { id: true }, _sum: { value: true } })
+      : Promise.resolve(emptyAgg),
+    prisma.procedure.aggregate({ where: walkInWhere, _count: { id: true }, _sum: { value: true } }),
   ]);
 
   // Decidir granularity (dia/semana/mes) baseado no range
@@ -236,6 +284,35 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  // DASH-1: composicao da receita
+  const captacaoRevenue = captacaoAgg._sum.value ?? 0;
+  const recorrentesRevenue = recorrentesAgg._sum.value ?? 0;
+  const walkInRevenue = walkInAgg._sum.value ?? 0;
+  const totalOrigem = captacaoRevenue + recorrentesRevenue + walkInRevenue;
+  const pct = (v: number) => (totalOrigem > 0 ? (v / totalOrigem) * 100 : 0);
+
+  const receitaPorOrigem = {
+    captacao: {
+      count: captacaoAgg._count.id,
+      revenue: captacaoRevenue,
+      percent: pct(captacaoRevenue),
+    },
+    recorrentes: {
+      count: recorrentesAgg._count.id,
+      revenue: recorrentesRevenue,
+      percent: pct(recorrentesRevenue),
+    },
+    walkIn: {
+      count: walkInAgg._count.id,
+      revenue: walkInRevenue,
+      percent: pct(walkInRevenue),
+    },
+    total: {
+      count: captacaoAgg._count.id + recorrentesAgg._count.id + walkInAgg._count.id,
+      revenue: totalOrigem,
+    },
+  };
+
   return NextResponse.json({
     data: {
       totalLeads,
@@ -254,6 +331,7 @@ export async function GET(request: NextRequest) {
       revenueGranularity: granularity,
       topProcedures: topProcs,
       channelPerformance,
+      receitaPorOrigem,
       canalBreakdown: canalBreakdown.map((c) => ({
         canal: c.canalProspeccao ?? "Nao identificado",
         count: c._count.id,

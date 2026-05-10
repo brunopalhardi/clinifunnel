@@ -4,6 +4,19 @@ import { useCallback, useEffect, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
 
+interface RevenueBucket {
+  count: number;
+  revenue: number;
+  percent: number;
+}
+
+interface ReceitaPorOrigem {
+  captacao: RevenueBucket;
+  recorrentes: RevenueBucket;
+  walkIn: RevenueBucket;
+  total: { count: number; revenue: number };
+}
+
 interface DashboardData {
   totalLeads: number;
   campaignLeads: number;
@@ -21,6 +34,7 @@ interface DashboardData {
   revenueGranularity?: "day" | "week" | "month";
   topProcedures: { name: string; count: number; revenue: number; ticketMedio: number }[];
   channelPerformance: { channel: string; spend: number; impressions: number; clicks: number }[];
+  receitaPorOrigem?: ReceitaPorOrigem;
   canalBreakdown: { canal: string; count: number }[];
 }
 
@@ -204,6 +218,36 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Composicao da receita (DASH-1) */}
+      {d.receitaPorOrigem && d.receitaPorOrigem.total.revenue > 0 && (
+        <div className="rounded-xl bg-card p-6 glass-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold">Composicao da receita</h2>
+            <span className="text-xs text-muted-foreground">Total: {fmt(d.receitaPorOrigem.total.revenue)}</span>
+          </div>
+          <div className="space-y-3">
+            <RevenueOriginRow
+              label="Captacao"
+              tooltip="Pacientes com lead no pipeline de captacao"
+              bucket={d.receitaPorOrigem.captacao}
+              colorClass="from-success/60 to-success"
+            />
+            <RevenueOriginRow
+              label="Recorrentes"
+              tooltip="Pacientes com lead em outros pipelines (recorrentes)"
+              bucket={d.receitaPorOrigem.recorrentes}
+              colorClass="from-gold/60 to-gold"
+            />
+            <RevenueOriginRow
+              label="Walk-ins"
+              tooltip="Pacientes sem lead capturado (entraram direto pelo Clinicorp)"
+              bucket={d.receitaPorOrigem.walkIn}
+              colorClass="from-muted-foreground/40 to-muted-foreground/70"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Performance by Channel + Top Procedures */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Channel Performance */}
@@ -329,6 +373,41 @@ function KpiCard({ label, value, isCurrency, breakdown, icon, highlight }: {
       </div>
       <p className={`font-display text-2xl font-bold ${valueClass}`}>{displayValue}</p>
       {breakdown && <p className="text-[11px] text-muted-foreground mt-1">{breakdown}</p>}
+    </div>
+  );
+}
+
+function RevenueOriginRow({
+  label,
+  tooltip,
+  bucket,
+  colorClass,
+}: {
+  label: string;
+  tooltip: string;
+  bucket: RevenueBucket;
+  colorClass: string;
+}) {
+  const width = Math.max(bucket.percent, 2);
+  return (
+    <div title={tooltip}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-sm">
+          <span className="font-semibold">{fmt(bucket.revenue)}</span>{" "}
+          <span className="text-xs text-muted-foreground">
+            · {bucket.count} {bucket.count === 1 ? "procedure" : "procedures"}
+            {" · "}
+            {bucket.percent.toFixed(1)}%
+          </span>
+        </span>
+      </div>
+      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full rounded-full bg-gradient-to-r ${colorClass} transition-all duration-700`}
+          style={{ width: `${width}%` }}
+        />
+      </div>
     </div>
   );
 }

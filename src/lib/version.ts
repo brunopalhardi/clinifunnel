@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.35.0";
+export const APP_VERSION = "0.36.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.36.0",
+    date: "2026-05-10",
+    type: "minor",
+    changes: [
+      "DASH-1: card 'Composicao da receita' na Visao Geral mostra de onde vem cada centavo da clinica",
+      "3 buckets somando 100%: Captacao (pacientes do pipeline atual), Recorrentes (pacientes de outros pipelines), Walk-ins (pacientes sem lead capturado)",
+      "Cada bucket: valor R$, count de procedures e %",
+      "Investigacao INT-3.2 mostrou que os '78 orfaos' (na verdade 162) eram procedures de pacientes do pipeline 'PACIENTES RECORRENTES' do Kommo — nao bug, mas faltava visibilidade",
+      "API /api/dashboard ganhou campo receitaPorOrigem com {captacao, recorrentes, walkIn, total}",
+      "Filtro de patientType (novo/existente) NAO aplica nos buckets — sao conceitos ortogonais (pipeline vs lead.isNewPatient)",
+    ],
+  },
   {
     version: "0.35.0",
     date: "2026-05-10",
