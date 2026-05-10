@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
+import { buildLeadDateFilter } from "@/lib/dashboard-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -38,17 +39,22 @@ export async function GET(request: NextRequest) {
 
   if (channel) where.channel = channel;
   if (campaign) where.utmCampaign = campaign;
-  if (from || to) {
-    where.createdAt = {
-      ...(from ? { gte: new Date(from) } : {}),
-      ...(to ? { lte: new Date(to) } : {}),
-    };
+  // DASH-2: filtra por kommoCreatedAt (fonte de verdade) com fallback pra
+  // createdAt em legacy. Espalhamos via OR — junta com os demais filtros via AND.
+  const dateFilter = buildLeadDateFilter({ from, to });
+  if (dateFilter.OR) {
+    where.OR = dateFilter.OR;
   }
 
   const leads = await prisma.lead.findMany({
     where,
     include: { patient: true },
-    orderBy: { createdAt: "desc" },
+    // Ordena por kommoCreatedAt (data de criacao no Kommo) com fallback —
+    // mais util que createdAt do nosso DB pra leitura humana.
+    orderBy: [
+      { kommoCreatedAt: { sort: "desc", nulls: "last" } },
+      { createdAt: "desc" },
+    ],
     take: 100,
   });
 

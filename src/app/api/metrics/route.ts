@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
+import { buildLeadDateFilter } from "@/lib/dashboard-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -20,15 +21,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
   }
 
-  const dateFilter =
-    from || to
-      ? {
-          createdAt: {
-            ...(from ? { gte: new Date(from) } : {}),
-            ...(to ? { lte: new Date(to) } : {}),
-          },
-        }
-      : {};
+  // DASH-2: filtro de leads usa kommoCreatedAt (fonte de verdade) com fallback.
+  const dateFilter = buildLeadDateFilter({ from, to });
 
   const [totalLeads, campaignLeads, agendamentos, procedureAgg] =
     await Promise.all([

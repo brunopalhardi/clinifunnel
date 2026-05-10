@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
+import { buildLeadDateFilter } from "@/lib/dashboard-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -50,12 +51,12 @@ export async function GET(request: NextRequest) {
       ? { isNewPatient: false }
       : {};
 
-  const dateFilter = from || to ? {
-    createdAt: {
-      ...(from ? { gte: new Date(from) } : {}),
-      ...(to ? { lte: new Date(to) } : {}),
-    },
-  } : {};
+  // DASH-2: filtro de data dos LEADS usa kommoCreatedAt (fonte de verdade do
+  // Kommo) com fallback pra createdAt em legacy. Antes usava createdAt direto
+  // (DB insert), o que inflava contagens — leads antigos do Kommo que mudavam
+  // de stage hoje viravam "novos" no nosso DB porque webhook so dispara em
+  // mudanca, e createdAt @default(now()) sempre marca a primeira insercao.
+  const dateFilter = buildLeadDateFilter({ from, to });
 
   const procedureDateFilter = from || to ? {
     createdAt: {
