@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.34.0";
+export const APP_VERSION = "0.35.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,21 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.35.0",
+    date: "2026-05-10",
+    type: "minor",
+    changes: [
+      "INT-4: tela de Health da automacao Kommo->Clinicorp em /dashboard/settings/clinicorp/health",
+      "Checklist visual em 1 olhada: configuracao Kommo/Clinicorp, mapa de profissionais, flags clinicorpAutoCreatePatient/clinicorpWebhookEnabled, sync periodico (lastSyncAt/lastMatchAt < 30min), atividade nas 24h, erros recentes",
+      "Validacao opcional dos custom fields no Kommo via API (DATA E HORA CONSULTA + ATENDIDO POR) — carrega em paralelo com fallback se Kommo offline/token expirou, sem quebrar a tela",
+      "Endpoint GET /api/clinics/[id]/health (DB-only) e /api/clinics/[id]/health/kommo-fields (chama Kommo)",
+      "Helper computeHealthChecks em src/lib/clinicorp/health.ts (testavel) com 4 status: ok/warning/error/info e mensagem amigavel por item",
+      "Reuso dos helpers hasAppointmentNameKeyword/hasTimeNameKeyword/isProfessionalField (exportados de src/lib/kommo/utm.ts) pra detecao bater com runtime",
+      "Link 'Health automacao →' no header de /dashboard/settings",
+      "21 unit tests novos cobrindo todos os status, edge cases e detecao de campos Kommo",
+    ],
+  },
   {
     version: "0.34.0",
     date: "2026-05-08",
