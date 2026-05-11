@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
-import { buildLeadDateFilter } from "@/lib/dashboard-filters";
+import { APPROVED_PROCEDURE_FILTER, buildLeadDateFilter } from "@/lib/dashboard-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       prisma.procedure.aggregate({
         where: {
           clinicId,
-          status: { in: ["completed", "approved"] },
+          ...APPROVED_PROCEDURE_FILTER,
           ...(from || to
             ? {
                 createdAt: {
@@ -53,13 +53,14 @@ export async function GET(request: NextRequest) {
             : {}),
         },
         _count: { id: true },
-        _sum: { value: true },
+        _sum: { value: true, discountAmount: true },
       }),
     ]);
 
   const organicLeads = totalLeads - campaignLeads;
   const procedimentos = procedureAgg._count.id;
-  const totalRevenue = procedureAgg._sum.value ?? 0;
+  // [DASH-3] receita liquida
+  const totalRevenue = (procedureAgg._sum.value ?? 0) - (procedureAgg._sum.discountAmount ?? 0);
   const conversionRate =
     totalLeads > 0 ? (agendamentos / totalLeads) * 100 : 0;
 

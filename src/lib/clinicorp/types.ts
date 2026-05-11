@@ -48,6 +48,11 @@ export interface ClinicorpEstimateProcedure {
   StatusDescription: string;
   DentistName: string;
   Patient_PersonId: number;
+  // [DASH-3] Campos adicionais usados pra precisao de receita:
+  // PaymentAccounted="X" -> pagamento contabilizado (entra em "Vendas" no Clinicorp)
+  // Deleted="X" -> procedure deletado, pula no sync
+  PaymentAccounted?: string;
+  Deleted?: string;
 }
 
 export interface ClinicorpBusiness {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
-import { buildLeadDateFilter } from "@/lib/dashboard-filters";
+import { APPROVED_PROCEDURE_FILTER, buildLeadDateFilter } from "@/lib/dashboard-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -72,10 +72,14 @@ export async function GET(request: NextRequest) {
     },
   } : {};
 
-  // Filter: only procedures whose patient has at least one lead (came through funnel)
+  // [DASH-3] Filtro base de receita: procs Aprovado (status nivel-procedure,
+  // vem do Clinicorp) e nao-deletado. value liquido = value - discountAmount.
+  // Antes filtravamos por status legado in ["completed", "approved"], que vinha
+  // do est.Status (granularidade errada — incluia procs "Orçamento" dentro de
+  // estimates APPROVED).
   const funnelProcedureFilter = {
     clinicId,
-    status: { in: ["completed", "approved"] },
+    ...APPROVED_PROCEDURE_FILTER,
     patient: { leads: { some: { ...pipelineFilter, ...patientTypeFilter } } },
     ...procedureDateFilter,
   };
@@ -86,14 +90,10 @@ export async function GET(request: NextRequest) {
   // Captacao: pacientes com lead no pipelineId atual (= mesmo dataset do "Receita do funil").
   // Recorrentes: pacientes com lead em outros pipelines, sem nenhum lead no principal.
   // Walk-ins: pacientes sem lead nenhum.
-  // OBS: NAO usa patientTypeFilter porque "novo vs existente" eh ortogonal a "captacao
-  // vs recorrente vs walk-in" (clinica AD usa pipelines distintos pra cada caso).
-  const procedureBaseStatus = { in: ["completed", "approved"] };
-
   const captacaoWhere = clinic?.pipelineId
     ? {
         clinicId,
-        status: procedureBaseStatus,
+        ...APPROVED_PROCEDURE_FILTER,
         patient: { leads: { some: { kommoPipelineId: clinic.pipelineId } } },
         ...procedureDateFilter,
       }
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
   const recorrentesWhere = clinic?.pipelineId
     ? {
         clinicId,
-        status: procedureBaseStatus,
+        ...APPROVED_PROCEDURE_FILTER,
         AND: [
           { patient: { leads: { some: { kommoPipelineId: { not: clinic.pipelineId } } } } },
           { patient: { leads: { none: { kommoPipelineId: clinic.pipelineId } } } },
@@ -113,12 +113,12 @@ export async function GET(request: NextRequest) {
 
   const walkInWhere = {
     clinicId,
-    status: procedureBaseStatus,
+    ...APPROVED_PROCEDURE_FILTER,
     patient: { leads: { none: {} } },
     ...procedureDateFilter,
   };
 
-  const emptyAgg = { _count: { id: 0 }, _sum: { value: 0 } };
+  const emptyAgg = { _count: { id: 0 }, _sum: { value: 0, discountAmount: 0 } };
 
   const [
     totalLeads,
@@ -145,21 +145,21 @@ export async function GET(request: NextRequest) {
         patient: { procedures: { some: {} } },
       },
     }),
-    // Procedures DO FUNIL (apenas pacientes vinculados a leads)
+    // Procedures DO FUNIL (apenas pacientes vinculados a leads) — soma bruta + desconto
     prisma.procedure.aggregate({
       where: funnelProcedureFilter,
       _count: { id: true },
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
     }),
     // Procedures TOTAIS da clinica (independente de funil)
     prisma.procedure.aggregate({
       where: {
         clinicId,
-        status: procedureBaseStatus,
+        ...APPROVED_PROCEDURE_FILTER,
         ...procedureDateFilter,
       },
       _count: { id: true },
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
     }),
     prisma.adCampaignData.aggregate({
       where: { clinicId, ...adDateFilter },
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
     prisma.procedure.groupBy({
       by: ["name"],
       where: funnelProcedureFilter,
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
       _count: { id: true },
       orderBy: { _sum: { value: "desc" } },
       take: 3,
@@ -182,12 +182,12 @@ export async function GET(request: NextRequest) {
       orderBy: { _count: { id: "desc" } },
     }),
     captacaoWhere
-      ? prisma.procedure.aggregate({ where: captacaoWhere, _count: { id: true }, _sum: { value: true } })
+      ? prisma.procedure.aggregate({ where: captacaoWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } })
       : Promise.resolve(emptyAgg),
     recorrentesWhere
-      ? prisma.procedure.aggregate({ where: recorrentesWhere, _count: { id: true }, _sum: { value: true } })
+      ? prisma.procedure.aggregate({ where: recorrentesWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } })
       : Promise.resolve(emptyAgg),
-    prisma.procedure.aggregate({ where: walkInWhere, _count: { id: true }, _sum: { value: true } }),
+    prisma.procedure.aggregate({ where: walkInWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } }),
   ]);
 
   // Decidir granularity (dia/semana/mes) baseado no range
@@ -227,12 +227,16 @@ export async function GET(request: NextRequest) {
     dateConditions += ` AND ${procDateExpr} <= $${dateParams.length}::timestamp`;
   }
 
+  // [DASH-3] Filtra agora por statusDescription='Aprovado' + deleted=false em vez
+  // do legacy status IN ('completed','approved'). E soma value LIQUIDO (- discountAmount).
   const revenueTimeline = await prisma.$queryRawUnsafe<Array<{ bucket: Date; total: number }>>(
-    `SELECT date_trunc('${truncFn}', ${procDateExpr}) as bucket, SUM(p.value)::float as total
+    `SELECT date_trunc('${truncFn}', ${procDateExpr}) as bucket,
+            SUM(p.value - p."discountAmount")::float as total
      FROM "Procedure" p
      INNER JOIN "Patient" pt ON p."patientId" = pt.id
      WHERE p."clinicId" = $1
-       AND p.status IN ('completed', 'approved')
+       AND p."statusDescription" = 'Aprovado'
+       AND p."deleted" = false
        ${dateConditions}
      GROUP BY bucket ORDER BY bucket ASC`,
     ...dateParams
@@ -240,9 +244,10 @@ export async function GET(request: NextRequest) {
 
   const organicLeads = totalLeads - campaignLeads;
   const procedimentos = procedureAgg._count.id;
-  const totalRevenue = procedureAgg._sum.value ?? 0;
+  // [DASH-3] Receita liquida: bruto - desconto rateado entre aprovados.
+  const totalRevenue = (procedureAgg._sum.value ?? 0) - (procedureAgg._sum.discountAmount ?? 0);
   const procedimentosClinica = totalProcedureAgg._count.id;
-  const receitaClinica = totalProcedureAgg._sum.value ?? 0;
+  const receitaClinica = (totalProcedureAgg._sum.value ?? 0) - (totalProcedureAgg._sum.discountAmount ?? 0);
   const totalSpend = adSpendAgg._sum.spend ?? 0;
   const cpl = campaignLeads > 0 && totalSpend > 0 ? totalSpend / campaignLeads : null;
 
@@ -253,12 +258,15 @@ export async function GET(request: NextRequest) {
     value: Number(r.total),
   }));
 
-  // Top procedures formatted
+  // Top procedures formatted — usa receita liquida
   const topProcs = topProcedures.map((p) => ({
     name: p.name,
     count: p._count.id,
-    revenue: p._sum.value ?? 0,
-    ticketMedio: p._count.id > 0 ? (p._sum.value ?? 0) / p._count.id : 0,
+    revenue: (p._sum.value ?? 0) - (p._sum.discountAmount ?? 0),
+    ticketMedio:
+      p._count.id > 0
+        ? ((p._sum.value ?? 0) - (p._sum.discountAmount ?? 0)) / p._count.id
+        : 0,
   }));
 
   // Performance by channel (meta ads data)
@@ -285,10 +293,10 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // DASH-1: composicao da receita
-  const captacaoRevenue = captacaoAgg._sum.value ?? 0;
-  const recorrentesRevenue = recorrentesAgg._sum.value ?? 0;
-  const walkInRevenue = walkInAgg._sum.value ?? 0;
+  // DASH-1: composicao da receita (DASH-3: receita liquida = value - discountAmount)
+  const captacaoRevenue = (captacaoAgg._sum.value ?? 0) - (captacaoAgg._sum.discountAmount ?? 0);
+  const recorrentesRevenue = (recorrentesAgg._sum.value ?? 0) - (recorrentesAgg._sum.discountAmount ?? 0);
+  const walkInRevenue = (walkInAgg._sum.value ?? 0) - (walkInAgg._sum.discountAmount ?? 0);
   const totalOrigem = captacaoRevenue + recorrentesRevenue + walkInRevenue;
   const pct = (v: number) => (totalOrigem > 0 ? (v / totalOrigem) * 100 : 0);
 

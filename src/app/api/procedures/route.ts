@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
   }
 
-  const where: Record<string, unknown> = { clinicId };
+  // [DASH-3] Default oculta procedures deletados. Status agora aceita tanto
+  // legacy ("approved", "pending") quanto statusDescription do Clinicorp
+  // ("Aprovado", "Orçamento"). Page de Procedimentos no dashboard nao filtra
+  // por status — vai mostrar todos, e listagem ja exclui deleted.
+  const where: Record<string, unknown> = { clinicId, deleted: false };
 
   if (status) where.status = status;
   if (from || to) {
