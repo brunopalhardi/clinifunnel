@@ -139,13 +139,30 @@ model Procedure {
   patient              Patient   @relation(fields: [patientId], references: [id])
   clinicorpProcedureId String?
   name                 String
+  // value = FinalAmount do Clinicorp (preco bruto do procedure, sem desconto da Estimate)
   value                Float
-  status               String    @default("pending") // "pending" | "approved" | "completed" | "cancelled"
+  // [DASH-3] discountAmount = parcela do Estimate.DiscountAmount rateado proporcional
+  // ao FinalAmount entre os procedures Aprovados da mesma Estimate. Receita liquida
+  // ("Venda" no Clinicorp) = value - discountAmount.
+  discountAmount       Float     @default(0)
+  // status interno legado: "pending" | "approved" | "completed" | "cancelled"
+  // Mapeado a partir do est.Status (Estimate-level) — granularidade errada pra
+  // dashboards. Mantido por backwards-compat de leitura.
+  status               String    @default("pending")
+  // [DASH-3] Status do procedure-level (Aprovado, Orçamento, Executado, Cancelado...).
+  // Vem de proc.StatusDescription do Clinicorp. Granularidade correta — uma estimate
+  // APPROVED pode ter procs com statusDescription diferente.
+  statusDescription    String?
+  // [DASH-3] proc.PaymentAccounted == "X" no Clinicorp = pagamento contabilizado.
+  paymentAccounted     Boolean   @default(false)
+  // [DASH-3] proc.Deleted == "X" no Clinicorp. Pulamos esses procs no sync.
+  deleted              Boolean   @default(false)
   completedAt          DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
   @@index([clinicId, status])
+  @@index([clinicId, statusDescription])
   @@index([patientId])
 }
 

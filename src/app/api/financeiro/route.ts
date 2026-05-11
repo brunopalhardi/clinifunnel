@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
+import { APPROVED_PROCEDURE_FILTER } from "@/lib/dashboard-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,12 @@ export async function GET(request: NextRequest) {
     },
   } : {};
 
+  // [DASH-3] Receita confirmada = procs statusDescription='Aprovado', deleted=false.
+  // Pendente e Cancelada continuam por statusDescription tambem ("Orçamento", "Cancelado").
+  // Valor liquido em todas as somas (value - discountAmount).
   const procFilter = {
     clinicId,
-    status: { in: ["completed", "approved"] },
+    ...APPROVED_PROCEDURE_FILTER,
     ...dateFilter,
   };
 
@@ -41,44 +45,44 @@ export async function GET(request: NextRequest) {
     topProcedures,
     procedureBreakdown,
   ] = await Promise.all([
-    // Receita confirmada (completed + approved)
+    // Receita confirmada (Aprovado)
     prisma.procedure.aggregate({
       where: procFilter,
       _count: { id: true },
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
     }),
-    // Pipeline pendente
+    // Pipeline pendente: procs com status "Orçamento" (orcamentos abertos)
     prisma.procedure.aggregate({
-      where: { clinicId, status: "pending", ...dateFilter },
+      where: { clinicId, statusDescription: "Orçamento", deleted: false, ...dateFilter },
       _count: { id: true },
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
     }),
     // Canceladas
     prisma.procedure.aggregate({
-      where: { clinicId, status: "cancelled", ...dateFilter },
+      where: { clinicId, statusDescription: "Cancelado", deleted: false, ...dateFilter },
       _count: { id: true },
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
     }),
-    // Pacientes ativos no período (com pelo menos 1 procedure no range)
+    // Pacientes ativos no período
     prisma.procedure.findMany({
       where: procFilter,
       select: { patientId: true },
       distinct: ["patientId"],
     }),
-    // Top procedimentos por receita
+    // Top procedimentos por receita liquida
     prisma.procedure.groupBy({
       by: ["name"],
       where: procFilter,
-      _sum: { value: true },
+      _sum: { value: true, discountAmount: true },
       _count: { id: true },
       orderBy: { _sum: { value: "desc" } },
       take: 10,
     }),
-    // Breakdown por status (todos os procedures no período)
+    // Breakdown por statusDescription (granularidade certa)
     prisma.procedure.groupBy({
-      by: ["status"],
-      where: { clinicId, ...dateFilter },
-      _sum: { value: true },
+      by: ["statusDescription"],
+      where: { clinicId, deleted: false, ...dateFilter },
+      _sum: { value: true, discountAmount: true },
       _count: { id: true },
     }),
   ]);
@@ -90,11 +94,12 @@ export async function GET(request: NextRequest) {
   const revenueByDay = await prisma.$queryRawUnsafe<Array<{ day: string; total: number; count: number }>>(
     `SELECT
        DATE(${procDateExpr}) as day,
-       SUM(value)::float as total,
+       SUM(value - "discountAmount")::float as total,
        COUNT(*)::int as count
      FROM "Procedure"
      WHERE "clinicId" = $1
-       AND status IN ('completed', 'approved')
+       AND "statusDescription" = 'Aprovado'
+       AND "deleted" = false
        ${from ? `AND ${procDateExpr} >= $2::timestamp` : ""}
        ${to ? `AND ${procDateExpr} <= $${from ? "3" : "2"}::timestamp` : ""}
      GROUP BY DATE(${procDateExpr})
@@ -105,7 +110,11 @@ export async function GET(request: NextRequest) {
     ...(to ? [to] : [])
   );
 
-  const totalRevenue = revenueAgg._sum.value ?? 0;
+  // [DASH-3] Helper pra receita liquida.
+  const liquido = (agg: { _sum: { value: number | null; discountAmount: number | null } }) =>
+    (agg._sum.value ?? 0) - (agg._sum.discountAmount ?? 0);
+
+  const totalRevenue = liquido(revenueAgg);
   const totalProcedures = revenueAgg._count.id;
   const ticketMedio = totalProcedures > 0 ? totalRevenue / totalProcedures : 0;
 
@@ -116,21 +125,25 @@ export async function GET(request: NextRequest) {
       totalProcedures,
       ticketMedio,
       activePatients: activePatients.length,
-      pendingRevenue: pendingAgg._sum.value ?? 0,
+      pendingRevenue: liquido(pendingAgg),
       pendingCount: pendingAgg._count.id,
-      cancelledRevenue: cancelledAgg._sum.value ?? 0,
+      cancelledRevenue: liquido(cancelledAgg),
       cancelledCount: cancelledAgg._count.id,
-      // Detalhes
-      topProcedures: topProcedures.map((p) => ({
-        name: p.name,
-        count: p._count.id,
-        revenue: p._sum.value ?? 0,
-        ticketMedio: p._count.id > 0 ? (p._sum.value ?? 0) / p._count.id : 0,
-      })),
+      // Detalhes — receita liquida
+      topProcedures: topProcedures.map((p) => {
+        const rev = (p._sum.value ?? 0) - (p._sum.discountAmount ?? 0);
+        return {
+          name: p.name,
+          count: p._count.id,
+          revenue: rev,
+          ticketMedio: p._count.id > 0 ? rev / p._count.id : 0,
+        };
+      }),
       procedureBreakdown: procedureBreakdown.map((s) => ({
-        status: s.status,
+        // status agora vem do statusDescription (granularidade certa do Clinicorp)
+        status: s.statusDescription ?? "unknown",
         count: s._count.id,
-        revenue: s._sum.value ?? 0,
+        revenue: (s._sum.value ?? 0) - (s._sum.discountAmount ?? 0),
       })),
       revenueByDay: revenueByDay.reverse().map((r) => ({
         day: r.day,

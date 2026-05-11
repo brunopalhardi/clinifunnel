@@ -6,6 +6,7 @@ const log = logger.child({ scope: "sync-clinicorp" });
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { ClinicorpClient } from "@/lib/clinicorp/client";
+import { mapEstimateToProcedures } from "@/lib/clinicorp/procedure-mapper";
 
 export const syncClinicorpQueue = new Queue("sync-clinicorp", {
   connection: redis,
@@ -22,18 +23,6 @@ syncClinicorpQueue.add(
     removeOnFail: 50,
   },
 );
-
-function mapStatus(estimateStatus: string, executed: boolean): string {
-  if (executed) return "completed";
-  switch (estimateStatus.toUpperCase()) {
-    case "APPROVED":
-      return "approved";
-    case "CANCELED":
-      return "cancelled";
-    default:
-      return "pending";
-  }
-}
 
 export const syncClinicorpWorker = new Worker(
   "sync-clinicorp",
@@ -102,42 +91,56 @@ export const syncClinicorpWorker = new Worker(
             });
           }
 
-          // Sync procedures from estimate
-          for (const proc of est.ProcedureList) {
-            const procId = String(proc.id);
-            const isExecuted = proc.Executed === "X";
-            const status = mapStatus(est.Status, isExecuted);
-            const completedAt = proc.ExecutedDate ? new Date(proc.ExecutedDate) : null;
+          // [DASH-3] Procedures com Deleted='X' no Clinicorp: marca deleted=true
+          // no nosso DB tambem (em vez de manter como aprovado/cobrado).
+          // Pode ser que ja existam de syncs anteriores.
+          for (const proc of est.ProcedureList ?? []) {
+            if (proc.Deleted === "X") {
+              await prisma.procedure.updateMany({
+                where: {
+                  clinicId: clinic.id,
+                  clinicorpProcedureId: String(proc.id),
+                },
+                data: { deleted: true },
+              });
+            }
+          }
 
+          // [DASH-3] Mapeia procedures ativos: ratea desconto entre aprovados,
+          // captura statusDescription/paymentAccounted. Pula deleted (ja tratados acima).
+          const mappedProcs = mapEstimateToProcedures(est);
+          for (const m of mappedProcs) {
             const existing = await prisma.procedure.findFirst({
               where: {
                 clinicId: clinic.id,
-                clinicorpProcedureId: procId,
+                clinicorpProcedureId: m.clinicorpProcedureId,
               },
             });
+
+            const procData = {
+              name: m.name,
+              value: m.value,
+              discountAmount: m.discountAmount,
+              status: m.status,
+              statusDescription: m.statusDescription,
+              paymentAccounted: m.paymentAccounted,
+              completedAt: m.completedAt,
+            };
 
             if (existing) {
               await prisma.procedure.update({
                 where: { id: existing.id },
-                data: {
-                  name: proc.OperationDescription,
-                  value: proc.FinalAmount || proc.Amount,
-                  status,
-                  completedAt,
-                },
+                data: procData,
               });
               proceduresUpdated++;
             } else {
               await prisma.procedure.create({
                 data: {
+                  ...procData,
                   clinicId: clinic.id,
                   patientId: patient.id,
-                  clinicorpProcedureId: procId,
-                  name: proc.OperationDescription,
-                  value: proc.FinalAmount || proc.Amount,
-                  status,
-                  completedAt,
-                  createdAt: new Date(est.CreateDate),
+                  clinicorpProcedureId: m.clinicorpProcedureId,
+                  createdAt: m.estimateCreatedAt,
                 },
               });
               proceduresCreated++;

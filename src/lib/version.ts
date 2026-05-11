@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.37.0";
+export const APP_VERSION = "0.38.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.38.0",
+    date: "2026-05-10",
+    type: "minor",
+    changes: [
+      "DASH-3: dashboard agora reflete a 'Venda' como o Clinicorp calcula (- desconto, status nivel-procedure, exclui deletados)",
+      "Bruno reportou R$ 67.480 (CliniFunnel) vs R$ 60.640 (Clinicorp Vendas) no periodo 3-9 mai. Investigacao identificou 3 problemas no sync: (a) status mapeado do Estimate.Status, mas 13 procs eram 'Orçamento' dentro de estimates APPROVED, (b) desconto da Estimate (R$ 4.160 no periodo) nao era capturado, (c) procs com Deleted='X' nao eram filtrados",
+      "Schema: Procedure ganhou 4 campos novos — discountAmount (rateio proporcional), statusDescription ('Aprovado'/'Orçamento'/etc), paymentAccounted (boolean), deleted (boolean). Migration 20260510030000",
+      "Helper mapEstimateToProcedures (src/lib/clinicorp/procedure-mapper.ts) ratea Estimate.DiscountAmount proporcional ao FinalAmount entre procs Aprovados, com ultimo proc absorvendo residuo de centavos. 15 unit tests novos cobrindo: rateio igual, residuo, deletados, sem aprovados",
+      "Worker sync-clinicorp marca deleted=true em procs com Deleted='X' (pra procs que ja existiam no DB) e usa o helper pra inserir/atualizar com novos campos",
+      "Dashboard/Financeiro/Procedimentos/Metrics filtram por statusDescription='Aprovado' + deleted=false em vez do legacy status IN ('approved','completed'). Receita = SUM(value - discountAmount)",
+      "Receita esperada em prod: ~R$ 58.340 no range 3-9 mai (vs Clinicorp R$ 60.640, diff R$ 2.300 = sinais de consulta nao expostos na API publica do Clinicorp — gap aceito e documentado)",
+    ],
+  },
   {
     version: "0.37.0",
     date: "2026-05-10",

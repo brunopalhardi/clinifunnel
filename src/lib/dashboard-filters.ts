@@ -49,3 +49,20 @@ export function buildLeadDateFilter(range: DateRange): Prisma.LeadWhereInput {
     ],
   };
 }
+
+/**
+ * [DASH-3] Filtro base de procedures que contam como "receita real".
+ * - statusDescription = "Aprovado" (status nivel-procedure, vem do Clinicorp)
+ * - deleted = false (procs deletados nao contam)
+ *
+ * Mantemos o legacy `status` em paralelo no schema, mas as queries de receita
+ * devem usar statusDescription como verdade.
+ *
+ * Pra calcular receita liquida: `value - discountAmount` (rateio proporcional do
+ * Estimate.DiscountAmount feito no sync).
+ */
+export const APPROVED_PROCEDURE_FILTER = {
+  statusDescription: "Aprovado",
+  deleted: false,
+} as const;
+
