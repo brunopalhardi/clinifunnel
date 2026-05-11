@@ -1,42 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Moon, Sun, Monitor } from "lucide-react";
-import {
-  type ThemeMode,
-  getStoredTheme,
-  setStoredTheme,
-  resolveTheme,
-  applyTheme,
-} from "@/lib/theme";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 
 export function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>("system");
+  const { theme, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    setMode(getStoredTheme());
-  }, []);
-
-  function cycle() {
-    const next: ThemeMode =
-      mode === "light" ? "dark" : mode === "dark" ? "system" : "light";
-    setMode(next);
-    setStoredTheme(next);
-    applyTheme(
-      resolveTheme(next, () =>
-        window.matchMedia("(prefers-color-scheme: dark)").matches,
-      ),
-    );
-  }
-
-  const label =
-    mode === "light" ? "Light" : mode === "dark" ? "Dark" : "Sistema";
-  const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+  const isDark = theme === "dark";
+  const Icon = isDark ? Moon : Sun;
+  const label = isDark ? "Dark" : "Light";
 
   return (
     <button
       type="button"
-      onClick={cycle}
+      onClick={toggleTheme}
       aria-label={`Modo: ${label}. Clique para alternar.`}
       className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 transition-colors hover:bg-secondary"
     >

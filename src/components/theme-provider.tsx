@@ -1,28 +1,41 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-
-type Theme = "dark" | "light";
+import {
+  type ResolvedTheme,
+  applyTheme,
+  getStoredTheme,
+  resolveTheme,
+  setStoredTheme,
+} from "@/lib/theme";
 
 const ThemeContext = createContext<{
-  theme: Theme;
+  theme: ResolvedTheme;
   toggleTheme: () => void;
-}>({ theme: "dark", toggleTheme: () => {} });
+}>({ theme: "light", toggleTheme: () => {} });
+
+function prefersDark() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<ResolvedTheme>("light");
 
   useEffect(() => {
-    const stored = localStorage.getItem("clinifunnel-theme") as Theme | null;
-    if (stored) setTheme(stored);
+    const stored = getStoredTheme();
+    const resolved = resolveTheme(stored, prefersDark);
+    setTheme(resolved);
+    applyTheme(resolved);
   }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("clinifunnel-theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+  function toggleTheme() {
+    setTheme((current) => {
+      const next: ResolvedTheme = current === "dark" ? "light" : "dark";
+      setStoredTheme(next);
+      applyTheme(next);
+      return next;
+    });
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
