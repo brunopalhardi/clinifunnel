@@ -64,10 +64,13 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 10px)",
       },
       boxShadow: {
         glass: "0 8px 32px rgba(0, 0, 0, 0.08)",
         "glass-dark": "0 8px 32px rgba(0, 0, 0, 0.4)",
+        glow: "0 24px 70px hsl(22 100% 55% / 0.20)",
+        button: "0 6px 18px hsl(22 100% 55% / 0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
         gold: "0 0 20px rgba(212, 168, 83, 0.15)",
       },
     },
