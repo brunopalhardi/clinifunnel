@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.41.0";
+export const APP_VERSION = "0.41.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.41.1",
+    date: "2026-05-12",
+    type: "patch",
+    changes: [
+      "DASH-4.1: 'Compareceram' no Funil de Conversao agora usa a mesma fonte do KPI 'Comparecimento' (Appointment.statusKey='atendido' do Clinicorp)",
+      "Bruno reportou inconsistencia: KPI 'Comparecimento' mostrava 1 mas funil 'Compareceram' mostrava 0",
+      "Antes: lead.patient.procedures.some() — dependia de patientId estar populado no Lead e contava qualquer procedure (aprovado ou nao)",
+      "Agora: lead.patient.appointments.some(statusKey='atendido', deleted=false) — fonte de verdade do Clinicorp, igual ao KPI da linha 2",
+    ],
+  },
   {
     version: "0.41.0",
     date: "2026-05-12",
