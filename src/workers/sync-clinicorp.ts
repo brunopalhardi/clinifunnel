@@ -7,6 +7,7 @@ import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { ClinicorpClient } from "@/lib/clinicorp/client";
 import { mapEstimateToProcedures } from "@/lib/clinicorp/procedure-mapper";
+import { mapAppointmentStatus } from "@/lib/clinicorp/appointment-mapper";
 
 export const syncClinicorpQueue = new Queue("sync-clinicorp", {
   connection: redis,
@@ -61,6 +62,7 @@ export const syncClinicorpWorker = new Worker(
         let patientsCreated = 0;
         let proceduresCreated = 0;
         let proceduresUpdated = 0;
+        let appointmentsUpserted = 0;
 
         for (const est of estimates) {
           // Upsert patient by clinicorpPatientId
@@ -148,13 +150,92 @@ export const syncClinicorpWorker = new Worker(
           }
         }
 
+        // [DASH-4] Sync de appointments do Clinicorp pra ter status "Atendido"
+        // / "Faltou" / "Confirmado" disponiveis no dashboard. /appointment/list
+        // retorna tudo do range; fazemos upsert por clinicorpAppointmentId.
+        try {
+          const businessIdNum = Number(clinic.clinicorpBusinessId);
+          if (Number.isFinite(businessIdNum) && businessIdNum > 0) {
+            const appointments = await client.listAppointments({
+              from: fromStr,
+              to: toStr,
+              businessId: businessIdNum,
+            });
+
+            log.info(
+              { clinicId: clinic.id, appointments: appointments.length },
+              "appointments fetched",
+            );
+
+            // Cache de Patient resolvidos por clinicorpPatientId pra evitar N+1
+            const patientCache = new Map<string, string | null>();
+
+            for (const app of appointments) {
+              const clinicorpPatientId = app.Patient_PersonId
+                ? String(app.Patient_PersonId)
+                : null;
+
+              let patientDbId: string | null = null;
+              if (clinicorpPatientId) {
+                if (patientCache.has(clinicorpPatientId)) {
+                  patientDbId = patientCache.get(clinicorpPatientId) ?? null;
+                } else {
+                  const p = await prisma.patient.findFirst({
+                    where: { clinicId: clinic.id, clinicorpPatientId },
+                    select: { id: true },
+                  });
+                  patientDbId = p?.id ?? null;
+                  patientCache.set(clinicorpPatientId, patientDbId);
+                }
+              }
+
+              const statusKey = mapAppointmentStatus(
+                app.StatusId ?? null,
+                app.StatusColor ?? null,
+              );
+
+              const appointmentData = {
+                patientId: patientDbId,
+                date: new Date(app.date),
+                fromTime: app.fromTime ?? null,
+                toTime: app.toTime ?? null,
+                statusId: app.StatusId != null ? String(app.StatusId) : null,
+                statusColor: app.StatusColor ?? null,
+                statusKey,
+                dentistName: app.DentistName ?? null,
+                categoryDescription: app.CategoryDescription ?? null,
+                deleted: app.Deleted === "X",
+              };
+
+              await prisma.appointment.upsert({
+                where: {
+                  clinicId_clinicorpAppointmentId: {
+                    clinicId: clinic.id,
+                    clinicorpAppointmentId: String(app.id),
+                  },
+                },
+                update: appointmentData,
+                create: {
+                  ...appointmentData,
+                  clinicId: clinic.id,
+                  clinicorpAppointmentId: String(app.id),
+                },
+              });
+              appointmentsUpserted++;
+            }
+          }
+        } catch (appErr) {
+          log.error({ clinicId: clinic.id, err: appErr }, "appointment sync error");
+          // Nao falha o sync inteiro se appointments derem erro — estimates ja foram processadas.
+        }
+
         await prisma.clinic.update({
           where: { id: clinic.id },
           data: { lastClinicorpSyncAt: new Date() },
         });
 
         log.info(
-          { clinicId: clinic.id, patientsCreated, proceduresCreated, proceduresUpdated },
+          { clinicId: clinic.id, patientsCreated, proceduresCreated, proceduresUpdated, appointmentsUpserted },
           "sync done",
         );
       } catch (error) {

@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.40.0";
+export const APP_VERSION = "0.41.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.41.0",
+    date: "2026-05-12",
+    type: "minor",
+    changes: [
+      "DASH-4: linha nova de KPIs de comparecimento dos leads captados (vinda do Clinicorp) na Visao Geral",
+      "Linha 1 (funil — Kommo): Leads captados / Consultas agendadas (renomeado, era 'realizadas') / Procedimentos fechados / Receita do funil",
+      "Linha 2 (comparecimento — Clinicorp, FILTRADA pelo funil): Comparecimento ('Atendido' no Clinicorp) / Faltas (com taxa de no-show) / Confirmadas pendentes / Aguardando status",
+      "Schema: modelo Appointment com clinicorpAppointmentId, date, statusKey ('agendado'|'confirmado'|'atendido'|'faltou'|'em_espera'|'em_atendimento'|'atrasado'). Migration 20260512000000",
+      "Helper mapAppointmentStatus em src/lib/clinicorp/appointment-mapper.ts: 3 StatusIds canonicos confirmados com a equipe da clinica AD (5818=Atendido, 6447=Confirmado, 5434=Faltou) + fallback por StatusColor pra clinicas futuras. 11 unit tests",
+      "Worker sync-clinicorp puxa /appointment/list a cada 15min, faz match patient via Patient_PersonId, upsert por clinicorpAppointmentId. Erro em appointments nao quebra sync de estimates",
+      "Endpoint /api/dashboard ganha campo `consultas` com breakdown por statusKey, filtrado por patient com lead no pipelineId configurado (mesma logica de 'Procedimentos fechados' e 'Receita do funil')",
+    ],
+  },
   {
     version: "0.40.0",
     date: "2026-05-12",

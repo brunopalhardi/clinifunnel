@@ -17,6 +17,17 @@ interface ReceitaPorOrigem {
   total: { count: number; revenue: number };
 }
 
+interface ConsultasBreakdown {
+  realizadas: number;
+  confirmadas: number;
+  faltaram: number;
+  agendadas: number;
+  emEspera: number;
+  emAtendimento: number;
+  atrasadas: number;
+  total: number;
+}
+
 interface DashboardData {
   totalLeads: number;
   campaignLeads: number;
@@ -35,6 +46,7 @@ interface DashboardData {
   topProcedures: { name: string; count: number; revenue: number; ticketMedio: number }[];
   channelPerformance: { channel: string; spend: number; impressions: number; clicks: number }[];
   receitaPorOrigem?: ReceitaPorOrigem;
+  consultas?: ConsultasBreakdown;
   canalBreakdown: { canal: string; count: number }[];
 }
 
@@ -112,7 +124,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 4 KPI Cards */}
+      {/* Linha 1 — KPIs do funil (Kommo + receita) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Leads captados"
@@ -121,8 +133,9 @@ export default function DashboardPage() {
           icon={<UsersIcon />}
         />
         <KpiCard
-          label="Consultas realizadas"
+          label="Consultas agendadas"
           value={d.agendamentos}
+          breakdown="Leads no stage Agendado (Kommo)"
           icon={<CalendarIcon />}
         />
         <KpiCard
@@ -140,6 +153,40 @@ export default function DashboardPage() {
           highlight="green"
         />
       </div>
+
+      {/* [DASH-4] Linha 2 — Comparecimento dos leads (Clinicorp).
+          So leads do funil de captacao. Aparece se houver appointments no range. */}
+      {d.consultas && d.consultas.total > 0 && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="Comparecimento"
+            value={d.consultas.realizadas}
+            breakdown="Leads que vieram pra consulta"
+            icon={<CheckIcon />}
+            highlight="green"
+          />
+          <KpiCard
+            label="Faltas"
+            value={d.consultas.faltaram}
+            breakdown={d.consultas.realizadas + d.consultas.faltaram > 0
+              ? `${((d.consultas.faltaram / (d.consultas.realizadas + d.consultas.faltaram)) * 100).toFixed(1)}% no-show`
+              : undefined}
+            icon={<XIcon />}
+          />
+          <KpiCard
+            label="Confirmadas (pendentes)"
+            value={d.consultas.confirmadas}
+            breakdown="Confirmou, ainda nao veio"
+            icon={<CalendarIcon />}
+          />
+          <KpiCard
+            label="Aguardando status"
+            value={d.consultas.agendadas}
+            breakdown="Sem atualizacao no Clinicorp ainda"
+            icon={<CalendarIcon />}
+          />
+        </div>
+      )}
 
       {/* Funnel + Revenue Chart */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -449,4 +496,7 @@ function CheckIcon() {
 }
 function DollarIcon() {
   return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+}
+function XIcon() {
+  return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>;
 }
