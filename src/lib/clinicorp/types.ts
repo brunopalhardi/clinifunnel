@@ -76,7 +76,15 @@ export interface ClinicorpAppointment {
   fromTime: string;
   toTime: string;
   date: string;
-  status: string;
+  // [DASH-4] Campos adicionais que /appointment/list retorna:
+  Patient_PersonId?: number;
+  Dentist_PersonId?: number;
+  DentistName?: string;
+  StatusId?: number | string;
+  StatusColor?: string;
+  CategoryDescription?: string;
+  Deleted?: string;
+  status?: string;
 }
 
 export interface CreatePatientPayload {

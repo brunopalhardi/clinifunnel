@@ -72,6 +72,16 @@ export async function GET(request: NextRequest) {
     },
   } : {};
 
+  // [DASH-4] Filtro de data dos appointments (usa Appointment.date, que vem do
+  // campo `date` do Clinicorp = data marcada da consulta). Nao filtra por
+  // pipeline/patientType — appointments sao da clinica inteira.
+  const appointmentDateFilter = from || to ? {
+    date: {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to) } : {}),
+    },
+  } : {};
+
   // [DASH-3] Filtro base de receita: procs Aprovado (status nivel-procedure,
   // vem do Clinicorp) e nao-deletado. value liquido = value - discountAmount.
   // Antes filtravamos por status legado in ["completed", "approved"], que vinha
@@ -133,6 +143,7 @@ export async function GET(request: NextRequest) {
     captacaoAgg,
     recorrentesAgg,
     walkInAgg,
+    appointmentsByStatus,
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
@@ -188,6 +199,13 @@ export async function GET(request: NextRequest) {
       ? prisma.procedure.aggregate({ where: recorrentesWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } })
       : Promise.resolve(emptyAgg),
     prisma.procedure.aggregate({ where: walkInWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } }),
+    // [DASH-4] Appointments por statusKey no range. Sem filtro de pipeline/patientType
+    // (appointments sao da clinica inteira, ortogonais ao funil de captacao).
+    prisma.appointment.groupBy({
+      by: ["statusKey"],
+      where: { clinicId, deleted: false, ...appointmentDateFilter },
+      _count: { id: true },
+    }),
   ]);
 
   // Decidir granularity (dia/semana/mes) baseado no range
@@ -322,11 +340,32 @@ export async function GET(request: NextRequest) {
     },
   };
 
+  // [DASH-4] Consolida appointments por statusKey num objeto facil de consumir.
+  const consultasByStatus = appointmentsByStatus.reduce<Record<string, number>>(
+    (acc, row) => {
+      acc[row.statusKey] = row._count.id;
+      return acc;
+    },
+    {},
+  );
+  const consultas = {
+    realizadas: consultasByStatus.atendido ?? 0,
+    confirmadas: consultasByStatus.confirmado ?? 0,
+    faltaram: consultasByStatus.faltou ?? 0,
+    agendadas: consultasByStatus.agendado ?? 0,
+    emEspera: consultasByStatus.em_espera ?? 0,
+    emAtendimento: consultasByStatus.em_atendimento ?? 0,
+    atrasadas: consultasByStatus.atrasado ?? 0,
+    total: appointmentsByStatus.reduce((a, r) => a + r._count.id, 0),
+  };
+
   return NextResponse.json({
     data: {
       totalLeads,
       campaignLeads,
       organicLeads,
+      // [DASH-4] `agendamentos` = leads marcados como agendados no Kommo
+      // (Lead.agendamentoAt != null). Renomeado na UI pra "Consultas marcadas".
       agendamentos,
       compareceram,
       procedimentos,
@@ -341,6 +380,8 @@ export async function GET(request: NextRequest) {
       topProcedures: topProcs,
       channelPerformance,
       receitaPorOrigem,
+      // [DASH-4] consultas vindas do Clinicorp (status real do appointment).
+      consultas,
       canalBreakdown: canalBreakdown.map((c) => ({
         canal: c.canalProspeccao ?? "Nao identificado",
         count: c._count.id,

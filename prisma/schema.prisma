@@ -60,6 +60,7 @@ model Clinic {
   leads            Lead[]
   patients         Patient[]
   procedures       Procedure[]
+  appointments     Appointment[]
   adCampaignData   AdCampaignData[]
 }
 
@@ -124,11 +125,45 @@ model Patient {
   // Relações
   leads              Lead[]
   procedures         Procedure[]
+  appointments       Appointment[]
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
   @@unique([clinicId, clinicorpPatientId])
   @@index([clinicId, phone])
+}
+
+// [DASH-4] Appointment do Clinicorp — armazenado pra contar "consultas
+// realizadas" (Atendido), "faltas" (Faltou), etc.
+// Status no Clinicorp: meninas atualizam manualmente no dia (Agendado ->
+// Confirmado -> Atendido/Faltou). Refletimos esse fluxo via statusKey.
+model Appointment {
+  id                     String   @id @default(cuid())
+  clinicId               String
+  clinic                 Clinic   @relation(fields: [clinicId], references: [id])
+  patientId              String?
+  patient                Patient? @relation(fields: [patientId], references: [id])
+  clinicorpAppointmentId String   // id do appointment no Clinicorp
+  // Data + horario do appointment (vem do Clinicorp como date + fromTime + toTime)
+  date                   DateTime
+  fromTime               String?
+  toTime                 String?
+  // statusId / statusColor crus do Clinicorp (StatusId e StatusColor da response)
+  // statusKey eh a normalizacao interna ("agendado" | "confirmado" | "atendido" |
+  // "faltou" | "em_espera" | "em_atendimento" | "atrasado") usado nas queries.
+  statusId               String?
+  statusColor            String?
+  statusKey              String   @default("agendado")
+  dentistName            String?
+  // Categoria do appointment no Clinicorp ("Consulta" | "Retorno" | "Avaliação" etc).
+  categoryDescription    String?
+  deleted                Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([clinicId, clinicorpAppointmentId])
+  @@index([clinicId, statusKey, date])
+  @@index([patientId])
 }
 
 model Procedure {

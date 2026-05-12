@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.38.0";
+export const APP_VERSION = "0.39.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.39.0",
+    date: "2026-05-12",
+    type: "minor",
+    changes: [
+      "DASH-4: novos KPIs de atendimento vindos do Clinicorp na Visao Geral",
+      "Consultas realizadas (status 'Atendido' no Clinicorp), Faltas (Faltou), Confirmadas pendentes (Confirmado), Apenas agendadas (sem update). Taxa de no-show calculada automaticamente",
+      "KPI antigo 'Consultas realizadas' renomeado pra 'Consultas marcadas' (era Lead.agendamentoAt = stage Agendado no Kommo, nao consulta efetivamente realizada)",
+      "Schema: modelo Appointment com clinicorpAppointmentId, date, statusKey ('agendado'|'confirmado'|'atendido'|'faltou'|'em_espera'|'em_atendimento'|'atrasado'). Migration 20260512000000",
+      "Helper mapAppointmentStatus em src/lib/clinicorp/appointment-mapper.ts: 3 StatusIds canonicos confirmados com a equipe da clinica AD (5818=Atendido, 6447=Confirmado, 5434=Faltou) + fallback por StatusColor pra clinicas futuras. 11 unit tests",
+      "Worker sync-clinicorp puxa /appointment/list a cada 15min, faz match patient via Patient_PersonId, upsert por clinicorpAppointmentId. Erro em appointments nao quebra sync de estimates",
+      "Endpoint /api/dashboard ganha campo `consultas` com breakdown por statusKey",
+    ],
+  },
   {
     version: "0.38.0",
     date: "2026-05-10",
