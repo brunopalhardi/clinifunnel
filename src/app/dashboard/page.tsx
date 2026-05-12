@@ -133,7 +133,7 @@ export default function DashboardPage() {
           icon={<UsersIcon />}
         />
         <KpiCard
-          label="Consultas marcadas"
+          label="Consultas agendadas"
           value={d.agendamentos}
           breakdown="Leads no stage Agendado (Kommo)"
           icon={<CalendarIcon />}
@@ -154,21 +154,16 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* [DASH-4] Linha 2 — KPIs de atendimento (Clinicorp) */}
+      {/* [DASH-4] Linha 2 — Comparecimento dos leads (Clinicorp).
+          So leads do funil de captacao. Aparece se houver appointments no range. */}
       {d.consultas && d.consultas.total > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
-            label="Consultas realizadas"
+            label="Comparecimento"
             value={d.consultas.realizadas}
-            breakdown="Status 'Atendido' no Clinicorp"
+            breakdown="Leads que vieram pra consulta"
             icon={<CheckIcon />}
             highlight="green"
-          />
-          <KpiCard
-            label="Confirmadas (pendentes)"
-            value={d.consultas.confirmadas}
-            breakdown="Confirmou presenca, ainda nao veio"
-            icon={<CalendarIcon />}
           />
           <KpiCard
             label="Faltas"
@@ -179,9 +174,15 @@ export default function DashboardPage() {
             icon={<XIcon />}
           />
           <KpiCard
-            label="Apenas agendadas"
+            label="Confirmadas (pendentes)"
+            value={d.consultas.confirmadas}
+            breakdown="Confirmou, ainda nao veio"
+            icon={<CalendarIcon />}
+          />
+          <KpiCard
+            label="Aguardando status"
             value={d.consultas.agendadas}
-            breakdown="Sem status atualizado ainda"
+            breakdown="Sem atualizacao no Clinicorp ainda"
             icon={<CalendarIcon />}
           />
         </div>

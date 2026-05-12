@@ -199,11 +199,24 @@ export async function GET(request: NextRequest) {
       ? prisma.procedure.aggregate({ where: recorrentesWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } })
       : Promise.resolve(emptyAgg),
     prisma.procedure.aggregate({ where: walkInWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } }),
-    // [DASH-4] Appointments por statusKey no range. Sem filtro de pipeline/patientType
-    // (appointments sao da clinica inteira, ortogonais ao funil de captacao).
+    // [DASH-4] Appointments por statusKey no range, FILTRADOS PELO FUNIL DE CAPTACAO.
+    // Significado: dos leads captados no Kommo (no pipelineId configurado), quantos
+    // de fato compareceram (atendido), confirmaram, faltaram, etc no Clinicorp.
+    // Patient_PersonId do appointment cai no nosso Patient.id; filtramos por
+    // pacientes que tem ao menos 1 lead no pipeline de captacao (e respeita
+    // patientType pra coerencia com o resto da Visao Geral).
     prisma.appointment.groupBy({
       by: ["statusKey"],
-      where: { clinicId, deleted: false, ...appointmentDateFilter },
+      where: {
+        clinicId,
+        deleted: false,
+        ...appointmentDateFilter,
+        patient: {
+          leads: {
+            some: { ...pipelineFilter, ...patientTypeFilter },
+          },
+        },
+      },
       _count: { id: true },
     }),
   ]);
@@ -380,7 +393,8 @@ export async function GET(request: NextRequest) {
       topProcedures: topProcs,
       channelPerformance,
       receitaPorOrigem,
-      // [DASH-4] consultas vindas do Clinicorp (status real do appointment).
+      // [DASH-4] consultas vindas do Clinicorp (status real do appointment),
+      // filtradas pelos LEADS DO FUNIL (pacientes com lead no pipeline configurado).
       consultas,
       canalBreakdown: canalBreakdown.map((c) => ({
         canal: c.canalProspeccao ?? "Nao identificado",
