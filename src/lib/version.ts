@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.38.0";
+export const APP_VERSION = "0.39.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.39.0",
+    date: "2026-05-11",
+    type: "minor",
+    changes: [
+      "Visual: nova paleta laranja vivo (#FF7A1A) substitui o tema dourado/ambar; light mode 'Papel Quente' (fundo alabaster, sem branco puro) e dark mode 'Carvao Glow' (preto com glow laranja nos cantos)",
+      "Login redesenhado: glass card centralizado sobre fundo com grid sutil e brilhos laranja; brand mark com icone 'C' em gradiente; pre-titulo 'PAINEL DE GESTAO', headline 'Acessar sua clinica' e link 'Esqueci minha senha'",
+      "Toggle de modo (light/dark) no topo direito do login, persistido em localStorage; anti-flash via script inline no <head> aplica a classe 'dark' antes do paint",
+      "Pagina /forgot-password placeholder ate o fluxo real de reset existir",
+      "Token --gold mantido como alias visual de --primary (laranja vivo) pra absorver os 39 usos legados em dashboard/leads/sidebar/etc sem regressao; consolidacao bg-gold->bg-primary vira em PR2/3",
+      "PR1 de 5 do redesign visual completo. Proximos: sidebar+header (PR2), dashboard overview (PR3), leads/demais telas (PR4), polimento (PR5)",
+    ],
+  },
   {
     version: "0.38.0",
     date: "2026-05-10",
