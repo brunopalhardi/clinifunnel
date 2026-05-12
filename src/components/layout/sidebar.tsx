@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/theme-provider";
 import { APP_VERSION } from "@/lib/version";
 
 const navItems = [
@@ -33,7 +32,15 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
   const d = iconMap[name];
   if (!d) return null;
   return (
-    <svg className={cn("h-[18px] w-[18px]", className)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={cn("h-[18px] w-[18px]", className)}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d={d} />
       {name === "Settings" && <circle cx="12" cy="12" r="3" />}
     </svg>
@@ -42,23 +49,19 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { theme, toggleTheme } = useTheme();
 
   return (
-    <aside className="flex h-screen w-60 flex-col bg-sidebar">
-      {/* Logo */}
-      <div className="flex items-center gap-2 px-6 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/20">
-          <span className="text-sm font-bold text-gold">CF</span>
-        </div>
-        <div>
-          <h1 className="font-display text-sm font-bold text-gold">CliniFunnel</h1>
-          <p className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/50">Precision Analytics</p>
-        </div>
+    <aside className="flex h-screen w-60 flex-col border-r border-sidebar-foreground/10 bg-sidebar text-sidebar-foreground">
+      <div className="px-5 pb-2 pt-5">
+        <h1 className="font-display text-[20px] font-extrabold leading-none tracking-[-0.03em]">
+          Clini<span className="text-primary">Funnel</span>
+        </h1>
+        <p className="mt-1.5 text-[8px] font-bold uppercase tracking-[0.22em] text-sidebar-foreground/40">
+          Painel Clínico
+        </p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-0.5 px-3 pt-2">
+      <nav className="flex-1 space-y-0.5 px-3 pt-5">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -66,45 +69,36 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
                 isActive
-                  ? "text-gold"
-                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/5"
+                  ? "bg-primary/[0.12] font-semibold text-primary"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-foreground/[0.05] hover:text-sidebar-foreground"
               )}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gold" />
+                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
               )}
-              <NavIcon name={item.icon} className={isActive ? "text-gold" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70"} />
+              <NavIcon
+                name={item.icon}
+                className={
+                  isActive
+                    ? "text-primary"
+                    : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70"
+                }
+              />
               <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="space-y-3 px-4 pb-5">
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground/70 hover:bg-white/5"
+      <div className="border-t border-sidebar-foreground/10 px-5 pb-5 pt-3">
+        <Link
+          href="/changelog"
+          className="block text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground/70"
         >
-          {theme === "dark" ? (
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.73 12.73 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          ) : (
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          )}
-          <span>{theme === "dark" ? "Modo Claro" : "Modo Escuro"}</span>
-        </button>
-
-        <div className="px-3">
-          <Link
-            href="/changelog"
-            className="block text-[10px] uppercase tracking-wider text-sidebar-foreground/30 transition-colors hover:text-sidebar-foreground/60"
-          >
-            CliniFunnel v{APP_VERSION} · novidades
-          </Link>
-        </div>
+          CliniFunnel v{APP_VERSION} · novidades
+        </Link>
       </div>
     </aside>
   );

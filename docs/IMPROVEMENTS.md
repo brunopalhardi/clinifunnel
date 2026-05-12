@@ -8,8 +8,8 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Em andamento
 
-- **[UX-1] Redesign visual completo (PRs 2-5)**
-  PR1 (login + tokens) entregue em v0.39.0. Pendente: PR2 sidebar+header, PR3 dashboard overview (KPIs + cards), PR4 leads/pacientes/financeiro/etc, PR5 polimento (vazios, erros, formularios). Consolidar `bg-gold`->`bg-primary` nesses PRs (hoje `--gold` e alias visual de `--primary`).
+- **[UX-1] Redesign visual completo (PRs 3-5)**
+  PR1 (login + tokens) entregue em v0.39.0. PR2 (sidebar + header) entregue em v0.40.0. Pendente: PR3 dashboard overview (KPIs + cards), PR4 leads/pacientes/financeiro/etc, PR5 polimento (vazios, erros, formularios). 29 usos de bg-gold/text-gold ainda em paginas internas — consolidados em PR3/4.
   Eixo: produto/ux · Bump: minor por PR
 
 ### Proxima Fase (planejada, nao iniciada)
@@ -87,6 +87,9 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 ---
 
 ## Concluidos
+
+- **[UX-1.2] Redesign visual PR2: sidebar + header** — PR #_TBD_ — v0.40.0
+  Sidebar e header reaplicados com a paleta laranja. Sidebar agora acompanha o tema (antes era sempre escura). Brand vira wordmark "CliniFunnel" sem icone + microsubtitulo "PAINEL CLINICO". Item ativo: fundo laranja 12% + texto laranja escuro + barra esquerda 3px. Toggle de tema migra do rodape da sidebar pra pill no header, junto com avatar (gradiente laranja igual ao login). Header sticky + backdrop-blur. Consolidacao bg-gold->bg-primary em sidebar.tsx+header.tsx (10 usos). Os 29 restantes em paginas internas seguem via alias ate PR3/4. Token --sidebar ganhou valor light (38 32% 89% papel) + dark refinado. Nenhuma mudanca de API de componente; spec em docs/superpowers/specs/2026-05-12-redesign-visual-sidebar-header-design.md.
 
 - **[UX-1.1] Redesign visual PR1: tokens laranja + login** — PR #_TBD_ — v0.39.0
   Substitui paleta ambar/dourado por laranja vivo (#FF7A1A). Light mode "Papel Quente" (alabaster, sem branco puro) + dark mode "Carvao Glow" (preto com glow laranja). Login redesenhado com glass card sobre fundo de grid sutil + glow nos cantos, brand mark com icone "C" em gradiente, pre-titulo + headline maiores, link "Esqueci minha senha" novo (rota /forgot-password placeholder ate fluxo real existir), toggle de modo light/dark no topo direito persistido em localStorage com anti-flash via script inline no <head>. Token `--gold` redirecionado pros mesmos valores HSL de `--primary` pra absorver as 39 ocorrencias legadas em dashboard/leads/sidebar/etc sem regressao — consolidacao `bg-gold`->`bg-primary` vai nos PR2/3. PR1 de 5 do redesign; sequencia: sidebar+header (PR2), dashboard overview (PR3), leads+demais (PR4), polimento (PR5). Helpers de tema com 8 unit tests + jsdom adicionado ao vitest (environment global mudado de node pra jsdom — necessario pra testar localStorage; 161 tests existentes continuam verdes, total 169).

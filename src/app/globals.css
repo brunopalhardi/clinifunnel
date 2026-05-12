@@ -32,8 +32,8 @@
     --input: 38 35% 83%;
     --ring: 22 100% 55%;
     --radius: 0.75rem;
-    --sidebar: 240 14% 7%;
-    --sidebar-foreground: 0 0% 90%;
+    --sidebar: 38 32% 89%;
+    --sidebar-foreground: 36 25% 25%;
   }
 
   /* Dark Mode — Carvão Glow */
@@ -63,7 +63,7 @@
     --ring: 22 100% 55%;
     --radius: 0.75rem;
     --sidebar: 240 14% 5%;
-    --sidebar-foreground: 0 0% 90%;
+    --sidebar-foreground: 0 0% 88%;
   }
 }
 

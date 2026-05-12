@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.39.0";
+export const APP_VERSION = "0.40.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.40.0",
+    date: "2026-05-12",
+    type: "minor",
+    changes: [
+      "Visual PR2: sidebar e header repaginados com a paleta laranja. Sidebar agora respira o tema (light = papel quente, dark = preto carvao), antes era sempre escura.",
+      "Brand block da sidebar vira wordmark 'CliniFunnel' (Funnel em laranja) com microsubtitulo 'PAINEL CLINICO'. Removido o icone CF quadrado e o subtitulo 'Precision Analytics'.",
+      "Item ativo da nav: fundo laranja translucido (12%) + texto laranja escuro + barra lateral 3px. Hover em cinza-papel sutil.",
+      "Toggle de tema sai do rodape da sidebar e vira pill no header, junto com Sincronizar + avatar + Sair. Avatar agora tem gradiente laranja + sombra colorida (mesmo tratamento do icone do login).",
+      "Header ganha sticky + backdrop-blur sobre o fundo papel/carvao.",
+      "Consolidacao bg-gold/text-gold -> bg-primary/text-primary nos 10 usos do sidebar+header. Os 29 usos restantes em paginas internas seguem migrando automatico via alias --gold->--primary; consolidacao definitiva vira nos PRs 3+.",
+    ],
+  },
   {
     version: "0.39.0",
     date: "2026-05-11",
