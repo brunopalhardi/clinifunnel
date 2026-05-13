@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.41.0";
+export const APP_VERSION = "0.42.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.42.0",
+    date: "2026-05-12",
+    type: "minor",
+    changes: [
+      "DASH-5: Visao Geral dividida em 2 paginas com contextos claros",
+      "/dashboard/captacao (Kommo-centric): foco no funil — Leads captados -> Consultas agendadas -> Compareceram -> Procedimentos fechados -> Receita do funil. Linha 2 (comparecimento dos leads do funil) e composicao da receita continuam aqui.",
+      "/dashboard/operacao (Clinicorp-centric): unifica /dashboard/financeiro com agenda da clinica. KPIs financeiros (receita confirmada, ticket medio, pacientes ativos, pipeline pendente) + KPIs novos de agenda TODA a clinica (atendidos, faltas com taxa no-show, confirmadas, aguardando) — sem filtro de funil.",
+      "Endpoint /api/operacao agrega financeiro + appointments.groupBy(statusKey) sem filtro de pipeline.",
+      "Sidebar: Visao Geral -> Captacao, Financeiro -> Operacao. Outros itens mantidos.",
+      "Redirects: /dashboard -> /dashboard/captacao, /dashboard/financeiro -> /dashboard/operacao (links externos continuam funcionando).",
+      "Fix interno (era DASH-4.1, agora junto): 'Compareceram' no funil agora usa Appointment.statusKey='atendido' em vez de lead.patient.procedures.some() — bate com o KPI 'Comparecimento'.",
+    ],
+  },
   {
     version: "0.41.0",
     date: "2026-05-12",

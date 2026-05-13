@@ -5,14 +5,18 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/version";
 
+// [DASH-5] Dashboard dividido em 2 paginas principais:
+// - "Captacao" (Kommo): funil de leads ate procedimento fechado
+// - "Operacao" (Clinicorp): caixa + agenda da clinica inteira
+// "Visao Geral" e "Financeiro" antigos foram substituidos por redirects.
 const navItems = [
-  { href: "/dashboard", label: "Visao Geral", icon: "BarChart3" },
+  { href: "/dashboard/captacao", label: "Captacao", icon: "BarChart3" },
+  { href: "/dashboard/operacao", label: "Operacao", icon: "DollarSign" },
   { href: "/dashboard/leads", label: "Leads", icon: "Users" },
   { href: "/dashboard/campaigns", label: "Campanhas", icon: "Megaphone" },
   { href: "/dashboard/procedures", label: "Procedimentos", icon: "ClipboardCheck" },
   { href: "/dashboard/ltv", label: "LTV & ROAS", icon: "TrendingUp" },
   { href: "/dashboard/patients", label: "Pacientes", icon: "UserCheck" },
-  { href: "/dashboard/financeiro", label: "Financeiro", icon: "DollarSign" },
   { href: "/dashboard/settings", label: "Configuracoes", icon: "Settings" },
 ];
 

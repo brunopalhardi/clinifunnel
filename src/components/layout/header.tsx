@@ -8,10 +8,14 @@ import { useClinic } from "@/hooks/use-clinic";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const pageNames: Record<string, string> = {
-  "/dashboard": "Visao Geral",
+  "/dashboard": "Captacao",
+  "/dashboard/captacao": "Captacao",
+  "/dashboard/operacao": "Operacao",
   "/dashboard/leads": "Leads",
   "/dashboard/campaigns": "Campanhas",
   "/dashboard/procedures": "Procedimentos",
+  "/dashboard/patients": "Pacientes",
+  "/dashboard/ltv": "LTV & ROAS",
   "/dashboard/logs": "Webhook Logs",
   "/dashboard/settings": "Configuracoes",
 };
