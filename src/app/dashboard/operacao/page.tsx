@@ -16,6 +16,13 @@ interface AppointmentsBreakdown {
   taxaNoShow: number;
 }
 
+interface DiscountsBreakdown {
+  total: number;
+  percent: number;
+  proceduresWithDiscount: number;
+  revenueBruto: number;
+}
+
 interface OperacaoData {
   totalRevenue: number;
   totalProcedures: number;
@@ -29,6 +36,7 @@ interface OperacaoData {
   procedureBreakdown: { status: string; count: number; revenue: number }[];
   revenueByDay: { day: string; revenue: number; count: number }[];
   appointments?: AppointmentsBreakdown;
+  discounts?: DiscountsBreakdown;
 }
 
 const fmt = (v: number) =>
@@ -131,6 +139,28 @@ export default function OperacaoPage() {
             breakdown={`${d.pendingCount} aguardando`}
           />
         </div>
+
+        {/* [DASH-5.1] Desconto concedido no periodo */}
+        {d.discounts && d.discounts.total > 0 && (
+          <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                Descontos concedidos
+              </p>
+              <p className="font-display text-2xl font-bold mt-1">
+                {fmt(d.discounts.total)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {d.discounts.proceduresWithDiscount} procedimento(s) com desconto · {d.discounts.percent.toFixed(1)}% sobre a receita bruta
+              </p>
+            </div>
+            <div className="text-right text-xs text-muted-foreground">
+              <p>Receita bruta: <span className="font-semibold text-foreground">{fmt(d.discounts.revenueBruto)}</span></p>
+              <p>− Descontos: <span className="font-semibold text-amber-600 dark:text-amber-400">{fmt(d.discounts.total)}</span></p>
+              <p>= Receita liquida: <span className="font-semibold text-success">{fmt(d.totalRevenue)}</span></p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Linha 2 — Agenda (Appointments) */}

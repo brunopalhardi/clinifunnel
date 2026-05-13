@@ -125,6 +125,17 @@ export async function GET(request: NextRequest) {
   const totalProcedures = revenueAgg._count.id;
   const ticketMedio = totalProcedures > 0 ? totalRevenue / totalProcedures : 0;
 
+  // [DASH-5.1] Desconto total concedido no periodo (rateio proporcional via DASH-3).
+  // So conta procedures Aprovado — orcamentos abertos e cancelados nao tem desconto
+  // efetivo (mesmo escopo do `revenueAgg`). Conta tambem quantos procedures tiveram
+  // desconto > 0 pra calcular "ticket medio de desconto por procedure que recebeu".
+  const totalDiscount = revenueAgg._sum.discountAmount ?? 0;
+  const totalRevenueBruto = revenueAgg._sum.value ?? 0;
+  const discountPercent = totalRevenueBruto > 0 ? (totalDiscount / totalRevenueBruto) * 100 : 0;
+  const discountedProceduresCount = await prisma.procedure.count({
+    where: { ...procFilter, discountAmount: { gt: 0 } },
+  });
+
   // Breakdown de appointments
   const apptByStatus = appointmentsByStatus.reduce<Record<string, number>>(
     (acc, row) => {
@@ -149,6 +160,13 @@ export async function GET(request: NextRequest) {
       pendingCount: pendingAgg._count.id,
       cancelledRevenue: liquido(cancelledAgg),
       cancelledCount: cancelledAgg._count.id,
+      // [DASH-5.1] Desconto concedido no periodo
+      discounts: {
+        total: totalDiscount,
+        percent: discountPercent,
+        proceduresWithDiscount: discountedProceduresCount,
+        revenueBruto: totalRevenueBruto,
+      },
       topProcedures: topProcedures.map((p) => {
         const rev = (p._sum.value ?? 0) - (p._sum.discountAmount ?? 0);
         return {
