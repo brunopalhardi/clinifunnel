@@ -52,6 +52,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Reprocess phones completed", ...result });
   }
 
+  if (type === "reprocess-names") {
+    const result = await reprocessLeadNames(clinicId);
+    return NextResponse.json({ message: "Reprocess names completed", ...result });
+  }
+
   if (type === "match-now") {
     const result = await matchLeadsNow(clinicId);
     return NextResponse.json({ message: "Match leads completed", ...result });
@@ -135,6 +140,76 @@ async function reprocessLeadPhones(clinicId: string) {
     } catch (err) {
       totalErrors++;
       console.error(`[reprocess-phones] Lead ${lead.id} error:`, err);
+    }
+  }
+
+  return { totalProcessed, totalUpdated, totalErrors };
+}
+
+/**
+ * [LEAD-1] Reprocessa o nome dos leads que ficaram com "Lead #N" no DB.
+ *
+ * Esses leads sao antigos (pre-INT-2.2 / v0.32.2) ou casos onde o webhook
+ * processou sem buscar o contato do Kommo. Agora o webhook ja usa contact.name
+ * como displayName, mas o backfill aqui resolve os leads antigos.
+ *
+ * Estrategia:
+ * - Busca leads cujo `name` matcheia o padrao /^Lead #\d+$/i
+ * - Pra cada um, chama getLead(kommoLeadId) -> pega contacts[0].id -> getContact()
+ *   -> usa contact.name se nao vazio
+ * - Throttle de 100ms entre requests pra evitar rate limit
+ */
+async function reprocessLeadNames(clinicId: string) {
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
+    select: { id: true, kommoSubdomain: true, kommoToken: true },
+  });
+
+  if (!clinic || !clinic.kommoToken) {
+    return { totalProcessed: 0, totalUpdated: 0, totalErrors: 0 };
+  }
+
+  // Leads com nome no padrao "Lead #12345" (ou null/vazio)
+  const leads = await prisma.lead.findMany({
+    where: {
+      clinicId: clinic.id,
+      OR: [
+        { name: { startsWith: "Lead #" } },
+        { name: "" },
+      ],
+    },
+    select: { id: true, kommoLeadId: true },
+  });
+
+  let totalProcessed = 0;
+  let totalUpdated = 0;
+  let totalErrors = 0;
+
+  if (leads.length === 0) return { totalProcessed, totalUpdated, totalErrors };
+
+  const kommoClient = new KommoClient(clinic.kommoSubdomain, clinic.kommoToken);
+
+  for (const lead of leads) {
+    totalProcessed++;
+    try {
+      const kommoLead = await kommoClient.getLead(parseInt(lead.kommoLeadId));
+      const contacts = kommoLead._embedded?.contacts;
+      if (!contacts?.length) continue;
+
+      const contact = await kommoClient.getContact(contacts[0].id);
+      const realName = contact.name?.trim();
+      if (realName) {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { name: realName },
+        });
+        totalUpdated++;
+      }
+
+      await new Promise((r) => setTimeout(r, 100));
+    } catch (err) {
+      totalErrors++;
+      console.error(`[reprocess-names] Lead ${lead.id} error:`, err);
     }
   }
 

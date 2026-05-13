@@ -41,8 +41,12 @@ interface DashboardData {
   totalSpend: number;
   cpl: number | null;
   conversionRate: number;
-  revenueChart: { day: string; iso?: string; value: number }[];
-  revenueGranularity?: "day" | "week" | "month";
+  // [UI-3] Leads captados por dia/semana/mes (substituiu o antigo revenueChart)
+  leadsByDay: { day: string; iso?: string; count: number }[];
+  leadsByDayTotal: number;
+  leadsByDayAvg: number;
+  leadsByDayBest: { day: string; count: number } | null;
+  leadsGranularity?: "day" | "week" | "month";
   topProcedures: { name: string; count: number; revenue: number; ticketMedio: number }[];
   channelPerformance: { channel: string; spend: number; impressions: number; clicks: number }[];
   receitaPorOrigem?: ReceitaPorOrigem;
@@ -57,7 +61,9 @@ const fmtK = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : fmt(v);
 const empty: DashboardData = {
   totalLeads: 0, campaignLeads: 0, organicLeads: 0, agendamentos: 0,
   compareceram: 0, procedimentos: 0, totalRevenue: 0, procedimentosClinica: 0, receitaClinica: 0, totalSpend: 0, cpl: null,
-  conversionRate: 0, revenueChart: [], topProcedures: [], channelPerformance: [],
+  conversionRate: 0,
+  leadsByDay: [], leadsByDayTotal: 0, leadsByDayAvg: 0, leadsByDayBest: null,
+  topProcedures: [], channelPerformance: [],
   canalBreakdown: [],
 };
 
@@ -66,7 +72,6 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData>(empty);
   const [, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
-  const [patientType, setPatientType] = useState<"all" | "new" | "returning">("all");
 
   const fetchData = useCallback(() => {
     if (!clinic) return;
@@ -74,13 +79,12 @@ export default function DashboardPage() {
     const params = new URLSearchParams({ clinicId: clinic.id });
     if (dateRange.from) params.set("from", dateRange.from);
     if (dateRange.to) params.set("to", dateRange.to);
-    if (patientType !== "all") params.set("patientType", patientType);
     fetch(`/api/dashboard?${params}`)
       .then((res) => res.json())
       .then((json) => setData(json.data ?? empty))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [clinic, dateRange, patientType]);
+  }, [clinic, dateRange]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -90,7 +94,7 @@ export default function DashboardPage() {
   const agendRate = d.totalLeads > 0 ? (d.agendamentos / d.totalLeads) * 100 : 0;
   const compareRate = d.totalLeads > 0 ? (d.compareceram / d.totalLeads) * 100 : 0;
   const procRate = d.totalLeads > 0 ? (d.procedimentos / d.totalLeads) * 100 : 0;
-  const maxRevenue = Math.max(...d.revenueChart.map(r => r.value), 1);
+  const maxLeads = Math.max(...d.leadsByDay.map((r) => r.count), 1);
 
   return (
     <div className="space-y-6">
@@ -102,28 +106,7 @@ export default function DashboardPage() {
             {clinic?.name} — Origem: Kommo (leads captados ate procedimento fechado)
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            {(["all", "new", "returning"] as const).map((type) => {
-              const labels = { all: "Todos", new: "Novos", returning: "Existentes" };
-              const isActive = patientType === type;
-              return (
-                <button
-                  key={type}
-                  onClick={() => setPatientType(type)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                    isActive
-                      ? "bg-gold/15 text-gold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/10"
-                  }`}
-                >
-                  {labels[type]}
-                </button>
-              );
-            })}
-          </div>
-          <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
-        </div>
+        <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
       </div>
 
       {/* Linha 1 — KPIs do funil (Kommo + receita) */}
@@ -221,38 +204,67 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Revenue Timeline */}
+        {/* [UI-3] Leads captados por dia/semana/mes — substitui o antigo grafico
+            de receita por periodo (que ficava com 2 barrões gigantes em datasets
+            esparsos). Foco no topo do funil (entrada de leads) ja que a receita
+            ja aparece no KPI "Receita do funil" acima. */}
         <div className="rounded-xl bg-card p-6 glass-border">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display text-lg font-semibold">Receita por periodo</h2>
+            <h2 className="font-display text-lg font-semibold">Leads captados por periodo</h2>
             <span className="text-[11px] text-muted-foreground uppercase tracking-wider">
-              {d.revenueGranularity === "day" && "Por dia"}
-              {d.revenueGranularity === "week" && "Por semana"}
-              {d.revenueGranularity === "month" && "Por mes"}
+              {d.leadsGranularity === "day" && "Por dia"}
+              {d.leadsGranularity === "week" && "Por semana"}
+              {d.leadsGranularity === "month" && "Por mes"}
             </span>
           </div>
-          {d.revenueChart.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sem receita no periodo.</p>
+
+          {/* Stats agregadas em cima do grafico */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="rounded-lg bg-muted/30 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</p>
+              <p className="font-display text-xl font-bold mt-1">{d.leadsByDayTotal}</p>
+            </div>
+            <div className="rounded-lg bg-muted/30 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Media {d.leadsGranularity === "day" ? "diaria" : d.leadsGranularity === "week" ? "semanal" : "mensal"}
+              </p>
+              <p className="font-display text-xl font-bold mt-1">{d.leadsByDayAvg.toFixed(1)}</p>
+            </div>
+            <div className="rounded-lg bg-muted/30 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Melhor</p>
+              <p className="font-display text-xl font-bold mt-1">
+                {d.leadsByDayBest ? d.leadsByDayBest.count : "—"}
+                {d.leadsByDayBest && (
+                  <span className="text-xs font-normal text-muted-foreground ml-1.5">
+                    em {d.leadsByDayBest.day}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Sparkline (barras finas) */}
+          {d.leadsByDay.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem leads no periodo.</p>
           ) : (
             <div className="overflow-x-auto pb-1">
               <div
-                className="flex items-end gap-1.5 pt-6"
-                style={{ minWidth: `${Math.max(d.revenueChart.length * 36, 100)}px`, height: "180px" }}
+                className="flex items-end gap-1 pt-6"
+                style={{ minWidth: `${Math.max(d.leadsByDay.length * 24, 100)}px`, height: "140px" }}
               >
-                {d.revenueChart.map((r, idx) => {
-                  const heightPct = maxRevenue > 0 ? (r.value / maxRevenue) * 100 : 0;
-                  // Garante minimo visivel pra barras pequenas
-                  const renderHeight = r.value > 0 ? Math.max(heightPct, 6) : 0;
+                {d.leadsByDay.map((r, idx) => {
+                  const heightPct = maxLeads > 0 ? (r.count / maxLeads) * 100 : 0;
+                  const renderHeight = r.count > 0 ? Math.max(heightPct, 6) : 0;
                   return (
-                    <div key={`${r.day}-${idx}`} className="flex flex-1 min-w-[32px] flex-col items-center group relative">
+                    <div key={`${r.day}-${idx}`} className="flex flex-1 min-w-[20px] flex-col items-center group relative">
                       <span className="text-[10px] font-semibold text-foreground opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 whitespace-nowrap z-10">
-                        {fmtK(r.value)}
+                        {r.count} lead{r.count === 1 ? "" : "s"}
                       </span>
-                      <div className="w-full flex items-end justify-center" style={{ height: "140px" }}>
+                      <div className="w-full flex items-end justify-center" style={{ height: "100px" }}>
                         <div
-                          className="w-full rounded-t-md bg-success/80 hover:bg-success transition-all duration-300 cursor-pointer"
-                          style={{ height: `${renderHeight}%`, minHeight: r.value > 0 ? "4px" : "0" }}
-                          title={`${r.day}: ${fmt(r.value)}`}
+                          className="w-full rounded-t-md bg-primary/70 hover:bg-primary transition-all duration-300 cursor-pointer"
+                          style={{ height: `${renderHeight}%`, minHeight: r.count > 0 ? "3px" : "0" }}
+                          title={`${r.day}: ${r.count} lead${r.count === 1 ? "" : "s"}`}
                         />
                       </div>
                       <span className="text-[10px] text-muted-foreground mt-1.5 whitespace-nowrap">
