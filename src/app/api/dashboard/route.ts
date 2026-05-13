@@ -148,12 +148,17 @@ export async function GET(request: NextRequest) {
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
     prisma.lead.count({ where: { ...leadWhere, agendamentoAt: { not: null } } }),
-    // Compareceram: leads com paciente vinculado E paciente tem >= 1 procedimento
+    // [DASH-5] Compareceram = leads com paciente que tem appointment "Atendido"
+    // no Clinicorp (mesma fonte do KPI "Comparecimento" da linha 2, pra evitar
+    // discrepancia entre os 2 lugares onde aparece). Antes contava
+    // lead.patient.procedures — calculo legado que dependia de patientId
+    // populado e contava qualquer procedure (aprovado ou nao).
     prisma.lead.count({
       where: {
         ...leadWhere,
-        patientId: { not: null },
-        patient: { procedures: { some: {} } },
+        patient: {
+          appointments: { some: { statusKey: "atendido", deleted: false } },
+        },
       },
     }),
     // Procedures DO FUNIL (apenas pacientes vinculados a leads) — soma bruta + desconto
