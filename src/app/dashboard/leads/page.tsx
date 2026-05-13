@@ -11,16 +11,12 @@ interface Lead {
   channel: string;
   utmCampaign: string | null;
   kommoStatus: string | null;
+  // [LEAD-2] Enriquecido pelo endpoint via Clinic.kommoStages
+  statusName?: string | null;
+  statusColor?: string | null;
   agendamentoAt: string | null;
   createdAt: string;
 }
-
-const statusStyles: Record<string, string> = {
-  novo: "bg-gold/15 text-gold",
-  agendado: "bg-success/15 text-success",
-  convertido: "bg-success/20 text-success font-medium",
-  perdido: "bg-destructive/15 text-destructive",
-};
 
 export default function LeadsPage() {
   const { clinic, loading: clinicLoading } = useClinic();
@@ -133,8 +129,17 @@ export default function LeadsPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{lead.utmCampaign || "—"}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium ${statusStyles[lead.kommoStatus?.toLowerCase() || ""] || "bg-muted text-muted-foreground"}`}>
-                      {lead.kommoStatus || "—"}
+                    {/* [LEAD-2] Mostra nome humano do stage (vindo do cache Clinic.kommoStages)
+                        em vez do ID cru. Cor do badge: usa hex do Kommo quando disponivel,
+                        senao fallback pra cinza neutro. */}
+                    <span
+                      className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-muted text-foreground"
+                      style={lead.statusColor ? {
+                        backgroundColor: `${lead.statusColor}33`, // 33 = 20% opacity em hex
+                        color: lead.statusColor,
+                      } : undefined}
+                    >
+                      {lead.statusName || lead.kommoStatus || "—"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">

@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.42.1";
+export const APP_VERSION = "0.43.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,21 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.43.0",
+    date: "2026-05-13",
+    type: "minor",
+    changes: [
+      "DASH-6: 6 ajustes pedidos pelo Bruno (UI-2, UI-3, LEAD-1, LEAD-2, PROC-1, PROC-2)",
+      "UI-2: Removido toggle 'Todos/Novos/Existentes' da Captacao (nao agregava valor pra clinica AD)",
+      "UI-3: Substituido grafico 'Receita por periodo' por 'Leads captados por periodo' (sparkline + total + media + melhor dia). Foco no topo do funil em vez de receita (que ja aparece no KPI 'Receita do funil')",
+      "LEAD-1: Endpoint /api/sync com type=reprocess-names — busca getLead+getContact pra cada Lead.name no padrao 'Lead #N' e atualiza com o nome real do contato Kommo",
+      "LEAD-2: Schema Clinic.kommoStages (cache de stages do Kommo: {id: {name, color, pipelineId}}). Worker match-leads atualiza a cada 15min via kommoClient.getPipelines(). /api/leads enriquece resposta com statusName + statusColor. UI mostra badge colorido com nome humano em vez do ID cru",
+      "PROC-1: Tela Procedimentos ganha 2 totalizadores no topo: 'Vendas (fechadas)' = procs Aprovado / 'Pendente (orcamento aberto)' = procs em Orçamento. Deixa claro o split",
+      "PROC-2: Donut 'Distribuicao de vendas' e tabela 'Mais vendidos' agora filtram so statusDescription='Aprovado'. Subtitulos atualizados pra deixar claro o escopo",
+      "Migration: prisma/migrations/20260513000000_clinic_kommo_stages adiciona Clinic.kommoStages (Json nullable)",
+    ],
+  },
   {
     version: "0.42.1",
     date: "2026-05-13",

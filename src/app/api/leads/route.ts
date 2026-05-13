@@ -27,14 +27,15 @@ export async function GET(request: NextRequest) {
 
   const where: Record<string, unknown> = { clinicId };
 
-  if (!allPipelines) {
-    const clinic = await prisma.clinic.findUnique({
-      where: { id: clinicId },
-      select: { pipelineId: true },
-    });
-    if (clinic?.pipelineId) {
-      where.kommoPipelineId = clinic.pipelineId;
-    }
+  // [LEAD-2] Pega tambem o kommoStages cache (map id -> {name, color, pipelineId})
+  // pra enriquecer cada lead com statusName humano em vez do ID cru.
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
+    select: { pipelineId: true, kommoStages: true },
+  });
+
+  if (!allPipelines && clinic?.pipelineId) {
+    where.kommoPipelineId = clinic.pipelineId;
   }
 
   if (channel) where.channel = channel;
@@ -58,5 +59,20 @@ export async function GET(request: NextRequest) {
     take: 100,
   });
 
-  return NextResponse.json({ data: leads });
+  // [LEAD-2] Enriquece com statusName + statusColor traduzindo kommoStatus (ID)
+  // via Clinic.kommoStages. Se nao tiver cache, retorna ID cru como fallback.
+  const stagesMap = (clinic?.kommoStages ?? {}) as Record<
+    string,
+    { name: string; color: string; pipelineId: string }
+  >;
+  const enriched = leads.map((lead) => {
+    const stage = lead.kommoStatus ? stagesMap[lead.kommoStatus] : null;
+    return {
+      ...lead,
+      statusName: stage?.name ?? lead.kommoStatus ?? null,
+      statusColor: stage?.color ?? null,
+    };
+  });
+
+  return NextResponse.json({ data: enriched });
 }

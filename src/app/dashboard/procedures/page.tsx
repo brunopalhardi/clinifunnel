@@ -8,7 +8,9 @@ interface Procedure {
   id: string;
   name: string;
   value: number;
+  discountAmount: number;
   status: string;
+  statusDescription: string | null;
   completedAt: string | null;
   createdAt: string;
   patient: { name: string };
@@ -56,23 +58,43 @@ export default function ProceduresPage() {
 
   useEffect(() => { fetchProcedures(); }, [fetchProcedures]);
 
-  // Group by procedure name
+  // [PROC-2] Group por procedure name, SO Aprovado (vendas reais). Pendente e
+  // cancelado nao entram nem no donut nem no ranking. Valor liquido (- desconto).
   const grouped = useMemo(() => {
     const map = new Map<string, { name: string; count: number; revenue: number }>();
     for (const p of procedures) {
-      if (p.status === "cancelled") continue;
+      if (p.statusDescription !== "Aprovado") continue;
+      const liquido = p.value - (p.discountAmount ?? 0);
       const existing = map.get(p.name);
       if (existing) {
         existing.count++;
-        existing.revenue += p.value;
+        existing.revenue += liquido;
       } else {
-        map.set(p.name, { name: p.name, count: 1, revenue: p.value });
+        map.set(p.name, { name: p.name, count: 1, revenue: liquido });
       }
     }
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
   }, [procedures]);
 
   const totalRevenue = grouped.reduce((s, g) => s + g.revenue, 0);
+
+  // [PROC-1] Totalizadores por status pra mostrar acima do donut:
+  // Vendas (Aprovado) vs Pendente (Orçamento). Cancelados nao entram.
+  const stats = useMemo(() => {
+    let vendasCount = 0, vendasRevenue = 0;
+    let pendenteCount = 0, pendenteRevenue = 0;
+    for (const p of procedures) {
+      const liquido = p.value - (p.discountAmount ?? 0);
+      if (p.statusDescription === "Aprovado") {
+        vendasCount++;
+        vendasRevenue += liquido;
+      } else if (p.statusDescription === "Orçamento") {
+        pendenteCount++;
+        pendenteRevenue += liquido;
+      }
+    }
+    return { vendasCount, vendasRevenue, pendenteCount, pendenteRevenue };
+  }, [procedures]);
 
   const filtered = procedures.filter(p => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.patient.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -92,12 +114,31 @@ export default function ProceduresPage() {
         <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
       </div>
 
+      {/* [PROC-1] Vendas vs Pendente (Aprovado vs Orçamento) — totalizadores. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-xl bg-card p-5 glass-border ring-1 ring-success/20">
+          <p className="text-xs uppercase tracking-wider text-success font-semibold">Vendas (fechadas)</p>
+          <p className="font-display text-2xl font-bold mt-2 text-success">{fmt(stats.vendasRevenue)}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {stats.vendasCount} procedimento(s) aprovado(s) · receita liquida
+          </p>
+        </div>
+        <div className="rounded-xl bg-card p-5 glass-border">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Pendente (orcamento aberto)</p>
+          <p className="font-display text-2xl font-bold mt-2">{fmt(stats.pendenteRevenue)}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {stats.pendenteCount} procedimento(s) em orcamento · valor potencial
+          </p>
+        </div>
+      </div>
+
       {/* Donut + Ranking Table */}
       {grouped.length > 0 && (
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Donut Chart */}
           <div className="rounded-xl bg-card p-6 glass-border">
-            <h2 className="font-display text-lg font-semibold mb-4">Distribuicao de receita</h2>
+            <h2 className="font-display text-lg font-semibold mb-1">Distribuicao de vendas</h2>
+            <p className="text-xs text-muted-foreground mb-4">Receita liquida por procedimento (so Aprovado)</p>
             <div className="flex flex-col items-center">
               <DonutChart data={grouped} total={totalRevenue} />
               {/* Legend */}
@@ -118,7 +159,8 @@ export default function ProceduresPage() {
 
           {/* Ranking Table */}
           <div className="rounded-xl bg-card p-6 glass-border">
-            <h2 className="font-display text-lg font-semibold mb-4">Procedimentos mais vendidos</h2>
+            <h2 className="font-display text-lg font-semibold mb-1">Procedimentos mais vendidos</h2>
+            <p className="text-xs text-muted-foreground mb-4">Top 10 por receita liquida (so Aprovado)</p>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/20">

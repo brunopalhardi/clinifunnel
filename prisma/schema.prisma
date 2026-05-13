@@ -54,6 +54,10 @@ model Clinic {
   // pra mostrar "Atualizado ha Xmin" via /api/sync/status.
   lastClinicorpSyncAt DateTime?
   lastMatchLeadsAt    DateTime?
+  // [LEAD-2] Cache dos stages do Kommo (pipeline + status). Estrutura:
+  // { "82505867": { name: "Agendado (horário confirmado)", color: "#eb93ff", pipelineId: "10755863" }, ... }
+  // Atualizado pelo job match-leads (ou manual). Usado pra traduzir Lead.kommoStatus (ID) em nome humano na UI.
+  kommoStages         Json?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   users            User[]

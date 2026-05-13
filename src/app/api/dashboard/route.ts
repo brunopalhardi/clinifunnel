@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
-  const patientType = searchParams.get("patientType"); // "new" | "returning" | null
 
   const clinic = await prisma.clinic.findUnique({
     where: { id: clinicId },
@@ -45,11 +44,9 @@ export async function GET(request: NextRequest) {
     ? { kommoPipelineId: clinic.pipelineId }
     : {};
 
-  const patientTypeFilter = patientType === "new"
-    ? { isNewPatient: true }
-    : patientType === "returning"
-      ? { isNewPatient: false }
-      : {};
+  // [UI-2] Removido filtro patientType (Todos/Novos/Existentes) — Bruno pediu
+  // tirar o toggle da Captacao porque nao agregava valor pra clinica AD.
+  const patientTypeFilter = {};
 
   // DASH-2: filtro de data dos LEADS usa kommoCreatedAt (fonte de verdade do
   // Kommo) com fallback pra createdAt em legacy. Antes usava createdAt direto
@@ -236,46 +233,33 @@ export async function GET(request: NextRequest) {
     rangeDays <= 31 ? "day" : rangeDays <= 90 ? "week" : "month";
   const truncFn = granularity === "day" ? "day" : granularity === "week" ? "week" : "month";
 
-  // Revenue timeline (only funnel-linked procedures)
-  const dateParams: string[] = [clinicId];
-  let leadSubquery = `SELECT 1 FROM "Lead" l WHERE l."patientId" = pt.id`;
+  // [UI-3] Leads captados por dia/semana/mes (timeline pro grafico da Captacao).
+  // Foco no TOPO do funil em vez de receita (que ja aparece no KPI "Receita do funil").
+  // Antes esse bloco gerava revenueTimeline (procedures); substituido pra mostrar leads.
+  const leadDateExpr = `COALESCE(l."kommoCreatedAt", l."createdAt")`;
+  const leadsParams: unknown[] = [clinicId];
+  let leadsWhere = `l."clinicId" = $1`;
   if (clinic?.pipelineId) {
-    dateParams.push(clinic.pipelineId);
-    leadSubquery += ` AND l."kommoPipelineId" = $${dateParams.length}`;
+    leadsParams.push(clinic.pipelineId);
+    leadsWhere += ` AND l."kommoPipelineId" = $${leadsParams.length}`;
   }
-  if (patientType === "new") {
-    leadSubquery += ` AND l."isNewPatient" = true`;
-  } else if (patientType === "returning") {
-    leadSubquery += ` AND l."isNewPatient" = false`;
-  }
-  // Agrupa pela data REAL do procedimento: completedAt quando existe (data de execucao
-  // vinda do Clinicorp), com fallback pra createdAt. createdAt vem de Estimate.CreateDate
-  // do Clinicorp, que e a data de criacao do orcamento e nao a data do atendimento — usar
-  // so ele empilhava todos os procedimentos no dia em que o sync rodou.
-  const procDateExpr = `COALESCE(p."completedAt", p."createdAt")`;
-  let dateConditions = ` AND EXISTS (${leadSubquery})`;
   if (from) {
-    dateParams.push(from);
-    dateConditions += ` AND ${procDateExpr} >= $${dateParams.length}::timestamp`;
+    leadsParams.push(new Date(from));
+    leadsWhere += ` AND ${leadDateExpr} >= $${leadsParams.length}::timestamp`;
   }
   if (to) {
-    dateParams.push(to);
-    dateConditions += ` AND ${procDateExpr} <= $${dateParams.length}::timestamp`;
+    leadsParams.push(new Date(to));
+    leadsWhere += ` AND ${leadDateExpr} <= $${leadsParams.length}::timestamp`;
   }
 
-  // [DASH-3] Filtra agora por statusDescription='Aprovado' + deleted=false em vez
-  // do legacy status IN ('completed','approved'). E soma value LIQUIDO (- discountAmount).
-  const revenueTimeline = await prisma.$queryRawUnsafe<Array<{ bucket: Date; total: number }>>(
-    `SELECT date_trunc('${truncFn}', ${procDateExpr}) as bucket,
-            SUM(p.value - p."discountAmount")::float as total
-     FROM "Procedure" p
-     INNER JOIN "Patient" pt ON p."patientId" = pt.id
-     WHERE p."clinicId" = $1
-       AND p."statusDescription" = 'Aprovado'
-       AND p."deleted" = false
-       ${dateConditions}
-     GROUP BY bucket ORDER BY bucket ASC`,
-    ...dateParams
+  const leadsTimeline = await prisma.$queryRawUnsafe<Array<{ bucket: Date; count: number }>>(
+    `SELECT date_trunc('${truncFn}', ${leadDateExpr}) as bucket,
+            COUNT(*)::int as count
+     FROM "Lead" l
+     WHERE ${leadsWhere}
+     GROUP BY bucket
+     ORDER BY bucket ASC`,
+    ...leadsParams,
   );
 
   const organicLeads = totalLeads - campaignLeads;
@@ -287,12 +271,18 @@ export async function GET(request: NextRequest) {
   const totalSpend = adSpendAgg._sum.spend ?? 0;
   const cpl = campaignLeads > 0 && totalSpend > 0 ? totalSpend / campaignLeads : null;
 
-  // Revenue chart: timeline (dia / semana / mes)
-  const revenueChart = revenueTimeline.map((r) => ({
+  // [UI-3] Leads por dia: timeline pro grafico de Captacao
+  const leadsByDay = leadsTimeline.map((r) => ({
     day: formatBucketLabel(r.bucket, granularity),
     iso: new Date(r.bucket).toISOString(),
-    value: Number(r.total),
+    count: Number(r.count),
   }));
+  const leadsByDayTotal = leadsByDay.reduce((a, b) => a + b.count, 0);
+  const leadsByDayAvg = leadsByDay.length > 0 ? leadsByDayTotal / leadsByDay.length : 0;
+  const leadsByDayBest = leadsByDay.reduce<{ day: string; count: number } | null>(
+    (best, cur) => (best === null || cur.count > best.count ? { day: cur.day, count: cur.count } : best),
+    null,
+  );
 
   // Top procedures formatted — usa receita liquida
   const topProcs = topProcedures.map((p) => ({
@@ -393,8 +383,12 @@ export async function GET(request: NextRequest) {
       totalSpend,
       cpl,
       conversionRate: totalLeads > 0 ? (agendamentos / totalLeads) * 100 : 0,
-      revenueChart,
-      revenueGranularity: granularity,
+      // [UI-3] Leads captados por dia/semana/mes (substitui revenueChart antigo)
+      leadsByDay,
+      leadsByDayTotal,
+      leadsByDayAvg,
+      leadsByDayBest,
+      leadsGranularity: granularity,
       topProcedures: topProcs,
       channelPerformance,
       receitaPorOrigem,
