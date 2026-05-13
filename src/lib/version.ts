@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.42.0";
+export const APP_VERSION = "0.42.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.42.1",
+    date: "2026-05-13",
+    type: "patch",
+    changes: [
+      "DASH-5.1: card 'Descontos concedidos' na pagina Operacao",
+      "Mostra valor total de desconto aplicado nos procedures Aprovado no periodo selecionado, % sobre a receita bruta, e quantidade de procedures que receberam desconto",
+      "Inclui breakdown Receita Bruta - Descontos = Receita Liquida pra deixar claro o calculo",
+      "Endpoint /api/operacao ganha campo `discounts: {total, percent, proceduresWithDiscount, revenueBruto}`",
+      "Sem schema change — usa Procedure.discountAmount ja capturado em DASH-3",
+    ],
+  },
   {
     version: "0.42.0",
     date: "2026-05-12",
