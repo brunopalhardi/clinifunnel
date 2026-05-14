@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
-const STORAGE_KEY = "clinifunnel:datePreset";
+export const STORAGE_KEY = "clinifunnel:datePreset";
 
 export type DatePresetId =
   | "today"
@@ -27,35 +27,36 @@ function isValidPreset(value: string): value is DatePresetId {
   return VALID_PRESETS.has(value as DatePresetId);
 }
 
+export function readStoredPreset(fallback: DatePresetId): DatePresetId {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored && isValidPreset(stored)) return stored;
+  } catch {
+    // localStorage indisponivel (modo privado, SSR, etc) — usa fallback.
+  }
+  return fallback;
+}
+
+export function writeStoredPreset(presetId: string | null): void {
+  if (!presetId || !isValidPreset(presetId)) return;
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, presetId);
+  } catch {
+    // ignore
+  }
+}
+
+// Le sincronicamente no mesmo tick do primeiro render via lazy useState.
+// Evita o race em que o DateFilter (child) disparava onFilter -> save("30d")
+// ANTES do hook (parent) conseguir ler o stored — sobrescrevendo o sticky
+// com fallback na v0.44.0. Custom ranges (presetId = null) nao persistem.
 export function useStickyDateRange(fallback: DatePresetId = "30d"): {
   initialPreset: DatePresetId;
   save: (presetId: string | null) => void;
 } {
-  const [preset, setPreset] = useState<DatePresetId>(fallback);
-
-  // Lê o preset salvo no localStorage apos hydration. Evita mismatch
-  // SSR/client; o trade-off e um possivel re-fetch quando o stored
-  // difere do fallback.
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored && isValidPreset(stored)) {
-        setPreset(stored);
-      }
-    } catch {
-      // localStorage indisponivel (modo privado, etc) — segue com fallback.
-    }
-  }, []);
-
-  // Custom ranges (presetId = null) nao sao persistidos: o sticky e por preset.
-  const save = useCallback((presetId: string | null) => {
-    if (!presetId || !isValidPreset(presetId)) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, presetId);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  return { initialPreset: preset, save };
+  const [initialPreset] = useState<DatePresetId>(() => readStoredPreset(fallback));
+  const save = useCallback(writeStoredPreset, []);
+  return { initialPreset, save };
 }
