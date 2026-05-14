@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
+import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
 
 interface AppointmentsBreakdown {
   total: number;
@@ -74,6 +75,7 @@ const empty: OperacaoData = {
 
 export default function OperacaoPage() {
   const { clinic, loading: clinicLoading } = useClinic();
+  const { initialPreset, save: saveDatePreset } = useStickyDateRange();
   const [data, setData] = useState<OperacaoData>(empty);
   const [, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -108,7 +110,13 @@ export default function OperacaoPage() {
             {clinic?.name} — Origem: Clinicorp (toda a clinica, sem filtro de funil)
           </p>
         </div>
-        <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+        <DateFilter
+          defaultPreset={initialPreset}
+          onFilter={(from, to, presetId) => {
+            setDateRange({ from, to });
+            saveDatePreset(presetId);
+          }}
+        />
       </div>
 
       {/* Linha 1 — Financeiro */}
@@ -129,14 +137,14 @@ export default function OperacaoPage() {
             breakdown="Por procedimento"
           />
           <KpiCard
-            label="Pacientes ativos"
-            value={String(d.activePatients)}
-            breakdown="No periodo"
+            label="Ticket medio por cliente"
+            value={fmt(d.activePatients > 0 ? d.totalRevenue / d.activePatients : 0)}
+            breakdown={`${d.activePatients} paciente(s) no periodo`}
           />
           <KpiCard
-            label="Pipeline pendente"
+            label="Orcamento em aberto"
             value={fmt(d.pendingRevenue)}
-            breakdown={`${d.pendingCount} aguardando`}
+            breakdown={`${d.pendingCount} orcamento(s) aguardando`}
           />
         </div>
 

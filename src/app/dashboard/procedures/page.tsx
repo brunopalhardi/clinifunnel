@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
+import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
 
 interface Procedure {
   id: string;
@@ -37,6 +38,7 @@ const DONUT_COLORS = [
 
 export default function ProceduresPage() {
   const { clinic, loading: clinicLoading } = useClinic();
+  const { initialPreset, save: saveDatePreset } = useStickyDateRange();
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -111,7 +113,13 @@ export default function ProceduresPage() {
           <h1 className="font-display text-2xl font-bold">Procedimentos</h1>
           <p className="text-sm text-muted-foreground">Receita e performance por tipo de procedimento</p>
         </div>
-        <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+        <DateFilter
+          defaultPreset={initialPreset}
+          onFilter={(from, to, presetId) => {
+            setDateRange({ from, to });
+            saveDatePreset(presetId);
+          }}
+        />
       </div>
 
       {/* [PROC-1] Vendas vs Pendente (Aprovado vs Orçamento) — totalizadores. */}

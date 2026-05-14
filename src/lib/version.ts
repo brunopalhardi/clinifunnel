@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.43.0";
+export const APP_VERSION = "0.44.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.44.0",
+    date: "2026-05-14",
+    type: "minor",
+    changes: [
+      "DASH-7a: 3 ajustes acumulados pedidos pelo Bruno (OP-1, OP-2, UI-4)",
+      "OP-1: Card 'Pacientes ativos' substituido por 'Ticket medio por cliente' (= totalRevenue / activePatients) na pagina Operacao — KPI considerado mais util pela clinica",
+      "OP-2: Card 'Pipeline pendente' renomeado para 'Orcamento em aberto' com subtitulo 'N orcamento(s) aguardando' (linguagem mais clara pro time)",
+      "UI-4: Filtro de data agora e sticky entre paginas via localStorage. Hook useStickyDateRange persiste o preset selecionado (chave 'clinifunnel:datePreset'). Selecione '7d' em Operacao e ao navegar pra Captacao/Leads/Procedures/LTV/Campanhas o filtro mantem '7d'. Custom ranges (clicar dias no calendario) nao sao persistidos — so presets",
+      "DateFilter: callback onFilter ganha 3o argumento presetId: string | null (null = custom range). Compat: callers que ignoram o 3o arg continuam funcionando",
+    ],
+  },
   {
     version: "0.43.0",
     date: "2026-05-13",

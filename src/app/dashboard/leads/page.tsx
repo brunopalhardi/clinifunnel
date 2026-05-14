@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
+import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
 
 interface Lead {
   id: string;
@@ -20,6 +21,7 @@ interface Lead {
 
 export default function LeadsPage() {
   const { clinic, loading: clinicLoading } = useClinic();
+  const { initialPreset, save: saveDatePreset } = useStickyDateRange();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -59,7 +61,13 @@ export default function LeadsPage() {
         <p className="text-sm text-muted-foreground">Gerencie e acompanhe todos os leads da clinica</p>
       </div>
 
-      <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+      <DateFilter
+        defaultPreset={initialPreset}
+        onFilter={(from, to, presetId) => {
+          setDateRange({ from, to });
+          saveDatePreset(presetId);
+        }}
+      />
 
       {/* KPI Mini Cards */}
       <div className="grid grid-cols-3 gap-4">
