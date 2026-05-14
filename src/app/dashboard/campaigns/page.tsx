@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
+import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
 import { CampaignMetrics, CampaignTotals } from "@/types";
 
 const fmt = (v: number) =>
@@ -11,6 +12,7 @@ const fmtNum = (v: number) => new Intl.NumberFormat("pt-BR").format(v);
 
 export default function CampaignsPage() {
   const { clinic, loading: clinicLoading } = useClinic();
+  const { initialPreset, save: saveDatePreset } = useStickyDateRange();
   const [campaigns, setCampaigns] = useState<CampaignMetrics[]>([]);
   const [totals, setTotals] = useState<CampaignTotals | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,13 @@ export default function CampaignsPage() {
         <p className="text-sm text-muted-foreground">Analise o ROI de cada campanha de marketing</p>
       </div>
 
-      <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+      <DateFilter
+        defaultPreset={initialPreset}
+        onFilter={(from, to, presetId) => {
+          setDateRange({ from, to });
+          saveDatePreset(presetId);
+        }}
+      />
 
       {/* KPIs */}
       {totals && (

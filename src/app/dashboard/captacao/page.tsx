@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
+import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
 
 interface RevenueBucket {
   count: number;
@@ -69,6 +70,7 @@ const empty: DashboardData = {
 
 export default function DashboardPage() {
   const { clinic, loading: clinicLoading } = useClinic();
+  const { initialPreset, save: saveDatePreset } = useStickyDateRange();
   const [data, setData] = useState<DashboardData>(empty);
   const [, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -106,7 +108,13 @@ export default function DashboardPage() {
             {clinic?.name} — Origem: Kommo (leads captados ate procedimento fechado)
           </p>
         </div>
-        <DateFilter onFilter={(from, to) => setDateRange({ from, to })} />
+        <DateFilter
+          defaultPreset={initialPreset}
+          onFilter={(from, to, presetId) => {
+            setDateRange({ from, to });
+            saveDatePreset(presetId);
+          }}
+        />
       </div>
 
       {/* Linha 1 — KPIs do funil (Kommo + receita) */}

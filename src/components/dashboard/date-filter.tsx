@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface DateFilterProps {
-  onFilter: (from: string, to: string) => void;
+  onFilter: (from: string, to: string, presetId: string | null) => void;
   defaultPreset?: "today" | "yesterday" | "7d" | "30d" | "90d" | "thisMonth" | "lastMonth";
 }
 
@@ -156,7 +156,7 @@ export function DateFilter({ onFilter, defaultPreset = "30d" }: DateFilterProps)
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
-    if (from && to) onFilter(from.toISOString(), to.toISOString());
+    if (from && to) onFilter(from.toISOString(), to.toISOString(), initial.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -174,7 +174,7 @@ export function DateFilter({ onFilter, defaultPreset = "30d" }: DateFilterProps)
     setFrom(r.from);
     setTo(r.to);
     setActiveId(p.id);
-    onFilter(r.from.toISOString(), r.to.toISOString());
+    onFilter(r.from.toISOString(), r.to.toISOString(), p.id);
     setOpen(false);
   }
 
@@ -194,7 +194,7 @@ export function DateFilter({ onFilter, defaultPreset = "30d" }: DateFilterProps)
         // Click depois → vira to e aplica
         const newTo = endOfDay(d);
         setTo(newTo);
-        onFilter(from.toISOString(), newTo.toISOString());
+        onFilter(from.toISOString(), newTo.toISOString(), null);
         setOpen(false);
       }
     }
