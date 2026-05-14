@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.44.0";
+export const APP_VERSION = "0.44.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.44.1",
+    date: "2026-05-14",
+    type: "patch",
+    changes: [
+      "UI-4 fix: filtro de data sticky agora funciona de verdade entre paginas",
+      "Bug original (v0.44.0): o useEffect do hook lia o localStorage DEPOIS do useEffect do DateFilter disparar onFilter no mount. Como o onFilter chamava save(fallback), sobrescrevia o valor salvo antes do hook conseguir ler. Resultado: sticky reset toda navegacao",
+      "Fix: hook agora le o localStorage sincronicamente no mesmo tick do primeiro render via lazy useState. DateFilter ja monta com o preset correto, save fica idempotente",
+      "Helpers `readStoredPreset`/`writeStoredPreset` extraidos como funcoes puras (padrao de theme.ts) com 8 unit tests cobrindo fallback, valores invalidos e o cenario de regressao",
+    ],
+  },
   {
     version: "0.44.0",
     date: "2026-05-14",
