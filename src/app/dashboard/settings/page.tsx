@@ -229,6 +229,12 @@ export default function SettingsPage() {
           >
             Gerenciar usuarios →
           </a>
+          <a
+            href="/dashboard/settings/recall"
+            className="text-sm font-medium text-gold hover:underline"
+          >
+            Recall por procedimento →
+          </a>
           {settings.hasKommo && <Badge variant="default">Kommo</Badge>}
           {settings.hasClinicorp && <Badge variant="default">Clinicorp</Badge>}
           {settings.hasMeta && <Badge variant="default">Meta Ads</Badge>}
