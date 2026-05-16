@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.45.0";
+export const APP_VERSION = "0.46.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.46.0",
+    date: "2026-05-16",
+    type: "minor",
+    changes: [
+      "DASH-9: Alertas de retorno configuraveis (recall por procedimento, paciente inativo, pos-consulta)",
+      "Schema novo: ProcedureRecallInterval (config por clinica) + ReminderAction (log de tratamento) + 2 campos em Clinic (recallInactiveMonths default 6, recallPostConsultaDays default 3)",
+      "Tab 'Alertas (N)' em /dashboard/patients com 3 mini cards (Recall/Inativos/Pos-consulta), agrupados por urgencia (Atrasados/Urgentes/Em breve). Deep-link via ?tab=alertas",
+      "Cada alerta tem botao Tratar com 4 opcoes: Tratado, Adiar 7d, Adiar 30d, Dispensar. UX otimista (some na hora, POST em background, rollback em caso de erro)",
+      "Tela /dashboard/settings/recall: configura intervalos por procedimento (CRUD) + limites globais (inativo em meses 1-60, pos-consulta em dias 1-30). Banner inicial 'Adicionar todos' chama POST /seed (5 padroes hardcoded: botox/toxina/preenchimento/filler/bioestimulador)",
+      "Lib pura computeReminders em src/lib/reminders/calc.ts com 16 unit tests cobrindo match de pattern (maior days vence), janelas (-30..+30 pra pos-consulta, sem limite superior pra inativo) e filtro por actions (ultima vence, snoozeUntil reabre alerta)",
+      "Fix DASH-3 carryover: /api/reminders agora filtra statusDescription='Aprovado' (estava com legacy status='completed' e retornava 0)",
+      "Cleanup: worker check-reminders (orfao, so logava) deletado. Removido da QUEUE_NAMES e dos imports. Calculo agora e on-demand no endpoint",
+      "Migration: 20260516000000_reminders (so adiciona — sem destrutivo)",
+    ],
+  },
   {
     version: "0.45.0",
     date: "2026-05-14",
