@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.44.1";
+export const APP_VERSION = "0.45.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.45.0",
+    date: "2026-05-14",
+    type: "minor",
+    changes: [
+      "DASH-8: 3 ajustes acumulados pedidos pelo Bruno (esconder LTV/Campanhas, leads por status, drawer de detalhe)",
+      "Sidebar: LTV & ROAS e Campanhas ocultados da nav via flag hidden no array navItems. Rotas continuam funcionais por URL direta — voltam ao menu quando comecarem os anuncios",
+      "Leads: bloco 'Por status' com mini cards (1 por status do Kommo, cor + nome + count). Click no card filtra a tabela. Combina com busca + filtro de canal via AND. Mostra onde os leads estao parados no funil",
+      "Leads: clicar num lead abre drawer lateral com info basica + timeline (capturado -> agendado -> virou paciente -> procedimentos) + link 'Abrir no Kommo'. URL nao muda (drawer puro, sem rota nova). Backdrop/ESC/[x] fecham; scroll do body trava enquanto aberto",
+      "Endpoint novo: GET /api/leads/[id] retorna lead enriquecido (statusName/Color via kommoStages) + patient + procedures, multi-tenant filtered via findFirst",
+      "Lib pura groupLeadsByStatus com 6 unit tests (agrupa por kommoStatus, bucket __none__ pra leads sem status, ordem por count desc)",
+    ],
+  },
   {
     version: "0.44.1",
     date: "2026-05-14",

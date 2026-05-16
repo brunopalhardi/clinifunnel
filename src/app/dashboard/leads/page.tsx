@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
 import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
+import { groupLeadsByStatus, type LeadForGrouping } from "@/lib/leads/group-by-status";
+import { LeadDetailDrawer } from "@/components/dashboard/lead-detail-drawer";
 
 interface Lead {
   id: string;
@@ -27,6 +29,8 @@ export default function LeadsPage() {
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
   const fetchLeads = useCallback(() => {
     if (!clinic) return;
@@ -43,12 +47,21 @@ export default function LeadsPage() {
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
+  const statusGroups = useMemo(
+    () => groupLeadsByStatus(leads as LeadForGrouping[]),
+    [leads]
+  );
+
   if (clinicLoading) return <p className="text-muted-foreground p-8">Carregando...</p>;
 
   const campaignLeads = leads.filter((l) => l.channel === "campaign").length;
   const organicLeads = leads.filter((l) => l.channel !== "campaign").length;
 
   const filtered = leads.filter((l) => {
+    if (statusFilter) {
+      if (statusFilter === "__none__" && l.kommoStatus !== null) return false;
+      if (statusFilter !== "__none__" && l.kommoStatus !== statusFilter) return false;
+    }
     if (search && !l.name.toLowerCase().includes(search.toLowerCase()) && !(l.phone || "").includes(search)) return false;
     if (channelFilter !== "all" && l.channel !== channelFilter) return false;
     return true;
@@ -84,6 +97,38 @@ export default function LeadsPage() {
           <p className="font-display text-2xl font-bold mt-1">{organicLeads} <span className="text-sm text-muted-foreground font-normal">{leads.length > 0 ? `${((organicLeads / leads.length) * 100).toFixed(0)}% do total` : ""}</span></p>
         </div>
       </div>
+
+      {/* [DASH-8] Por status — mini cards filtraveis. Click no card alterna o filtro. */}
+      {statusGroups.length > 0 && (
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            Por status (clique pra filtrar)
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {statusGroups.map((g) => {
+              const isActive = statusFilter === g.id;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => setStatusFilter((curr) => (curr === g.id ? null : g.id))}
+                  className={`flex items-center gap-2 rounded-xl bg-card p-3 glass-border text-left transition-all hover:bg-card/80 ${
+                    isActive ? "ring-2 ring-primary" : ""
+                  }`}
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: g.color ?? "#999" }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-muted-foreground truncate">{g.name}</p>
+                    <p className="font-display text-lg font-bold">{g.count}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex items-center gap-3">
@@ -127,7 +172,11 @@ export default function LeadsPage() {
               <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">{loading ? "Carregando..." : "Nenhum lead encontrado"}</td></tr>
             ) : (
               filtered.map((lead) => (
-                <tr key={lead.id} className="border-b border-border/10 transition-colors hover:bg-muted/30">
+                <tr
+                  key={lead.id}
+                  onClick={() => setOpenLeadId(lead.id)}
+                  className="cursor-pointer border-b border-border/10 transition-colors hover:bg-muted/30"
+                >
                   <td className="px-4 py-3 text-sm font-medium">{lead.name}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{lead.phone || "—"}</td>
                   <td className="px-4 py-3">
@@ -167,6 +216,8 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      <LeadDetailDrawer leadId={openLeadId} onClose={() => setOpenLeadId(null)} />
     </div>
   );
 }
