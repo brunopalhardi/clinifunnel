@@ -6,7 +6,6 @@ import { matchLeadsWorker } from "./match-leads";
 import { syncClinicorpWorker } from "./sync-clinicorp";
 import { syncMetaAdsWorker } from "./sync-meta-ads";
 import { syncGoogleAdsWorker } from "./sync-google-ads";
-import { checkRemindersWorker } from "./check-reminders";
 import { webhookLogCleanupWorker } from "./webhook-log-cleanup";
 
 const log = logger.child({ scope: "workers" });
@@ -18,7 +17,6 @@ const WORKERS = [
   "sync-clinicorp",
   "sync-meta-ads",
   "sync-google-ads",
-  "check-reminders",
   "webhook-log-cleanup",
 ];
 log.info({ workers: WORKERS }, "starting CliniFunnel workers");
@@ -32,7 +30,6 @@ const shutdown = async () => {
     syncClinicorpWorker.close(),
     syncMetaAdsWorker.close(),
     syncGoogleAdsWorker.close(),
-    checkRemindersWorker.close(),
     webhookLogCleanupWorker.close(),
   ]);
   process.exit(0);
