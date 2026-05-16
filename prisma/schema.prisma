@@ -58,6 +58,10 @@ model Clinic {
   // { "82505867": { name: "Agendado (horário confirmado)", color: "#eb93ff", pipelineId: "10755863" }, ... }
   // Atualizado pelo job match-leads (ou manual). Usado pra traduzir Lead.kommoStatus (ID) em nome humano na UI.
   kommoStages         Json?
+  // [DASH-9] Janela pra considerar paciente "inativo" (sem procedure aprovado).
+  recallInactiveMonths   Int  @default(6)
+  // [DASH-9] Dias apos procedure pra alerta de pos-consulta.
+  recallPostConsultaDays Int  @default(3)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   users            User[]
@@ -65,6 +69,8 @@ model Clinic {
   patients         Patient[]
   procedures       Procedure[]
   appointments     Appointment[]
+  procedureRecallIntervals ProcedureRecallInterval[]
+  reminderActions          ReminderAction[]
   adCampaignData   AdCampaignData[]
 }
 
@@ -238,4 +244,38 @@ model WebhookLog {
   createdAt DateTime @default(now())
 
   @@index([clinicId, createdAt])
+}
+
+// [DASH-9] Configuracao de recall por procedimento. Match e case-insensitive
+// `procedureNamePattern.toLowerCase()` contra `procedure.name.toLowerCase()` via includes.
+// Se multiplos patterns batem, ganha o de maior `days` (heuristica anti-duplicata).
+model ProcedureRecallInterval {
+  id                   String   @id @default(cuid())
+  clinicId             String
+  procedureNamePattern String
+  days                 Int
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  clinic               Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+}
+
+// [DASH-9] Log de tratamento de alerta. `reminderKey` e string deterministica:
+//   recall:${patientId}:${procedureId}
+//   inactive:${patientId}
+//   postconsulta:${patientId}:${procedureId}
+// A *ultima* action por reminderKey decide se o alerta esta consumido.
+model ReminderAction {
+  id           String    @id @default(cuid())
+  clinicId     String
+  reminderKey  String
+  action       String
+  snoozeUntil  DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  createdById  String?
+  clinic       Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId, reminderKey])
 }
