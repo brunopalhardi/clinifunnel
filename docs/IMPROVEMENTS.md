@@ -80,13 +80,16 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
   Captura de leads via webhook do WhatsApp Business / Z-API. Modelagem de canal, dedup com Kommo, UTM passthrough.
   Eixo: feature · Bump: minor
 
-- **[FEAT-2] Lembretes proativos por procedimento**
-  Expandir `check-reminders` para enviar para Kommo/WhatsApp em vez de so registrar. Configuravel por procedimento.
+- **[FEAT-2] Lembretes proativos por procedimento (envio via WhatsApp/Kommo)**
+  DASH-9 (v0.46.0) entregou a base: calculo + UI manual de tratamento. Proximo passo: enviar automatico via Z-API/WhatsApp Business quando alerta entra em "Urgente". Depende de [FEAT-1] estar pronto (canal WhatsApp). Marcado como [DASH-9.1] no spec.
   Eixo: feature · Bump: minor
 
 ---
 
 ## Concluidos
+
+- **[DASH-9] Alertas de retorno configuraveis (recall + inativo + pos-consulta)** — PR #_TBD_ — v0.46.0
+  Sistema de alertas espelhando Clinicorp (que nao expoe via API). 3 tipos: recall por procedure (N dias configuravel por pattern), paciente inativo (M meses default 6), pos-consulta (D dias default 3). Tab "Alertas (N)" em /dashboard/patients com 3 minicards + 3 secoes por urgencia. Botao Tratar (Tratado/Adiar 7d/Adiar 30d/Dispensar) com UX otimista. Tela /dashboard/settings/recall com CRUD de patterns + limites + seed de 5 padroes. Schema novo: ProcedureRecallInterval + ReminderAction + 2 campos em Clinic. Lib pura computeReminders com 16 unit tests. Refator de /api/reminders + fix do filtro statusDescription='Aprovado' (era legacy 'completed'). Worker check-reminders orfao deletado. Spec: docs/superpowers/specs/2026-05-14-dash-9-alertas-retorno-design.md.
 
 - **[DASH-8] 3 ajustes acumulados (LTV/Campanhas hidden, leads por status, drawer de detalhe)** — PR #_TBD_ — v0.45.0
   Bruno enviou 3 ajustes agregados num PR so seguindo o padrao DASH-6/DASH-7a. (Item 1) LTV & ROAS e Campanhas saem do menu lateral via flag `hidden: true` em `navItems` (sidebar). Rotas `/dashboard/ltv` e `/dashboard/campaigns` continuam funcionais por URL direta — voltam ao menu quando comecarem os anuncios (1 caractere por item). (Item 2) Pagina `/dashboard/leads` ganha bloco "Por status" abaixo dos KPIs Total/Campanha/Organico com mini cards (1 por status do Kommo, bolinha colorida + nome humano + count, ordenado por count desc). Click filtra a tabela; click no card ativo limpa o filtro. Combina com busca/canal via AND. Edge case: leads sem `kommoStatus` viram bucket `__none__` ("Sem status"). Lib pura `groupLeadsByStatus` em `src/lib/leads/group-by-status.ts` com 6 unit tests. (Item 3) Clicar num lead abre drawer lateral (`src/components/dashboard/lead-detail-drawer.tsx`) com info basica + timeline derivada (capturado no Kommo → agendado → virou paciente → procedimentos com valor liquido) + link "Abrir no Kommo". URL nao muda — drawer puro sem rota nova. Backdrop click/ESC/[×] fecham; scroll do body trava enquanto aberto. Endpoint novo `GET /api/leads/[id]` (multi-tenant filtered via `findFirst` + clinicId obrigatorio) retorna o payload consolidado. Spec: `docs/superpowers/specs/2026-05-14-dash-8-leads-ux-design.md`.

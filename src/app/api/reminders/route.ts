@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
+import { computeReminders } from "@/lib/reminders/calc";
+import type { ReminderActionRecord, RemindersGrouped } from "@/lib/reminders/types";
 
 export const dynamic = "force-dynamic";
-
-const PROCEDURE_INTERVALS: Record<string, number> = {
-  botox: 120,
-  toxina: 120,
-  preenchimento: 240,
-  filler: 240,
-  bioestimulador: 365,
-};
-
-function getReturnIntervalDays(procedureName: string): number | null {
-  const lower = procedureName.toLowerCase();
-  for (const [key, days] of Object.entries(PROCEDURE_INTERVALS)) {
-    if (lower.includes(key)) return days;
-  }
-  return null;
-}
 
 export async function GET(request: NextRequest) {
   let clinicId: string;
@@ -32,46 +18,72 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Erro de autorizacao" }, { status: 500 });
   }
 
-  const procedures = await prisma.procedure.findMany({
-    where: {
-      clinicId,
-      status: "completed",
-      completedAt: { not: null },
-    },
-    include: {
-      patient: {
-        select: { id: true, name: true, phone: true, canalProspeccao: true },
+  const [procRows, recallIntervals, clinic, actionRows] = await Promise.all([
+    prisma.procedure.findMany({
+      where: {
+        clinicId,
+        statusDescription: "Aprovado",
+        deleted: false,
+        completedAt: { not: null },
       },
-    },
-    orderBy: { completedAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        completedAt: true,
+        patient: { select: { id: true, name: true, phone: true } },
+      },
+    }),
+    prisma.procedureRecallInterval.findMany({
+      where: { clinicId },
+      select: { procedureNamePattern: true, days: true },
+    }),
+    prisma.clinic.findUnique({
+      where: { id: clinicId },
+      select: { recallInactiveMonths: true, recallPostConsultaDays: true },
+    }),
+    prisma.reminderAction.findMany({
+      where: { clinicId },
+      select: { reminderKey: true, action: true, snoozeUntil: true, createdAt: true },
+    }),
+  ]);
+
+  const procedures = procRows
+    .filter((p): p is typeof p & { completedAt: Date } => p.completedAt !== null)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      completedAt: p.completedAt,
+      patient: p.patient,
+    }));
+
+  const actions: ReminderActionRecord[] = actionRows.map((a) => ({
+    reminderKey: a.reminderKey,
+    action: a.action as ReminderActionRecord["action"],
+    snoozeUntil: a.snoozeUntil,
+    createdAt: a.createdAt,
+  }));
+
+  const reminders = computeReminders({
+    procedures,
+    recallIntervals,
+    inactiveMonths: clinic?.recallInactiveMonths ?? 6,
+    postConsultaDays: clinic?.recallPostConsultaDays ?? 3,
+    actions,
   });
-
-  const now = new Date();
-  const reminders = [];
-
-  for (const proc of procedures) {
-    const intervalDays = getReturnIntervalDays(proc.name);
-    if (!intervalDays || !proc.completedAt) continue;
-
-    const dueDate = new Date(proc.completedAt.getTime() + intervalDays * 24 * 60 * 60 * 1000);
-    const daysUntilDue = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (daysUntilDue <= 30) {
-      reminders.push({
-        patientId: proc.patient.id,
-        patientName: proc.patient.name,
-        phone: proc.patient.phone,
-        canal: proc.patient.canalProspeccao,
-        procedureName: proc.name,
-        lastDate: proc.completedAt,
-        dueDate,
-        daysUntilDue,
-        status: daysUntilDue < 0 ? "overdue" : daysUntilDue <= 7 ? "urgent" : "upcoming",
-      });
-    }
-  }
 
   reminders.sort((a, b) => a.daysUntilDue - b.daysUntilDue);
 
-  return NextResponse.json({ data: reminders });
+  const grouped: RemindersGrouped = {
+    overdue: reminders.filter((r) => r.urgency === "overdue"),
+    urgent: reminders.filter((r) => r.urgency === "urgent"),
+    upcoming: reminders.filter((r) => r.urgency === "upcoming"),
+    counts: {
+      recall: reminders.filter((r) => r.type === "recall").length,
+      inactive: reminders.filter((r) => r.type === "inactive").length,
+      postconsulta: reminders.filter((r) => r.type === "postconsulta").length,
+      total: reminders.length,
+    },
+  };
+
+  return NextResponse.json({ data: grouped });
 }

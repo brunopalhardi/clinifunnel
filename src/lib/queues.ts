@@ -28,10 +28,6 @@ export function getSyncClinicorpQueue() {
   return getQueue("sync-clinicorp");
 }
 
-export function getCheckRemindersQueue() {
-  return getQueue("check-reminders");
-}
-
 // Lista canonica das filas conhecidas. Usada por /api/admin/queues e
 // futuras features de monitoramento. Nomes batem com o `name` passado pra
 // `new Queue()` em cada worker.
@@ -42,7 +38,6 @@ export const QUEUE_NAMES = [
   "sync-clinicorp",
   "sync-meta-ads",
   "sync-google-ads",
-  "check-reminders",
   "webhook-log-cleanup",
 ] as const;
 
