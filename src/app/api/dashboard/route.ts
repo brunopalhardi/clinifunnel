@@ -137,6 +137,7 @@ export async function GET(request: NextRequest) {
     adSpendAgg,
     topProcedures,
     canalBreakdown,
+    sdrLeads,
     captacaoAgg,
     recorrentesAgg,
     walkInAgg,
@@ -193,6 +194,33 @@ export async function GET(request: NextRequest) {
       where: { ...leadWhere, canalProspeccao: { not: null } },
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
+    }),
+    // [DASH-10] Leads do range com vendedora + dados de funil pra agregar
+    // SDR performance em memoria. Buscamos so leads do funil (mesma where do
+    // KPI principal) pra coerencia com "Leads captados".
+    prisma.lead.findMany({
+      where: leadWhere,
+      select: {
+        vendedora: true,
+        agendamentoAt: true,
+        patientId: true,
+        patient: {
+          select: {
+            appointments: {
+              where: { statusKey: "atendido", deleted: false },
+              select: { id: true },
+              take: 1,
+            },
+            procedures: {
+              where: {
+                ...APPROVED_PROCEDURE_FILTER,
+                ...procedureDateFilter,
+              },
+              select: { value: true, discountAmount: true },
+            },
+          },
+        },
+      },
     }),
     captacaoWhere
       ? prisma.procedure.aggregate({ where: captacaoWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } })
@@ -367,6 +395,51 @@ export async function GET(request: NextRequest) {
     total: appointmentsByStatus.reduce((a, r) => a + r._count.id, 0),
   };
 
+  // [DASH-10] Agregacao por SDR (vendedora do Kommo). Faz em memoria porque
+  // precisamos juntar lead -> patient -> appointments + procedures por SDR,
+  // o que ficaria pesado/feio em SQL puro. Volume baixo (leads do range).
+  type SdrBucket = {
+    leads: number;
+    agendados: number;
+    compareceram: number;
+    fecharam: number;
+    receita: number;
+  };
+  const sdrBuckets = new Map<string, SdrBucket>();
+  for (const lead of sdrLeads) {
+    const key = lead.vendedora ?? "Sem SDR";
+    const bucket = sdrBuckets.get(key) ?? {
+      leads: 0,
+      agendados: 0,
+      compareceram: 0,
+      fecharam: 0,
+      receita: 0,
+    };
+    bucket.leads += 1;
+    if (lead.agendamentoAt) bucket.agendados += 1;
+    if (lead.patient && lead.patient.appointments.length > 0) {
+      bucket.compareceram += 1;
+    }
+    if (lead.patient && lead.patient.procedures.length > 0) {
+      bucket.fecharam += 1;
+      for (const proc of lead.patient.procedures) {
+        bucket.receita += (proc.value ?? 0) - (proc.discountAmount ?? 0);
+      }
+    }
+    sdrBuckets.set(key, bucket);
+  }
+  const sdrPerformance = Array.from(sdrBuckets.entries())
+    .map(([vendedora, b]) => ({
+      vendedora,
+      leads: b.leads,
+      agendados: b.agendados,
+      compareceram: b.compareceram,
+      fecharam: b.fecharam,
+      receita: b.receita,
+      conversao: b.leads > 0 ? (b.fecharam / b.leads) * 100 : 0,
+    }))
+    .sort((a, b) => b.leads - a.leads);
+
   return NextResponse.json({
     data: {
       totalLeads,
@@ -399,6 +472,7 @@ export async function GET(request: NextRequest) {
         canal: c.canalProspeccao ?? "Nao identificado",
         count: c._count.id,
       })),
+      sdrPerformance,
     },
   });
 }
