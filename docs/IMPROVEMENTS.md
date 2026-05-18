@@ -88,6 +88,9 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Concluidos
 
+- **[DASH-9.1] Fix alertas + seletor de procedimento + sub-menu lateral em /settings** — PR #_TBD_ — v0.46.1
+  Bruno reportou apos DASH-9 que alertas nao apareciam mesmo configurando patterns. Investigacao confirmou: a clinica AD nao marca ExecutedDate no Clinicorp — 160/160 procedures Aprovados tinham completedAt=null. Fix: usar COALESCE(completedAt, createdAt) — createdAt ja e o estimate.CreateDate via sync. Aproveitou pra adicionar 2 UX wins: (a) seletor de procedimento na config — endpoint GET /api/procedures/names + <select> com nomes reais (27 distintos), removendo o input texto livre que era propenso a erro de digitacao/cedilha; (b) sub-menu lateral em /dashboard/settings/* via layout.tsx, removendo os 4 links laranja do header da pagina de Integracoes — visual mais limpo e escalavel.
+
 - **[DASH-9] Alertas de retorno configuraveis (recall + inativo + pos-consulta)** — PR #_TBD_ — v0.46.0
   Sistema de alertas espelhando Clinicorp (que nao expoe via API). 3 tipos: recall por procedure (N dias configuravel por pattern), paciente inativo (M meses default 6), pos-consulta (D dias default 3). Tab "Alertas (N)" em /dashboard/patients com 3 minicards + 3 secoes por urgencia. Botao Tratar (Tratado/Adiar 7d/Adiar 30d/Dispensar) com UX otimista. Tela /dashboard/settings/recall com CRUD de patterns + limites + seed de 5 padroes. Schema novo: ProcedureRecallInterval + ReminderAction + 2 campos em Clinic. Lib pura computeReminders com 16 unit tests. Refator de /api/reminders + fix do filtro statusDescription='Aprovado' (era legacy 'completed'). Worker check-reminders orfao deletado. Spec: docs/superpowers/specs/2026-05-14-dash-9-alertas-retorno-design.md.
 
