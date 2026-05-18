@@ -46,6 +46,7 @@ export default function RecallSettingsPage() {
   const [editDays, setEditDays] = useState("");
 
   const [seedDismissed, setSeedDismissed] = useState(false);
+  const [procedureNames, setProcedureNames] = useState<Array<{ name: string; count: number }>>([]);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -65,6 +66,14 @@ export default function RecallSettingsPage() {
     if (!clinic) return;
     reload();
   }, [clinic, reload]);
+
+  useEffect(() => {
+    if (!clinic) return;
+    fetch("/api/procedures/names")
+      .then((r) => r.json())
+      .then((json) => setProcedureNames(json.data ?? []))
+      .catch(() => {});
+  }, [clinic]);
 
   async function saveLimits() {
     setLimitsStatus("saving");
@@ -255,7 +264,20 @@ export default function RecallSettingsPage() {
                   <TableRow key={i.id}>
                     <TableCell>
                       {editingId === i.id ? (
-                        <Input value={editPattern} onChange={(e) => setEditPattern(e.target.value)} />
+                        <select
+                          value={editPattern}
+                          onChange={(e) => setEditPattern(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gold/50"
+                        >
+                          <option value={i.procedureNamePattern}>{i.procedureNamePattern}</option>
+                          {procedureNames
+                            .filter((p) => p.name !== i.procedureNamePattern)
+                            .map((p) => (
+                              <option key={p.name} value={p.name}>
+                                {p.name} ({p.count})
+                              </option>
+                            ))}
+                        </select>
                       ) : (
                         i.procedureNamePattern
                       )}
@@ -288,13 +310,20 @@ export default function RecallSettingsPage() {
 
           <div className="mt-4 flex flex-wrap items-end gap-3 border-t pt-4">
             <div className="space-y-1 flex-1 min-w-48">
-              <Label htmlFor="new-pattern">Novo padrao</Label>
-              <Input
+              <Label htmlFor="new-pattern">Procedimento</Label>
+              <select
                 id="new-pattern"
-                placeholder='Ex: "botox"'
                 value={newPattern}
                 onChange={(e) => setNewPattern(e.target.value)}
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gold/50"
+              >
+                <option value="">Selecione...</option>
+                {procedureNames.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name} ({p.count})
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1 w-32">
               <Label htmlFor="new-days">Dias</Label>
@@ -313,7 +342,7 @@ export default function RecallSettingsPage() {
           {addError && <p className="mt-2 text-sm text-red-600">{addError}</p>}
 
           <p className="mt-4 text-xs text-muted-foreground">
-            O padrao de nome e casado case-insensitive contra o nome do procedimento no Clinicorp. Ex: &quot;botox&quot; pega &quot;Aplicacao Botox 50U&quot; e &quot;Botox Brow Lift&quot;.
+            Selecione o procedimento da lista. Os nomes vem direto dos procedimentos Aprovados sincronizados do Clinicorp. Match e case-insensitive — escolher &quot;BOTOX TERÇO SUPERIOR&quot; pega tambem variantes como &quot;Botox Terço Superior + Pescoço&quot; (match por substring).
           </p>
         </CardContent>
       </Card>

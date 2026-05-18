@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
         clinicId,
         statusDescription: "Aprovado",
         deleted: false,
-        completedAt: { not: null },
       },
       select: {
         id: true,
         name: true,
         completedAt: true,
+        createdAt: true,
         patient: { select: { id: true, name: true, phone: true } },
       },
     }),
@@ -47,14 +47,15 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  const procedures = procRows
-    .filter((p): p is typeof p & { completedAt: Date } => p.completedAt !== null)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      completedAt: p.completedAt,
-      patient: p.patient,
-    }));
+  // [DASH-9.1] Fallback: clinicas que nao preenchem ExecutedDate no Clinicorp tem
+  // completedAt=null. Usa createdAt (que vem do estimate.CreateDate via sync — data
+  // real de aprovacao do orcamento no Clinicorp).
+  const procedures = procRows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    completedAt: p.completedAt ?? p.createdAt,
+    patient: p.patient,
+  }));
 
   const actions: ReminderActionRecord[] = actionRows.map((a) => ({
     reminderKey: a.reminderKey,

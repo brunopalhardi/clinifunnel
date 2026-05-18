@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.46.0";
+export const APP_VERSION = "0.46.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.46.1",
+    date: "2026-05-18",
+    type: "patch",
+    changes: [
+      "DASH-9.1: 3 ajustes acumulados pos-DASH-9 (1 bug fix + 2 melhorias UX)",
+      "Fix alertas nao aparecendo: clinicas que nao marcam ExecutedDate no Clinicorp tinham 100% dos procedures Aprovados com completedAt=null (caso da AD: 160/160). /api/reminders agora usa COALESCE(completedAt, createdAt) — createdAt vem do estimate.CreateDate via sync, nao do now() do nosso DB",
+      "Removido filtro completedAt:{not: null} do where — todos os Aprovados entram no calculo agora",
+      "Seletor de procedimento na tela /dashboard/settings/recall: novo endpoint GET /api/procedures/names retorna distinct dos nomes Aprovados ordenado por count desc (27 distintos hoje na AD). UI substitui <Input> texto livre por <select> com nomes reais. Tira o risco de erro de digitacao/cedilha que tornava o pattern silenciosamente invalido",
+      "Sub-menu lateral em /dashboard/settings/*: criado src/app/dashboard/settings/layout.tsx com nav vertical listando 5 sub-rotas (Integracoes, Recall, Mapa de profissionais, Health, Usuarios). Removidos os 4 links laranja do header da pagina principal — visual mais limpo e escalavel pra sub-rotas futuras",
+    ],
+  },
   {
     version: "0.46.0",
     date: "2026-05-16",
