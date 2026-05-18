@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractAppointmentFields } from "./utm";
+import { extractAppointmentFields, extractVendedora } from "./utm";
 import type { KommoCustomField } from "./types";
 
 function field(
@@ -131,5 +131,56 @@ describe("extractAppointmentFields", () => {
     // appointmentTime should be HH:MM, NOT the raw timestamp string
     expect(result.appointmentTime).toMatch(/^\d{2}:\d{2}$/);
     expect(result.appointmentTime).not.toBe(String(ts));
+  });
+});
+
+describe("extractVendedora", () => {
+  it("returns null when fields is null/undefined/empty", () => {
+    expect(extractVendedora(null)).toBeNull();
+    expect(extractVendedora(undefined)).toBeNull();
+    expect(extractVendedora([])).toBeNull();
+  });
+
+  it("returns null when no field matches 'vendedora'", () => {
+    expect(
+      extractVendedora([
+        field("Canal de prospeccao", "Instagram"),
+        field("UTM Source", "google"),
+      ]),
+    ).toBeNull();
+  });
+
+  it("extracts value from field named 'Vendedora'", () => {
+    expect(
+      extractVendedora([field("Vendedora", "Ingrid")]),
+    ).toBe("Ingrid");
+  });
+
+  it("is case-insensitive on field name", () => {
+    expect(extractVendedora([field("VENDEDORA", "SDR")])).toBe("SDR");
+    expect(extractVendedora([field("vendedora", "Ingrid")])).toBe("Ingrid");
+    expect(extractVendedora([field("Vendedora", "SDR")])).toBe("SDR");
+  });
+
+  it("returns null when field is present but has no values", () => {
+    const f: KommoCustomField = {
+      field_id: 1,
+      field_name: "Vendedora",
+      field_code: null,
+      field_type: "select",
+      values: [],
+    };
+    expect(extractVendedora([f])).toBeNull();
+  });
+
+  it("picks the vendedora field among many", () => {
+    expect(
+      extractVendedora([
+        field("UTM Source", "google"),
+        field("Canal de prospeccao", "Instagram"),
+        field("Vendedora", "Ingrid"),
+        field("Outro campo", "qualquer"),
+      ]),
+    ).toBe("Ingrid");
   });
 });

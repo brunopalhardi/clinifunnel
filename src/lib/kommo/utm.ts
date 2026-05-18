@@ -76,6 +76,19 @@ export function extractCanalProspeccao(
   return null;
 }
 
+export function extractVendedora(
+  fields: KommoCustomField[] | null | undefined
+): string | null {
+  if (!fields) return null;
+  for (const field of fields) {
+    const name = field.field_name?.toLowerCase() ?? "";
+    if (name.includes("vendedora")) {
+      if (field.values.length > 0) return field.values[0].value;
+    }
+  }
+  return null;
+}
+
 export interface AppointmentFields {
   appointmentDate: string | null;
   appointmentTime: string | null;
