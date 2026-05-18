@@ -211,30 +211,6 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Configuracoes</h1>
         <div className="flex items-center gap-3">
-          <a
-            href="/dashboard/settings/clinicorp/health"
-            className="text-sm font-medium text-gold hover:underline"
-          >
-            Health automacao →
-          </a>
-          <a
-            href="/dashboard/settings/clinicorp/professionals"
-            className="text-sm font-medium text-gold hover:underline"
-          >
-            Mapa de profissionais →
-          </a>
-          <a
-            href="/dashboard/settings/users"
-            className="text-sm font-medium text-gold hover:underline"
-          >
-            Gerenciar usuarios →
-          </a>
-          <a
-            href="/dashboard/settings/recall"
-            className="text-sm font-medium text-gold hover:underline"
-          >
-            Recall por procedimento →
-          </a>
           {settings.hasKommo && <Badge variant="default">Kommo</Badge>}
           {settings.hasClinicorp && <Badge variant="default">Clinicorp</Badge>}
           {settings.hasMeta && <Badge variant="default">Meta Ads</Badge>}
