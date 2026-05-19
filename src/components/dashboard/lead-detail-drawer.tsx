@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useReminderActions } from "@/lib/reminders/use-reminder-actions";
+import { ReminderRow, type Reminder } from "@/components/dashboard/reminder-row";
 
 interface LeadDetailDrawerProps {
   leadId: string | null;
@@ -36,6 +38,13 @@ interface LeadDetail {
       createdAt: string;
     }[];
   } | null;
+}
+
+interface RemindersPayload {
+  overdue: Reminder[];
+  urgent: Reminder[];
+  upcoming: Reminder[];
+  counts: { total: number };
 }
 
 interface TimelineEvent {
@@ -90,6 +99,8 @@ function buildTimeline(lead: LeadDetail): TimelineEvent[] {
 export function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerProps) {
   const [data, setData] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [alerts, setAlerts] = useState<Reminder[]>([]);
+  const [allReminders, setAllReminders] = useState<Reminder[] | null>(null);
 
   useEffect(() => {
     if (!leadId) {
@@ -110,6 +121,38 @@ export function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerProps) {
   }, [leadId]);
 
   useEffect(() => {
+    if (!leadId) {
+      setAllReminders(null);
+      setAlerts([]);
+      return;
+    }
+    const controller = new AbortController();
+    fetch("/api/reminders", { signal: controller.signal })
+      .then((r) => r.json())
+      .then((json) => {
+        const p: RemindersPayload | undefined = json.data;
+        if (!p) {
+          setAllReminders([]);
+          return;
+        }
+        setAllReminders([...p.overdue, ...p.urgent, ...p.upcoming]);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") setAllReminders([]);
+      });
+    return () => controller.abort();
+  }, [leadId]);
+
+  useEffect(() => {
+    if (!data?.patient?.id || allReminders === null) {
+      setAlerts([]);
+      return;
+    }
+    const patientId = data.patient.id;
+    setAlerts(allReminders.filter((r) => r.patientId === patientId));
+  }, [data, allReminders]);
+
+  useEffect(() => {
     if (!leadId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -122,6 +165,25 @@ export function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerProps) {
       document.body.style.overflow = prevOverflow;
     };
   }, [leadId, onClose]);
+
+  const { busy, openMenu, setOpenMenu, handleAction } = useReminderActions({
+    onActioned: (key: string) => setAlerts((prev) => prev.filter((r) => r.key !== key)),
+    onError: () => {
+      // rollback: refaz fetch
+      if (data?.patient?.id) {
+        const patientId = data.patient.id;
+        fetch("/api/reminders")
+          .then((r) => r.json())
+          .then((json) => {
+            const p: RemindersPayload | undefined = json.data;
+            if (!p) return;
+            const all = [...p.overdue, ...p.urgent, ...p.upcoming];
+            setAlerts(all.filter((r) => r.patientId === patientId));
+          })
+          .catch(() => {});
+      }
+    },
+  });
 
   if (!leadId) return null;
 
@@ -206,6 +268,27 @@ export function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerProps) {
                 </>
               )}
             </dl>
+
+            {alerts.length > 0 && (
+              <div>
+                <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                  Alertas ativos ({alerts.length})
+                </h3>
+                <div className="rounded-xl bg-card glass-border divide-y divide-border/50">
+                  {alerts.map((r) => (
+                    <ReminderRow
+                      key={r.key}
+                      reminder={r}
+                      busy={busy.has(r.key)}
+                      menuOpen={openMenu === r.key}
+                      onMenuToggle={() => setOpenMenu(openMenu === r.key ? null : r.key)}
+                      onAction={(kind) => handleAction(r.key, kind)}
+                      hidePatientLink
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
