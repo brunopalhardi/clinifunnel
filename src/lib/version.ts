@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.48.0";
+export const APP_VERSION = "0.48.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.48.1",
+    date: "2026-05-19",
+    type: "patch",
+    changes: [
+      "DASH-11.fix: Application error em /dashboard/captacao apos v0.48.0",
+      "Root cause: LeadListItem assumia lead.patient.procedures, mas /api/leads usava include:{patient:true} sem incluir procedures — undefined em qualquer lead com paciente, .some() crashava render",
+      "Fix: /api/leads agora inclui procedures filtradas a Aprovado (so id, server-side) + hasApprovedProc usa procedures?.length defensivamente",
+      "TS nao pegou porque res.json() retorna any — defesa em profundidade no client evita repeticao do bug",
+    ],
+  },
   {
     version: "0.48.0",
     date: "2026-05-19",
