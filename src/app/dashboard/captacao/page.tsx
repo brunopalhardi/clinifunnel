@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { useClinic } from "@/hooks/use-clinic";
 import { useStickyDateRange } from "@/hooks/use-sticky-date-range";
+import { LeadDetailDrawer } from "@/components/dashboard/lead-detail-drawer";
 
 interface RevenueBucket {
   count: number;
@@ -38,6 +39,22 @@ interface SdrPerformance {
   receita: number;
   conversao: number;
 }
+
+interface LeadListItem {
+  id: string;
+  name: string;
+  phone: string | null;
+  kommoStatus: string | null;
+  statusName: string | null;
+  statusColor: string | null;
+  agendamentoAt: string | null;
+  patient: {
+    id: string;
+    procedures: { statusDescription: string | null }[];
+  } | null;
+}
+
+type LeadTab = "todos" | "agendados" | "fecharam" | "sem-agendar";
 
 interface DashboardData {
   totalLeads: number;
@@ -87,6 +104,13 @@ export default function DashboardPage() {
   const [, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
 
+  const [leads, setLeads] = useState<LeadListItem[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadsError, setLeadsError] = useState(false);
+  const [leadTab, setLeadTab] = useState<LeadTab>("todos");
+  const [visibleCount, setVisibleCount] = useState(50);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+
   const fetchData = useCallback(() => {
     if (!clinic) return;
     setLoading(true);
@@ -102,6 +126,23 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  useEffect(() => {
+    if (!clinic) return;
+    setLeadsLoading(true);
+    setLeadsError(false);
+    const params = new URLSearchParams({ clinicId: clinic.id });
+    if (dateRange.from) params.set("from", dateRange.from);
+    if (dateRange.to) params.set("to", dateRange.to);
+    fetch(`/api/leads?${params}`)
+      .then((res) => res.json())
+      .then((json) => {
+        setLeads(json.data ?? []);
+        setVisibleCount(50);
+      })
+      .catch(() => setLeadsError(true))
+      .finally(() => setLeadsLoading(false));
+  }, [clinic, dateRange]);
+
   if (clinicLoading) return <p className="text-muted-foreground p-8">Carregando...</p>;
 
   const d = data;
@@ -109,6 +150,25 @@ export default function DashboardPage() {
   const compareRate = d.totalLeads > 0 ? (d.compareceram / d.totalLeads) * 100 : 0;
   const procRate = d.totalLeads > 0 ? (d.procedimentos / d.totalLeads) * 100 : 0;
   const maxLeads = Math.max(...d.leadsByDay.map((r) => r.count), 1);
+
+  const hasApprovedProc = (l: LeadListItem) =>
+    !!l.patient && l.patient.procedures.some((p) => p.statusDescription === "Aprovado");
+
+  const counts = {
+    todos: leads.length,
+    agendados: leads.filter((l) => l.agendamentoAt !== null && !hasApprovedProc(l)).length,
+    fecharam: leads.filter((l) => hasApprovedProc(l)).length,
+    semAgendar: leads.filter((l) => l.agendamentoAt === null).length,
+  };
+
+  const filteredLeads = leads.filter((l) => {
+    if (leadTab === "agendados") return l.agendamentoAt !== null && !hasApprovedProc(l);
+    if (leadTab === "fecharam") return hasApprovedProc(l);
+    if (leadTab === "sem-agendar") return l.agendamentoAt === null;
+    return true;
+  });
+  const visibleLeads = filteredLeads.slice(0, visibleCount);
+  const hasMoreLeads = filteredLeads.length > visibleCount;
 
   return (
     <div className="space-y-6">
@@ -486,6 +546,101 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* [DASH-11] Lista de leads no funil — tabs por estagio + drawer ao clicar.
+          Carrega de /api/leads (mesmo endpoint da pagina /leads), respeita filtro
+          de data global. Cada linha abre o LeadDetailDrawer (timeline + procs +
+          alertas ativos do paciente). */}
+      <div className="rounded-xl bg-card p-6 glass-border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg font-semibold">Leads no funil</h2>
+          <span className="text-xs text-muted-foreground">
+            {counts.todos} lead{counts.todos === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-border mb-4 overflow-x-auto">
+          <TabButton active={leadTab === "todos"} onClick={() => { setLeadTab("todos"); setVisibleCount(50); }}>
+            Todos ({counts.todos})
+          </TabButton>
+          <TabButton active={leadTab === "agendados"} onClick={() => { setLeadTab("agendados"); setVisibleCount(50); }}>
+            Agendados ({counts.agendados})
+          </TabButton>
+          <TabButton active={leadTab === "fecharam"} onClick={() => { setLeadTab("fecharam"); setVisibleCount(50); }}>
+            Fecharam ({counts.fecharam})
+          </TabButton>
+          <TabButton active={leadTab === "sem-agendar"} onClick={() => { setLeadTab("sem-agendar"); setVisibleCount(50); }}>
+            Sem agendar ({counts.semAgendar})
+          </TabButton>
+        </div>
+
+        {leadsLoading ? (
+          <div className="space-y-2">
+            <div className="h-10 rounded bg-muted/30 animate-pulse" />
+            <div className="h-10 rounded bg-muted/30 animate-pulse" />
+            <div className="h-10 rounded bg-muted/30 animate-pulse" />
+          </div>
+        ) : leadsError ? (
+          <p className="text-sm text-destructive">Erro ao carregar leads. Tente recarregar a pagina.</p>
+        ) : filteredLeads.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sem leads nessa categoria no periodo.</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <th className="text-left font-medium py-2 pr-3">Nome</th>
+                    <th className="text-left font-medium py-2 px-3">Telefone</th>
+                    <th className="text-left font-medium py-2 px-3">Status</th>
+                    <th className="text-right font-medium py-2 pl-3 w-8"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleLeads.map((l) => (
+                    <tr
+                      key={l.id}
+                      onClick={() => setOpenLeadId(l.id)}
+                      className="border-b border-border/30 last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+                    >
+                      <td className="py-3 pr-3 font-medium">{l.name}</td>
+                      <td className="py-3 px-3 text-muted-foreground">{l.phone ?? "—"}</td>
+                      <td className="py-3 px-3">
+                        <span
+                          className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-muted text-foreground"
+                          style={l.statusColor ? {
+                            backgroundColor: `${l.statusColor}33`,
+                            color: l.statusColor,
+                          } : undefined}
+                        >
+                          {l.statusName || l.kommoStatus || "—"}
+                        </span>
+                      </td>
+                      <td className="py-3 pl-3 text-right text-muted-foreground">→</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+              <span>
+                Mostrando {visibleLeads.length} de {filteredLeads.length} leads
+              </span>
+              {hasMoreLeads && (
+                <button
+                  onClick={() => setVisibleCount((c) => c + 50)}
+                  className="rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"
+                >
+                  Ver mais leads
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <LeadDetailDrawer leadId={openLeadId} onClose={() => setOpenLeadId(null)} />
     </div>
   );
 }
@@ -588,4 +743,20 @@ function DollarIcon() {
 }
 function XIcon() {
   return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>;
+}
+
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        "whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 -mb-px " +
+        (active
+          ? "border-primary text-primary"
+          : "border-transparent text-muted-foreground hover:text-foreground")
+      }
+    >
+      {children}
+    </button>
+  );
 }

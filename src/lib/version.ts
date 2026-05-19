@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.47.0";
+export const APP_VERSION = "0.48.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.48.0",
+    date: "2026-05-19",
+    type: "minor",
+    changes: [
+      "DASH-11: Lista de leads no final do Dashboard de Captacao com 4 tabs (Todos / Agendados / Fecharam / Sem agendar)",
+      "Click em um lead abre LeadDetailDrawer (timeline + procedimentos)",
+      "Drawer agora inclui secao 'Alertas ativos' quando o lead virou paciente e tem reminder pendente",
+      "Refactor: useReminderActions hook + ReminderRow component extraidos de PatientAlerts pra compartilhar com o drawer",
+      "Lista respeita o filtro de data global, pagina 50 por vez client-side (endpoint /api/leads ja existente, sem mudancas)",
+    ],
+  },
   {
     version: "0.47.0",
     date: "2026-05-18",
