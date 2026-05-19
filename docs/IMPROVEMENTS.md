@@ -8,14 +8,6 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Em andamento
 
-- **[DASH-11] Lista de leads no Dashboard de Captacao**
-  Lista de leads no final da pagina /dashboard/captacao com 4 tabs (Todos / Agendados / Fecharam / Sem agendar) e drawer com timeline + procedimentos + alertas ativos do paciente. Respeita o filtro de data global. Reusa /api/leads existente.
-  Eixo: produto/dash · Bump: minor (0.48.0)
-
-- **[DASH-10] Performance por SDR no Dashboard de Captacao**
-  Novo campo `vendedora` no Lead extraido do custom field Kommo "Vendedora" + tabela com funil completo (Leads -> Agend. -> Comp. -> Fechou -> Receita -> Conv.%) agrupado por SDR na pagina /dashboard/captacao. Sem backfill: leads anteriores ao deploy ficam como "Sem SDR".
-  Eixo: produto/dash · Bump: minor (0.47.0)
-
 - **[UX-1] Redesign visual completo (PRs 3-5)**
   PR1 (login + tokens) entregue em v0.39.0. PR2 (sidebar + header) entregue em v0.40.0. Pendente: PR3 dashboard overview (KPIs + cards), PR4 leads/pacientes/financeiro/etc, PR5 polimento (vazios, erros, formularios). 29 usos de bg-gold/text-gold ainda em paginas internas — consolidados em PR3/4.
   Eixo: produto/ux · Bump: minor por PR
@@ -95,6 +87,12 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 ---
 
 ## Concluidos
+
+- **[DASH-11] Lista de leads no Dashboard de Captacao** — [PR #91](https://github.com/brunopalhardi/clinifunnel/pull/91) — v0.48.0
+  Lista de leads no final da pagina /dashboard/captacao com 4 tabs (Todos / Agendados / Fecharam / Sem agendar), respeita filtro de data global, pagina 50 por vez. Click no lead abre LeadDetailDrawer (timeline + procedimentos), agora estendido com secao "Alertas ativos" quando o lead virou paciente e tem reminder pendente. Refactor: useReminderActions hook + ReminderRow component extraidos de PatientAlerts pra compartilhar com o drawer. Reusa /api/leads existente (sem mudancas no backend). Spec: docs/superpowers/specs/2026-05-19-dash-11-captacao-leads-list-design.md.
+
+- **[DASH-10] Performance por SDR no Dashboard de Captacao** — [PR #90](https://github.com/brunopalhardi/clinifunnel/pull/90) — v0.47.0
+  Novo campo `vendedora` no Lead extraido do custom field Kommo "Vendedora" via nova helper `extractVendedora` no webhook. Tabela "Performance por SDR" na /dashboard/captacao com funil completo (Leads -> Agend. -> Comp. -> Fechou -> Receita -> Conv.%) agrupado por SDR, ordenada por leads desc, primeira linha em destaque. Sem backfill: leads anteriores ao deploy aparecem como "Sem SDR". Migration add_lead_vendedora (so adiciona coluna nullable). Spec: docs/superpowers/specs/2026-05-18-sdr-performance-design.md.
 
 - **[DASH-9.1] Fix alertas + seletor de procedimento + sub-menu lateral em /settings** — PR #_TBD_ — v0.46.1
   Bruno reportou apos DASH-9 que alertas nao apareciam mesmo configurando patterns. Investigacao confirmou: a clinica AD nao marca ExecutedDate no Clinicorp — 160/160 procedures Aprovados tinham completedAt=null. Fix: usar COALESCE(completedAt, createdAt) — createdAt ja e o estimate.CreateDate via sync. Aproveitou pra adicionar 2 UX wins: (a) seletor de procedimento na config — endpoint GET /api/procedures/names + <select> com nomes reais (27 distintos), removendo o input texto livre que era propenso a erro de digitacao/cedilha; (b) sub-menu lateral em /dashboard/settings/* via layout.tsx, removendo os 4 links laranja do header da pagina de Integracoes — visual mais limpo e escalavel.
