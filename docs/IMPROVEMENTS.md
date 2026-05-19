@@ -8,6 +8,10 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Em andamento
 
+- **[DASH-11] Lista de leads no Dashboard de Captacao**
+  Lista de leads no final da pagina /dashboard/captacao com 4 tabs (Todos / Agendados / Fecharam / Sem agendar) e drawer com timeline + procedimentos + alertas ativos do paciente. Respeita o filtro de data global. Reusa /api/leads existente.
+  Eixo: produto/dash · Bump: minor (0.48.0)
+
 - **[DASH-10] Performance por SDR no Dashboard de Captacao**
   Novo campo `vendedora` no Lead extraido do custom field Kommo "Vendedora" + tabela com funil completo (Leads -> Agend. -> Comp. -> Fechou -> Receita -> Conv.%) agrupado por SDR na pagina /dashboard/captacao. Sem backfill: leads anteriores ao deploy ficam como "Sem SDR".
   Eixo: produto/dash · Bump: minor (0.47.0)
