@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.46.1";
+export const APP_VERSION = "0.47.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.47.0",
+    date: "2026-05-18",
+    type: "minor",
+    changes: [
+      "DASH-10: Performance por SDR no Dashboard de Captacao",
+      "Novo campo Vendedora extraido do custom field Kommo e persistido em Lead.vendedora",
+      "Tabela na pagina /dashboard/captacao com funil completo (Leads -> Agend. -> Comp. -> Fechou -> Receita -> Conv.%) agrupado por SDR, ordenado por leads desc",
+      "Leads sem vendedora preenchida aparecem como 'Sem SDR' (sem backfill — so leads novos a partir do deploy)",
+      "Migration add_lead_vendedora (so adiciona coluna nullable — sem destrutivo)",
+    ],
+  },
   {
     version: "0.46.1",
     date: "2026-05-18",

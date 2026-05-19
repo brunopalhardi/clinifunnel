@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 const log = logger.child({ scope: "webhook-kommo" });
 import { parseKommoWebhook } from "@/lib/kommo/webhooks";
 import { KommoClient } from "@/lib/kommo/client";
-import { extractUTMsFromCustomFields, extractCanalProspeccao, extractAppointmentFields } from "@/lib/kommo/utm";
+import { extractUTMsFromCustomFields, extractCanalProspeccao, extractAppointmentFields, extractVendedora } from "@/lib/kommo/utm";
 import { classifyChannel } from "@/lib/utils/utm";
 import { normalizePhoneBR } from "@/lib/utils/phone";
 import { getCreatePatientQueue } from "@/lib/queues";
@@ -67,6 +67,7 @@ async function processLead(
 
   const utms = extractUTMsFromCustomFields(kommoLead.custom_fields_values);
   const canalProspeccao = extractCanalProspeccao(kommoLead.custom_fields_values);
+  const vendedora = extractVendedora(kommoLead.custom_fields_values);
   const appointmentFields = extractAppointmentFields(kommoLead.custom_fields_values);
   const channel = classifyChannel(utms);
   const { phone, email, name: contactName } = await extractContact(kommoClient, kommoLead);
@@ -89,6 +90,7 @@ async function processLead(
       email,
       ...utms,
       canalProspeccao,
+      vendedora,
       ...appointmentFields,
       channel,
       kommoStatus: statusId,
@@ -103,6 +105,7 @@ async function processLead(
       email,
       ...utms,
       canalProspeccao,
+      vendedora,
       ...appointmentFields,
       channel,
       kommoStatus: statusId,

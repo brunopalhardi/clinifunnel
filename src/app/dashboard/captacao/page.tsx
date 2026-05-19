@@ -29,6 +29,16 @@ interface ConsultasBreakdown {
   total: number;
 }
 
+interface SdrPerformance {
+  vendedora: string;
+  leads: number;
+  agendados: number;
+  compareceram: number;
+  fecharam: number;
+  receita: number;
+  conversao: number;
+}
+
 interface DashboardData {
   totalLeads: number;
   campaignLeads: number;
@@ -52,6 +62,7 @@ interface DashboardData {
   channelPerformance: { channel: string; spend: number; impressions: number; clicks: number }[];
   receitaPorOrigem?: ReceitaPorOrigem;
   consultas?: ConsultasBreakdown;
+  sdrPerformance: SdrPerformance[];
   canalBreakdown: { canal: string; count: number }[];
 }
 
@@ -65,6 +76,7 @@ const empty: DashboardData = {
   conversionRate: 0,
   leadsByDay: [], leadsByDayTotal: 0, leadsByDayAvg: 0, leadsByDayBest: null,
   topProcedures: [], channelPerformance: [],
+  sdrPerformance: [],
   canalBreakdown: [],
 };
 
@@ -286,6 +298,61 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* [DASH-10] Performance por SDR — leads agrupados pela vendedora
+          (custom field Kommo). Funil completo: leads -> agendados ->
+          compareceram -> fecharam -> receita. So renderiza se houver SDR. */}
+      {d.sdrPerformance.length > 0 && (
+        <div className="rounded-xl bg-card p-6 glass-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold">Performance por SDR</h2>
+            <span className="text-xs text-muted-foreground">
+              {d.sdrPerformance.length} SDR{d.sdrPerformance.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <th className="text-left font-medium py-2 pr-3">SDR</th>
+                  <th className="text-right font-medium py-2 px-3">Leads</th>
+                  <th className="text-right font-medium py-2 px-3">Agend.</th>
+                  <th className="text-right font-medium py-2 px-3">Comp.</th>
+                  <th className="text-right font-medium py-2 px-3">Fechou</th>
+                  <th className="text-right font-medium py-2 px-3">Receita</th>
+                  <th className="text-right font-medium py-2 pl-3">Conv.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.sdrPerformance.map((s, idx) => (
+                  <tr
+                    key={s.vendedora}
+                    className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors"
+                  >
+                    <td className={`py-3 pr-3 ${idx === 0 ? "font-semibold" : "font-medium"}`}>
+                      {s.vendedora}
+                    </td>
+                    <td className="py-3 px-3 text-right tabular-nums">{s.leads}</td>
+                    <td className="py-3 px-3 text-right tabular-nums">{s.agendados}</td>
+                    <td className="py-3 px-3 text-right tabular-nums">{s.compareceram}</td>
+                    <td className="py-3 px-3 text-right tabular-nums">{s.fecharam}</td>
+                    <td className="py-3 px-3 text-right tabular-nums">
+                      {s.receita > 0 ? fmtK(s.receita) : "—"}
+                    </td>
+                    <td
+                      className={`py-3 pl-3 text-right tabular-nums ${
+                        s.conversao >= 20 ? "text-success font-semibold" : ""
+                      }`}
+                    >
+                      {s.conversao.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Composicao da receita (DASH-1) */}
       {d.receitaPorOrigem && d.receitaPorOrigem.total.revenue > 0 && (

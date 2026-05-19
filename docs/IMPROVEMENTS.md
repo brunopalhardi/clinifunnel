@@ -8,6 +8,10 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Em andamento
 
+- **[DASH-10] Performance por SDR no Dashboard de Captacao**
+  Novo campo `vendedora` no Lead extraido do custom field Kommo "Vendedora" + tabela com funil completo (Leads -> Agend. -> Comp. -> Fechou -> Receita -> Conv.%) agrupado por SDR na pagina /dashboard/captacao. Sem backfill: leads anteriores ao deploy ficam como "Sem SDR".
+  Eixo: produto/dash · Bump: minor (0.47.0)
+
 - **[UX-1] Redesign visual completo (PRs 3-5)**
   PR1 (login + tokens) entregue em v0.39.0. PR2 (sidebar + header) entregue em v0.40.0. Pendente: PR3 dashboard overview (KPIs + cards), PR4 leads/pacientes/financeiro/etc, PR5 polimento (vazios, erros, formularios). 29 usos de bg-gold/text-gold ainda em paginas internas — consolidados em PR3/4.
   Eixo: produto/ux · Bump: minor por PR

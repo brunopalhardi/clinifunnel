@@ -90,6 +90,8 @@ model Lead {
   utmTerm         String?
   // Canal de Prospeccao (Kommo custom field)
   canalProspeccao String?
+  // Vendedora/SDR responsavel (Kommo custom field "Vendedora")
+  vendedora       String?
   // Patient classification: true = first-time (acquisition), false = returning (retention)
   isNewPatient    Boolean?
   // Status
