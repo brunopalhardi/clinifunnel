@@ -50,7 +50,8 @@ interface LeadListItem {
   agendamentoAt: string | null;
   patient: {
     id: string;
-    procedures: { statusDescription: string | null }[];
+    // Procedures filtradas a "Aprovado" server-side em /api/leads — so o id chega.
+    procedures: { id: string }[];
   } | null;
 }
 
@@ -151,8 +152,11 @@ export default function DashboardPage() {
   const procRate = d.totalLeads > 0 ? (d.procedimentos / d.totalLeads) * 100 : 0;
   const maxLeads = Math.max(...d.leadsByDay.map((r) => r.count), 1);
 
+  // /api/leads ja filtra procedures por statusDescription="Aprovado", so checamos
+  // se a lista tem item. Defesa em profundidade: aceita procedures undefined caso
+  // o payload mude no futuro (TS nao consegue garantir o shape do fetch).
   const hasApprovedProc = (l: LeadListItem) =>
-    !!l.patient && l.patient.procedures.some((p) => p.statusDescription === "Aprovado");
+    !!l.patient && (l.patient.procedures?.length ?? 0) > 0;
 
   const counts = {
     todos: leads.length,

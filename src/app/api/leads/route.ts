@@ -49,7 +49,20 @@ export async function GET(request: NextRequest) {
 
   const leads = await prisma.lead.findMany({
     where,
-    include: { patient: true },
+    include: {
+      patient: {
+        include: {
+          // [DASH-11.fix] Procedures aprovadas (filtradas server-side, so id) pra
+          // que /dashboard/captacao consiga distinguir "fecharam" sem fazer
+          // request extra. Sem isso, lead.patient.procedures fica undefined e
+          // .some()/.length crasham o componente client-side.
+          procedures: {
+            where: { statusDescription: "Aprovado", deleted: false },
+            select: { id: true },
+          },
+        },
+      },
+    },
     // Ordena por kommoCreatedAt (data de criacao no Kommo) com fallback —
     // mais util que createdAt do nosso DB pra leitura humana.
     orderBy: [
