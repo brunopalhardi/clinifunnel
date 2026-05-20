@@ -131,7 +131,11 @@ export default function DashboardPage() {
     if (!clinic) return;
     setLeadsLoading(true);
     setLeadsError(false);
-    const params = new URLSearchParams({ clinicId: clinic.id });
+    // withRangeActivity=true: traz leads com qualquer movimentacao no periodo
+    // (capturado OU agendado OU paciente com procedure aprovada). Pre-filtra
+    // procedures incluidas ao range, entao l.patient.procedures.length > 0
+    // significa "fechou no periodo" e bate com KPI "Procedimentos fechados".
+    const params = new URLSearchParams({ clinicId: clinic.id, withRangeActivity: "true" });
     if (dateRange.from) params.set("from", dateRange.from);
     if (dateRange.to) params.set("to", dateRange.to);
     fetch(`/api/leads?${params}`)
@@ -162,13 +166,13 @@ export default function DashboardPage() {
     todos: leads.length,
     agendados: leads.filter((l) => l.agendamentoAt !== null && !hasApprovedProc(l)).length,
     fecharam: leads.filter((l) => hasApprovedProc(l)).length,
-    semAgendar: leads.filter((l) => l.agendamentoAt === null).length,
+    semAgendar: leads.filter((l) => l.agendamentoAt === null && !hasApprovedProc(l)).length,
   };
 
   const filteredLeads = leads.filter((l) => {
     if (leadTab === "agendados") return l.agendamentoAt !== null && !hasApprovedProc(l);
     if (leadTab === "fecharam") return hasApprovedProc(l);
-    if (leadTab === "sem-agendar") return l.agendamentoAt === null;
+    if (leadTab === "sem-agendar") return l.agendamentoAt === null && !hasApprovedProc(l);
     return true;
   });
   const visibleLeads = filteredLeads.slice(0, visibleCount);
