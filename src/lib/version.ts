@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.48.1";
+export const APP_VERSION = "0.49.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.49.0",
+    date: "2026-05-20",
+    type: "minor",
+    changes: [
+      "DASH-11.activity: Lista 'Leads no funil' da Captacao agora mostra leads com qualquer movimentacao no periodo (capturado OU agendado OU paciente com procedure fechada), batendo com os KPIs de cima",
+      "Antes, a tab 'Fecharam' so olhava leads capturados no range — leads antigos com procedure recente nao apareciam (gap entre KPI 'Procedimentos fechados' e a lista)",
+      "/api/leads ganha query param opt-in withRangeActivity=true (usado so pela Captacao). /dashboard/leads mantem comportamento atual (leads capturados no range)",
+      "Tab 'Sem agendar' agora exclui quem ja fechou procedure no periodo (estagio passado do funil)",
+    ],
+  },
   {
     version: "0.48.1",
     date: "2026-05-19",
