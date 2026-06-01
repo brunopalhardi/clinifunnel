@@ -333,7 +333,7 @@ export default function DashboardPage() {
               <thead>
                 <tr className="border-b border-border/50 text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="text-left font-medium py-2 pr-3">SDR</th>
-                  <th className="text-right font-medium py-2 px-3">Leads</th>
+                  <th className="text-right font-medium py-2 px-3">Atendidos</th>
                   <th className="text-right font-medium py-2 px-3">Agend.</th>
                   <th className="text-right font-medium py-2 px-3">Comp.</th>
                   <th className="text-right font-medium py-2 px-3">Fechou</th>

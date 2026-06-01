@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.52.1";
+export const APP_VERSION = "0.53.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.53.0",
+    date: "2026-06-01",
+    type: "minor",
+    changes: [
+      "Performance por SDR vira funil acumulado por SDR: Atendidos (total de leads da SDR) -> Agendados -> Compareceram -> Fecharam -> Receita",
+      "Conversao agora = Agendados / Atendidos (% das pessoas atendidas que viraram agendamento)",
+      "Resolve o '1 lead / 8 agendados': a coluna passou a ser o total de leads da SDR (acumulado), entao o funil desce coerente. Esta tabela nao filtra por periodo (mostra o total)",
+    ],
+  },
   {
     version: "0.52.1",
     date: "2026-06-01",

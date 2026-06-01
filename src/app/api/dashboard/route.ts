@@ -160,8 +160,6 @@ export async function GET(request: NextRequest) {
     walkInAgg,
     appointmentsByStatus,
     funnelPatientsFecharam,
-    sdrApptsRaw,
-    sdrProcsRaw,
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
@@ -216,12 +214,23 @@ export async function GET(request: NextRequest) {
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
     }),
-    // [SDR] Leads captados no range por SDR (so a vendedora — usado pra contar
-    // "Leads" por SDR). Agendados/compareceram/fecharam/receita vem das queries
-    // event-time abaixo (sdrApptsRaw / sdrProcsRaw).
+    // [SDR] Funil por SDR (ACUMULADO — nao filtra periodo). Todos os leads da
+    // captacao com a jornada do paciente. atendidos = leads da SDR; agendados =
+    // leads cujo paciente agendou (consulta Clinicorp) ou foi marcado "Agendado"
+    // no Kommo; compareceram = paciente com consulta atendida; fecharam =
+    // paciente com procedimento aprovado. Conversao = agendados/atendidos.
     prisma.lead.findMany({
-      where: leadWhere,
-      select: { vendedora: true },
+      where: { clinicId, ...pipelineFilter, ...patientTypeFilter },
+      select: {
+        vendedora: true,
+        agendamentoAt: true,
+        patient: {
+          select: {
+            appointments: { where: { deleted: false }, select: { statusKey: true } },
+            procedures: { where: APPROVED_PROCEDURE_FILTER, select: { value: true, discountAmount: true } },
+          },
+        },
+      },
     }),
     captacaoWhere
       ? prisma.procedure.aggregate({ where: captacaoWhere, _count: { id: true }, _sum: { value: true, discountAmount: true } })
@@ -257,49 +266,6 @@ export async function GET(request: NextRequest) {
       where: funnelProcedureFilter,
       select: { patientId: true },
       distinct: ["patientId"],
-    }),
-    // [SDR] Consultas do periodo (Clinicorp, funil) com a vendedora da captacao
-    // do paciente — pra contar agendados/compareceram POR SDR (event-time).
-    prisma.appointment.findMany({
-      where: {
-        clinicId,
-        deleted: false,
-        ...appointmentDateFilter,
-        patient: { leads: { some: { ...pipelineFilter, ...patientTypeFilter } } },
-      },
-      select: {
-        statusKey: true,
-        patient: {
-          select: {
-            leads: {
-              where: { ...pipelineFilter },
-              select: { vendedora: true },
-              orderBy: { vendedora: { sort: "asc", nulls: "last" } },
-              take: 1,
-            },
-          },
-        },
-      },
-    }),
-    // [SDR] Procedimentos aprovados do periodo (funil) com a vendedora da
-    // captacao — pra contar clientes que fecharam + receita POR SDR.
-    prisma.procedure.findMany({
-      where: funnelProcedureFilter,
-      select: {
-        patientId: true,
-        value: true,
-        discountAmount: true,
-        patient: {
-          select: {
-            leads: {
-              where: { ...pipelineFilter },
-              select: { vendedora: true },
-              orderBy: { vendedora: { sort: "asc", nulls: "last" } },
-              take: 1,
-            },
-          },
-        },
-      },
     }),
   ]);
 
@@ -449,52 +415,48 @@ export async function GET(request: NextRequest) {
     total: appointmentsByStatus.reduce((a, r) => a + r._count.id, 0),
   };
 
-  // [SDR] Agregacao por SDR (vendedora do Kommo), EVENT-TIME — coerente com o
-  // funil principal. `leads` = leads captados no periodo por essa SDR (cohort).
-  // `agendados`/`compareceram` = consultas do periodo (Clinicorp) dos pacientes
-  // que vieram dos leads dessa SDR. `fecharam` = CLIENTES distintos; `receita` =
-  // soma liquida. Atribuicao: cada consulta/procedimento herda a vendedora da
-  // captacao do paciente (lead no pipeline de captacao, preferindo vendedora
-  // preenchida). Faz em memoria — volume baixo (so funil do periodo).
+  // [SDR] Funil por SDR (ACUMULADO). Pra cada lead da captacao (agrupado pela
+  // vendedora), olha a jornada do paciente: atendidos -> agendados ->
+  // compareceram -> fecharam -> receita. Conversao = agendados/atendidos
+  // ("% das pessoas que a SDR atendeu que viraram agendamento"). Em memoria.
   type SdrBucket = {
-    leads: number;
+    atendidos: number;
     agendados: number;
     compareceram: number;
+    fecharam: number;
     receita: number;
-    patients: Set<string>;
   };
   const sdrBuckets = new Map<string, SdrBucket>();
   const sdrBucket = (vendedora: string | null): SdrBucket => {
     const key = vendedora ?? "Sem SDR";
     let b = sdrBuckets.get(key);
     if (!b) {
-      b = { leads: 0, agendados: 0, compareceram: 0, receita: 0, patients: new Set() };
+      b = { atendidos: 0, agendados: 0, compareceram: 0, fecharam: 0, receita: 0 };
       sdrBuckets.set(key, b);
     }
     return b;
   };
   for (const lead of sdrLeads) {
-    sdrBucket(lead.vendedora).leads += 1;
-  }
-  for (const appt of sdrApptsRaw) {
-    const b = sdrBucket(appt.patient?.leads[0]?.vendedora ?? null);
-    b.agendados += 1;
-    if (appt.statusKey === "atendido") b.compareceram += 1;
-  }
-  for (const proc of sdrProcsRaw) {
-    const b = sdrBucket(proc.patient?.leads[0]?.vendedora ?? null);
-    b.receita += (proc.value ?? 0) - (proc.discountAmount ?? 0);
-    if (proc.patientId) b.patients.add(proc.patientId);
+    const b = sdrBucket(lead.vendedora);
+    b.atendidos += 1;
+    const appts = lead.patient?.appointments ?? [];
+    const procs = lead.patient?.procedures ?? [];
+    if (lead.agendamentoAt != null || appts.length > 0) b.agendados += 1;
+    if (appts.some((a) => a.statusKey === "atendido")) b.compareceram += 1;
+    if (procs.length > 0) {
+      b.fecharam += 1;
+      for (const p of procs) b.receita += (p.value ?? 0) - (p.discountAmount ?? 0);
+    }
   }
   const sdrPerformance = Array.from(sdrBuckets.entries())
     .map(([vendedora, b]) => ({
       vendedora,
-      leads: b.leads,
+      leads: b.atendidos, // payload mantem a chave `leads` = total atendidos
       agendados: b.agendados,
       compareceram: b.compareceram,
-      fecharam: b.patients.size,
+      fecharam: b.fecharam,
       receita: b.receita,
-      conversao: b.leads > 0 ? (b.patients.size / b.leads) * 100 : 0,
+      conversao: b.atendidos > 0 ? (b.agendados / b.atendidos) * 100 : 0,
     }))
     .sort((a, b) => b.leads - a.leads);
 
