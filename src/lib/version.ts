@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.52.0";
+export const APP_VERSION = "0.52.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.52.1",
+    date: "2026-06-01",
+    type: "patch",
+    changes: [
+      "Captacao: removida a secao 'Leads no funil' (a lista de leads fica na aba /leads dedicada)",
+      "Captacao: removidos os rotulos vermelhos '% de queda' embaixo de cada etapa do funil",
+    ],
+  },
   {
     version: "0.52.0",
     date: "2026-06-01",
