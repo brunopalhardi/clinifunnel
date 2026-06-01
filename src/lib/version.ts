@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.50.0";
+export const APP_VERSION = "0.50.1";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.50.1",
+    date: "2026-06-01",
+    type: "patch",
+    changes: [
+      "CAP-12.prevent: deploy.yml limpa imagens/containers Docker antigos pos-deploy (docker image/container prune)",
+      "Previne a causa da queda de 01/06: imagens acumuladas a cada deploy encheram o disco (33GB), Postgres parou de aceitar conexao e o dashboard zerou",
+      "Seguro em VPS compartilhada: image prune -a so remove imagens sem container; servicos rodando (traefik, n8n, evolution, portainer) preservados. Falha de limpeza nao derruba deploy (|| true)",
+    ],
+  },
   {
     version: "0.50.0",
     date: "2026-06-01",
