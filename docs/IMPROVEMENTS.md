@@ -88,7 +88,10 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Concluidos
 
-- **[CAP-15] Limpeza da Captacao (remove 'Leads no funil' + % de queda)** — PR #_TBD_ — v0.52.1
+- **[CAP-16] Performance por SDR como funil acumulado (Atendidos->Agendados->...)** — PR #_TBD_ — v0.53.0
+  Bruno achou confuso "1 lead / 8 agendados" (CAP-14 era event-time: leads=captados no periodo vs agendados=atividade do periodo). Reformulado pra funil cohort ACUMULADO por SDR (nao filtra periodo): pra cada lead da captacao (agrupado por vendedora), olha a jornada do paciente — `atendidos` (total de leads da SDR) -> `agendados` (paciente agendou consulta no Clinicorp OU lead marcado Agendado no Kommo) -> `compareceram` (consulta atendida) -> `fecharam` (proc aprovado) -> `receita`. Conversao = agendados/atendidos. Query: 1 findMany de leads do pipeline com patient.appointments+procedures, agregacao em memoria (substituiu as 2 queries event-time do CAP-14). UI: header "Leads" -> "Atendidos". Decisao do Bruno: tabela acumulada (total), nao respeita filtro de data. Relacionado: [CAP-14].
+
+- **[CAP-15] Limpeza da Captacao (remove 'Leads no funil' + % de queda)** — PR #99 — v0.52.1
   Bruno pediu enxugar a Captacao: removida a secao "Leads no funil" do fim da pagina (a lista de leads vive na aba /leads dedicada) + removidos os rotulos vermelhos "↓ X% de queda" embaixo de cada etapa do funil. Limpeza de codigo morto associada (estado/fetch de leads, helpers, tipos LeadListItem/LeadTab, componente TabButton, import LeadDetailDrawer). So UI; sem mudanca de dado/comportamento.
 
 - **[CAP-14] Performance por SDR event-time (coerente com o funil)** — PR #98 — v0.52.0
