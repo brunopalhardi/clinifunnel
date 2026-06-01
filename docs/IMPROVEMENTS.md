@@ -88,7 +88,10 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 ## Concluidos
 
-- **[CAP-14] Performance por SDR event-time (coerente com o funil)** — PR #_TBD_ — v0.52.0
+- **[CAP-15] Limpeza da Captacao (remove 'Leads no funil' + % de queda)** — PR #_TBD_ — v0.52.1
+  Bruno pediu enxugar a Captacao: removida a secao "Leads no funil" do fim da pagina (a lista de leads vive na aba /leads dedicada) + removidos os rotulos vermelhos "↓ X% de queda" embaixo de cada etapa do funil. Limpeza de codigo morto associada (estado/fetch de leads, helpers, tipos LeadListItem/LeadTab, componente TabButton, import LeadDetailDrawer). So UI; sem mudanca de dado/comportamento.
+
+- **[CAP-14] Performance por SDR event-time (coerente com o funil)** — PR #98 — v0.52.0
   A tabela "Performance por SDR" contava Agend./Comp./Fechou por safra de captacao + coluna "Agendado" do Kommo -> dava ~0 em range curto (enganoso). Rework: `agendados`/`compareceram` por SDR agora vem das **consultas do Clinicorp no periodo** (event-time), atribuidas a vendedora que captou o paciente (lead no pipeline de captacao, preferindo vendedora preenchida via orderBy nulls-last). `fecharam` = clientes (pacientes distintos), `receita` = soma liquida, ambos por SDR. `leads` segue sendo leads captados no periodo por SDR (cohort). Implementacao: 2 queries novas no /api/dashboard (sdrApptsRaw com statusKey+vendedora; sdrProcsRaw com value/discount/patientId+vendedora) + agregacao em memoria. UI inalterada (mesmas chaves). Limitacao conhecida: depende do campo "Vendedora" preenchido no Kommo (hoje ~42/53 leads sem -> caem em "Sem SDR"); ganho real exige disciplina de CRM. Relacionado: [CAP-13].
 
 - **[CAP-13] Funil de Captacao coerente (fonte de agendadas + unidades + bug do 294)** — PR #97 — v0.51.0
