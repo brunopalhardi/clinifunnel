@@ -151,8 +151,12 @@ export default function DashboardPage() {
   if (clinicLoading) return <p className="text-muted-foreground p-8">Carregando...</p>;
 
   const d = data;
+  // [CAP-12] "Compareceram" no funil usa a mesma fonte event-time do card de
+  // cima "Comparecimento" (Clinicorp: appointments atendidos no periodo), em vez
+  // do calculo legado por safra de lead — assim os dois lugares batem.
+  const comparecimento = d.consultas?.realizadas ?? d.compareceram;
   const agendRate = d.totalLeads > 0 ? (d.agendamentos / d.totalLeads) * 100 : 0;
-  const compareRate = d.totalLeads > 0 ? (d.compareceram / d.totalLeads) * 100 : 0;
+  const compareRate = d.totalLeads > 0 ? (comparecimento / d.totalLeads) * 100 : 0;
   const procRate = d.totalLeads > 0 ? (d.procedimentos / d.totalLeads) * 100 : 0;
   const maxLeads = Math.max(...d.leadsByDay.map((r) => r.count), 1);
 
@@ -208,7 +212,7 @@ export default function DashboardPage() {
         <KpiCard
           label="Consultas agendadas"
           value={d.agendamentos}
-          breakdown="Leads no stage Agendado (Kommo)"
+          breakdown="Agendaram no periodo (Kommo)"
           icon={<CalendarIcon />}
         />
         <KpiCard
@@ -277,17 +281,17 @@ export default function DashboardPage() {
             />
             <FunnelRow
               label="Compareceram"
-              value={d.compareceram}
+              value={comparecimento}
               max={d.totalLeads}
               pct={compareRate}
-              drop={d.agendamentos > 0 ? ((d.agendamentos - d.compareceram) / d.agendamentos) * 100 : 0}
+              drop={d.agendamentos > 0 ? ((d.agendamentos - comparecimento) / d.agendamentos) * 100 : 0}
             />
             <FunnelRow
               label="Fecharam procedimento"
               value={d.procedimentos}
               max={d.totalLeads}
               pct={procRate}
-              drop={d.compareceram > 0 ? ((d.compareceram - d.procedimentos) / d.compareceram) * 100 : 0}
+              drop={comparecimento > 0 ? ((comparecimento - d.procedimentos) / comparecimento) * 100 : 0}
             />
           </div>
         </div>

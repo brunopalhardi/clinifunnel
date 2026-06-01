@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
 import { APPROVED_PROCEDURE_FILTER, buildLeadDateFilter } from "@/lib/dashboard-filters";
@@ -93,6 +94,22 @@ export async function GET(request: NextRequest) {
 
   const leadWhere = { clinicId, ...pipelineFilter, ...patientTypeFilter, ...dateFilter };
 
+  // [CAP-12] "Consultas agendadas" conta por DATA DO EVENTO (agendamentoAt no
+  // range), nao pela safra de captacao. Um lead captado meses atras que agenda
+  // dentro do periodo deve contar — antes ele caia fora porque o filtro usava
+  // kommoCreatedAt (data de captacao). Sem range = todos os agendados.
+  const agFrom = from ? new Date(from) : null;
+  const agTo = to ? new Date(to) : null;
+  const agendamentoEventFilter: Prisma.DateTimeNullableFilter =
+    agFrom || agTo
+      ? { ...(agFrom ? { gte: agFrom } : {}), ...(agTo ? { lte: agTo } : {}) }
+      : { not: null };
+  const agendamentoEventWhere = {
+    clinicId,
+    ...pipelineFilter,
+    agendamentoAt: agendamentoEventFilter,
+  };
+
   // DASH-1: 3 buckets de origem da receita.
   // Captacao: pacientes com lead no pipelineId atual (= mesmo dataset do "Receita do funil").
   // Recorrentes: pacientes com lead em outros pipelines, sem nenhum lead no principal.
@@ -145,7 +162,8 @@ export async function GET(request: NextRequest) {
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
-    prisma.lead.count({ where: { ...leadWhere, agendamentoAt: { not: null } } }),
+    // [CAP-12] event-time: agendamentoAt no range (ver agendamentoEventWhere)
+    prisma.lead.count({ where: agendamentoEventWhere }),
     // [DASH-5] Compareceram = leads com paciente que tem appointment "Atendido"
     // no Clinicorp (mesma fonte do KPI "Comparecimento" da linha 2, pra evitar
     // discrepancia entre os 2 lugares onde aparece). Antes contava
@@ -445,8 +463,10 @@ export async function GET(request: NextRequest) {
       totalLeads,
       campaignLeads,
       organicLeads,
-      // [DASH-4] `agendamentos` = leads marcados como agendados no Kommo
-      // (Lead.agendamentoAt != null). Renomeado na UI pra "Consultas marcadas".
+      // [CAP-12] `agendamentos` = leads que entraram em "Agendado" no Kommo
+      // DENTRO do range (agendamentoAt no periodo), independente de quando
+      // foram captados. Antes contava pela safra de captacao (kommoCreatedAt),
+      // o que zerava a metrica porque quem agenda foi captado meses antes.
       agendamentos,
       compareceram,
       procedimentos,

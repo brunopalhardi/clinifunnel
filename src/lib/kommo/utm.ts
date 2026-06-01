@@ -154,8 +154,13 @@ export function extractAppointmentFields(
     const name = field.field_name?.toLowerCase() ?? "";
     const code = field.field_code?.toLowerCase() ?? "";
     const type = field.field_type ?? "";
-    const value = field.values?.[0]?.value;
-    if (!value) continue;
+    // Kommo as vezes manda o valor como numero (ex: timestamp do horario no
+    // campo "Horario"), mesmo o type TS dizendo string. Sem coercao, isso
+    // chega como Int no prisma.lead.upsert e quebra com "Expected String or
+    // Null, provided Int" — derrubando o webhook inteiro (lead perdido).
+    const rawValue = field.values?.[0]?.value;
+    if (rawValue === undefined || rawValue === null || rawValue === "") continue;
+    const value = String(rawValue);
 
     const isCombinedDateTime =
       hasAppointmentNameKeyword(name) &&

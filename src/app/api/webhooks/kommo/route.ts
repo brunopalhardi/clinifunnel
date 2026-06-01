@@ -1,131 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { parseKommoWebhook } from "@/lib/kommo/webhooks";
+import { getProcessKommoLeadQueue } from "@/lib/queues";
 
 const log = logger.child({ scope: "webhook-kommo" });
-import { parseKommoWebhook } from "@/lib/kommo/webhooks";
-import { KommoClient } from "@/lib/kommo/client";
-import { extractUTMsFromCustomFields, extractCanalProspeccao, extractAppointmentFields, extractVendedora } from "@/lib/kommo/utm";
-import { classifyChannel } from "@/lib/utils/utm";
-import { normalizePhoneBR } from "@/lib/utils/phone";
-import { getCreatePatientQueue } from "@/lib/queues";
-
-async function extractContact(
-  kommoClient: KommoClient,
-  kommoLead: {
-    _embedded?: {
-      contacts?: Array<{ id: number }>;
-    };
-  }
-) {
-  let phone: string | null = null;
-  let email: string | null = null;
-  let name: string | null = null;
-
-  const contacts = kommoLead._embedded?.contacts;
-  if (!contacts?.length) return { phone, email, name };
-
-  try {
-    const contact = await kommoClient.getContact(contacts[0].id);
-    // Nome do contato (geralmente completo: "Gabrielle Freitas") tende a ser
-    // melhor que o nome do card (curto: "Gabrielle" ou "Lead #N").
-    if (contact.name && contact.name.trim()) name = contact.name.trim();
-    if (contact.custom_fields_values) {
-      for (const field of contact.custom_fields_values) {
-        const code = field.field_code?.toUpperCase();
-        if (code === "PHONE" && field.values.length > 0) {
-          phone = normalizePhoneBR(field.values[0].value);
-        }
-        if (code === "EMAIL" && field.values.length > 0) {
-          email = field.values[0].value;
-        }
-      }
-    }
-  } catch (err) {
-    log.error({ contactId: contacts[0].id, err }, "failed to fetch contact");
-  }
-
-  return { phone, email, name };
-}
-
-async function processLead(
-  clinic: {
-    id: string;
-    kommoSubdomain: string;
-    kommoToken: string;
-    stageAgendamento: string | null;
-  },
-  leadId: string,
-  statusId: string,
-  pipelineId: string
-) {
-  const kommoClient = new KommoClient(
-    clinic.kommoSubdomain,
-    clinic.kommoToken
-  );
-  const kommoLead = await kommoClient.getLead(parseInt(leadId));
-
-  const utms = extractUTMsFromCustomFields(kommoLead.custom_fields_values);
-  const canalProspeccao = extractCanalProspeccao(kommoLead.custom_fields_values);
-  const vendedora = extractVendedora(kommoLead.custom_fields_values);
-  const appointmentFields = extractAppointmentFields(kommoLead.custom_fields_values);
-  const channel = classifyChannel(utms);
-  const { phone, email, name: contactName } = await extractContact(kommoClient, kommoLead);
-  // Prefer nome do contato (completo) ao do card (frequentemente curto).
-  const displayName = contactName || kommoLead.name;
-
-  const isAgendamento =
-    clinic.stageAgendamento && statusId === clinic.stageAgendamento;
-
-  const lead = await prisma.lead.upsert({
-    where: {
-      clinicId_kommoLeadId: {
-        clinicId: clinic.id,
-        kommoLeadId: String(kommoLead.id),
-      },
-    },
-    update: {
-      name: displayName,
-      phone,
-      email,
-      ...utms,
-      canalProspeccao,
-      vendedora,
-      ...appointmentFields,
-      channel,
-      kommoStatus: statusId,
-      kommoPipelineId: pipelineId,
-      ...(isAgendamento ? { agendamentoAt: new Date() } : {}),
-    },
-    create: {
-      clinicId: clinic.id,
-      kommoLeadId: String(kommoLead.id),
-      name: displayName,
-      phone,
-      email,
-      ...utms,
-      canalProspeccao,
-      vendedora,
-      ...appointmentFields,
-      channel,
-      kommoStatus: statusId,
-      kommoPipelineId: pipelineId,
-      kommoCreatedAt: new Date(kommoLead.created_at * 1000),
-      ...(isAgendamento ? { agendamentoAt: new Date() } : {}),
-    },
-  });
-
-  // Enqueue patient creation when lead reaches "Agendado"
-  if (isAgendamento && !lead.patientId) {
-    await getCreatePatientQueue().add(
-      "create-patient",
-      { leadId: lead.id },
-      { jobId: `patient-${lead.id}`, attempts: 3, backoff: { type: "exponential", delay: 5000 } }
-    );
-  }
-
-  return lead;
-}
 
 export async function POST(request: NextRequest) {
   let logId: string | undefined;
@@ -133,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
 
-    const log = await prisma.webhookLog.create({
+    const webhookLog = await prisma.webhookLog.create({
       data: {
         source: "kommo",
         event: "incoming",
@@ -141,7 +20,7 @@ export async function POST(request: NextRequest) {
         status: "received",
       },
     });
-    logId = log.id;
+    logId = webhookLog.id;
 
     const webhook = parseKommoWebhook(body);
 
@@ -156,6 +35,7 @@ export async function POST(request: NextRequest) {
 
     const clinic = await prisma.clinic.findUnique({
       where: { kommoSubdomain: subdomain },
+      select: { id: true },
     });
 
     if (!clinic) {
@@ -173,37 +53,52 @@ export async function POST(request: NextRequest) {
       data: { clinicId: clinic.id },
     });
 
-    let processed = 0;
+    // [CAP-12] Processamento ASSINCRONO. Antes, o handler chamava o Kommo
+    // (getLead + getContact) de forma sincrona aqui. Sob rajada isso tomava
+    // 429 (Too Many Requests), o erro era engolido, o handler respondia 200 e
+    // o Kommo NUNCA reenviava => mudanca de stage perdida (inclusive
+    // "Agendado", zerando "Consultas agendadas"). Agora so enfileiramos e
+    // respondemos 200 rapido; o worker process-kommo-lead faz as chamadas com
+    // retry/backoff, entao o 429 e absorvido sem perda de evento.
+    const queue = getProcessKommoLeadQueue();
+    const jobs: Array<{ leadId: string; statusId: string; pipelineId: string }> = [];
 
-    // Process new leads (add)
     if (webhook.leads?.add?.length) {
       for (const added of webhook.leads.add) {
-        await processLead(clinic, added.id, added.status_id, added.pipeline_id);
-        processed++;
+        jobs.push({ leadId: added.id, statusId: added.status_id, pipelineId: added.pipeline_id });
       }
     }
-
-    // Process status changes
     if (webhook.leads?.status?.length) {
       for (const statusChange of webhook.leads.status) {
-        await processLead(
-          clinic,
-          statusChange.id,
-          statusChange.status_id,
-          statusChange.pipeline_id
-        );
-        processed++;
+        jobs.push({
+          leadId: statusChange.id,
+          statusId: statusChange.status_id,
+          pipelineId: statusChange.pipeline_id,
+        });
       }
     }
 
-    const event =
-      processed > 0
-        ? `processed_${processed}_leads`
-        : "ignored_no_lead_events";
+    await Promise.all(
+      jobs.map((j) =>
+        queue.add(
+          "process-kommo-lead",
+          { clinicId: clinic.id, ...j },
+          {
+            attempts: 8,
+            backoff: { type: "exponential", delay: 15000 },
+            removeOnComplete: 1000,
+            removeOnFail: 5000,
+          }
+        )
+      )
+    );
 
     await prisma.webhookLog.update({
       where: { id: logId },
-      data: { status: "processed", event },
+      data: {
+        status: "processed",
+        event: jobs.length > 0 ? `enqueued_${jobs.length}_leads` : "ignored_no_lead_events",
+      },
     });
 
     return NextResponse.json({ ok: true });

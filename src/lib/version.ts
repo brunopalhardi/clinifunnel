@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.49.0";
+export const APP_VERSION = "0.50.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.50.0",
+    date: "2026-06-01",
+    type: "minor",
+    changes: [
+      "CAP-12: 'Consultas agendadas' e 'Comparecimento' estavam zerados ha ~1 mes — corrigido na raiz",
+      "Causa 1: webhook do Kommo chamava a API de forma sincrona, tomava 429 (Too Many Requests), engolia o erro e respondia 200 — o Kommo nunca reenviava e a mudanca de stage (inclusive 'Agendado') se perdia. Agora o webhook responde 200 na hora e processa async via fila (worker process-kommo-lead) com retry/backoff que absorve o 429",
+      "Causa 2: campo numerico do Kommo (ex: horario) derrubava o prisma.lead.upsert com 'Expected String, provided Int' — agora coage valores pra string na extracao",
+      "Causa 3 (latente): parser do webhook so lia o primeiro evento (leads[status][0]) — agora le todos os eventos agrupados no POST",
+      "Metrica por DATA DO EVENTO: 'Consultas agendadas' conta quem entrou em 'Agendado' dentro do periodo (independente de quando foi captado ou de ja ter saido da coluna). Funil 'Compareceram' usa a mesma fonte event-time do card (Clinicorp)",
+      "Script de backfill (npm run backfill-agendamento) recupera o agendamentoAt historico dos leads que passaram por 'Agendado' (le os eventos do Kommo, sem criar agendamento duplicado no Clinicorp)",
+    ],
+  },
   {
     version: "0.49.0",
     date: "2026-05-20",

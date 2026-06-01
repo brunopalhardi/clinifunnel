@@ -132,6 +132,24 @@ describe("extractAppointmentFields", () => {
     expect(result.appointmentTime).toMatch(/^\d{2}:\d{2}$/);
     expect(result.appointmentTime).not.toBe(String(ts));
   });
+
+  it("coerces numeric Kommo values to string (CAP-12: evita crash Int->String no prisma)", () => {
+    // Regressao CAP-12: o Kommo as vezes manda o valor como numero (ex:
+    // timestamp no campo "Horario"). O tipo TS diz string, mas em runtime vem
+    // Int — sem coercao, appointmentTime chegava Int e derrubava o
+    // prisma.lead.upsert ("Expected String or Null, provided Int"), perdendo o
+    // webhook inteiro.
+    const numericField: KommoCustomField = {
+      field_id: 1,
+      field_name: "Horario",
+      field_code: null,
+      field_type: "numeric",
+      values: [{ value: 1779731100 as unknown as string }],
+    };
+    const result = extractAppointmentFields([numericField]);
+    expect(result.appointmentTime).toBe("1779731100");
+    expect(typeof result.appointmentTime).toBe("string");
+  });
 });
 
 describe("extractVendedora", () => {

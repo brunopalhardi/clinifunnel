@@ -1,6 +1,6 @@
 {
   "name": "clinifunnel",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,7 @@
     "workers": "tsx --tsconfig tsconfig.json src/workers/index.ts",
     "seed": "tsx prisma/seed.ts",
     "encrypt-tokens": "tsx prisma/scripts/encrypt-existing-tokens.ts",
+    "backfill-agendamento": "tsx --tsconfig tsconfig.json prisma/scripts/backfill-agendamento.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
