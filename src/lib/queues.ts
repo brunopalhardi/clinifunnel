@@ -28,11 +28,16 @@ export function getSyncClinicorpQueue() {
   return getQueue("sync-clinicorp");
 }
 
+export function getProcessKommoLeadQueue() {
+  return getQueue("process-kommo-lead");
+}
+
 // Lista canonica das filas conhecidas. Usada por /api/admin/queues e
 // futuras features de monitoramento. Nomes batem com o `name` passado pra
 // `new Queue()` em cada worker.
 export const QUEUE_NAMES = [
   "create-patient",
+  "process-kommo-lead",
   "process-procedure",
   "match-leads",
   "sync-clinicorp",

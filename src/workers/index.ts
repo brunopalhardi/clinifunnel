@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { logger } from "@/lib/logger";
 import { createPatientWorker } from "./create-patient";
+import { processKommoLeadWorker } from "./process-kommo-lead";
 import { processProcedureWorker } from "./process-procedure";
 import { matchLeadsWorker } from "./match-leads";
 import { syncClinicorpWorker } from "./sync-clinicorp";
@@ -12,6 +13,7 @@ const log = logger.child({ scope: "workers" });
 
 const WORKERS = [
   "create-patient",
+  "process-kommo-lead",
   "process-procedure",
   "match-leads",
   "sync-clinicorp",
@@ -25,6 +27,7 @@ const shutdown = async () => {
   log.info("shutting down");
   await Promise.all([
     createPatientWorker.close(),
+    processKommoLeadWorker.close(),
     processProcedureWorker.close(),
     matchLeadsWorker.close(),
     syncClinicorpWorker.close(),
