@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.51.0";
+export const APP_VERSION = "0.52.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.52.0",
+    date: "2026-06-01",
+    type: "minor",
+    changes: [
+      "CAP-14: Performance por SDR agora event-time e coerente com o funil",
+      "Colunas Agend./Comp. por SDR vem das consultas do Clinicorp no periodo (nao mais da coluna 'Agendado' do Kommo, que dava 0), atribuidas a SDR que captou o lead",
+      "Fechou = clientes (pacientes distintos); Receita = soma liquida; ambos atribuidos por SDR",
+      "Obs: ainda depende do campo 'Vendedora' preenchido no Kommo — leads sem vendedora caem em 'Sem SDR'",
+    ],
+  },
   {
     version: "0.51.0",
     date: "2026-06-01",
