@@ -159,6 +159,7 @@ export async function GET(request: NextRequest) {
     recorrentesAgg,
     walkInAgg,
     appointmentsByStatus,
+    funnelPatientsFecharam,
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
@@ -267,7 +268,17 @@ export async function GET(request: NextRequest) {
       },
       _count: { id: true },
     }),
+    // [funil] CLIENTES (pacientes distintos) que fecharam procedimento aprovado
+    // no funil/range — pro funil contar PESSOAS, nao nº de procedimentos (o card
+    // "Procedimentos fechados" continua contando procedimentos).
+    prisma.procedure.findMany({
+      where: funnelProcedureFilter,
+      select: { patientId: true },
+      distinct: ["patientId"],
+    }),
   ]);
+
+  const pacientesFecharam = funnelPatientsFecharam.filter((p) => p.patientId).length;
 
   // Decidir granularity (dia/semana/mes) baseado no range
   const fromDate = from ? new Date(from) : null;
@@ -470,6 +481,7 @@ export async function GET(request: NextRequest) {
       agendamentos,
       compareceram,
       procedimentos,
+      pacientesFecharam,
       totalRevenue,
       procedimentosClinica,
       receitaClinica,

@@ -64,6 +64,7 @@ interface DashboardData {
   agendamentos: number;
   compareceram: number;
   procedimentos: number;
+  pacientesFecharam: number;
   totalRevenue: number;
   procedimentosClinica: number;
   receitaClinica: number;
@@ -90,7 +91,7 @@ const fmtK = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : fmt(v);
 
 const empty: DashboardData = {
   totalLeads: 0, campaignLeads: 0, organicLeads: 0, agendamentos: 0,
-  compareceram: 0, procedimentos: 0, totalRevenue: 0, procedimentosClinica: 0, receitaClinica: 0, totalSpend: 0, cpl: null,
+  compareceram: 0, procedimentos: 0, pacientesFecharam: 0, totalRevenue: 0, procedimentosClinica: 0, receitaClinica: 0, totalSpend: 0, cpl: null,
   conversionRate: 0,
   leadsByDay: [], leadsByDayTotal: 0, leadsByDayAvg: 0, leadsByDayBest: null,
   topProcedures: [], channelPerformance: [],
@@ -113,7 +114,13 @@ export default function DashboardPage() {
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
-    if (!clinic) return;
+    // [funil] Espera o intervalo de data estar definido antes de buscar. Sem
+    // isso, o fetch dispara no mount com dateRange vazio -> API sem from/to ->
+    // retorna dados de TODO o periodo (ex: 294 leads). Como essa query "tudo"
+    // ficou mais lenta com o crescimento dos dados, ela resolvia DEPOIS da
+    // query de 30d e sobrescrevia o resultado correto (race). Agora so busca
+    // quando ha range, e a tela sempre reflete o filtro selecionado.
+    if (!clinic || !dateRange.from || !dateRange.to) return;
     setLoading(true);
     const params = new URLSearchParams({ clinicId: clinic.id });
     if (dateRange.from) params.set("from", dateRange.from);
@@ -128,7 +135,8 @@ export default function DashboardPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
-    if (!clinic) return;
+    // [funil] Mesma guarda do fetchData: so busca leads com intervalo definido.
+    if (!clinic || !dateRange.from || !dateRange.to) return;
     setLeadsLoading(true);
     setLeadsError(false);
     // withRangeActivity=true: traz leads com qualquer movimentacao no periodo
@@ -155,9 +163,19 @@ export default function DashboardPage() {
   // cima "Comparecimento" (Clinicorp: appointments atendidos no periodo), em vez
   // do calculo legado por safra de lead — assim os dois lugares batem.
   const comparecimento = d.consultas?.realizadas ?? d.compareceram;
-  const agendRate = d.totalLeads > 0 ? (d.agendamentos / d.totalLeads) * 100 : 0;
+  // [funil] "Consultas agendadas" = consultas marcadas no Clinicorp DOS LEADS DA
+  // CAPTACAO no periodo (consultas.total ja e filtrado por paciente com lead no
+  // pipeline de captacao — exclui walk-ins/recorrentes sem origem na captacao).
+  // Antes vinha da coluna "Agendado" do Kommo (d.agendamentos), subutilizada pela
+  // clinica, o que deixava o funil invertido (5 agendadas < 9 compareceram).
+  const agendadas = d.consultas?.total ?? 0;
+  // [funil] "Fecharam procedimento" no funil = nº de CLIENTES (pacientes
+  // distintos) que fecharam, nao nº de procedimentos. O card de cima continua
+  // mostrando procedimentos (d.procedimentos).
+  const fecharamClientes = d.pacientesFecharam ?? 0;
+  const agendRate = d.totalLeads > 0 ? (agendadas / d.totalLeads) * 100 : 0;
   const compareRate = d.totalLeads > 0 ? (comparecimento / d.totalLeads) * 100 : 0;
-  const procRate = d.totalLeads > 0 ? (d.procedimentos / d.totalLeads) * 100 : 0;
+  const procRate = d.totalLeads > 0 ? (fecharamClientes / d.totalLeads) * 100 : 0;
   const maxLeads = Math.max(...d.leadsByDay.map((r) => r.count), 1);
 
   // /api/leads ja filtra procedures por statusDescription="Aprovado", so checamos
@@ -211,8 +229,8 @@ export default function DashboardPage() {
         />
         <KpiCard
           label="Consultas agendadas"
-          value={d.agendamentos}
-          breakdown="Agendaram no periodo (Kommo)"
+          value={agendadas}
+          breakdown="Marcadas no periodo (so leads da captacao)"
           icon={<CalendarIcon />}
         />
         <KpiCard
@@ -274,7 +292,7 @@ export default function DashboardPage() {
             <FunnelRow label="Leads captados" value={d.totalLeads} max={d.totalLeads} pct={100} />
             <FunnelRow
               label="Consultas agendadas"
-              value={d.agendamentos}
+              value={agendadas}
               max={d.totalLeads}
               pct={agendRate}
               drop={d.totalLeads > 0 ? 100 - agendRate : 0}
@@ -284,14 +302,14 @@ export default function DashboardPage() {
               value={comparecimento}
               max={d.totalLeads}
               pct={compareRate}
-              drop={d.agendamentos > 0 ? ((d.agendamentos - comparecimento) / d.agendamentos) * 100 : 0}
+              drop={agendadas > 0 ? ((agendadas - comparecimento) / agendadas) * 100 : 0}
             />
             <FunnelRow
               label="Fecharam procedimento"
-              value={d.procedimentos}
+              value={fecharamClientes}
               max={d.totalLeads}
               pct={procRate}
-              drop={comparecimento > 0 ? ((comparecimento - d.procedimentos) / comparecimento) * 100 : 0}
+              drop={comparecimento > 0 ? ((comparecimento - fecharamClientes) / comparecimento) * 100 : 0}
             />
           </div>
         </div>

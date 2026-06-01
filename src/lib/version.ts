@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.50.1";
+export const APP_VERSION = "0.51.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.51.0",
+    date: "2026-06-01",
+    type: "minor",
+    changes: [
+      "CAP-13: funil de Captacao coerente (numeros que faziam sentido invertido)",
+      "Bug do '294 leads': a tela disparava o fetch no mount sem intervalo de data -> API retornava TODO o periodo, e essa query (mais lenta) sobrescrevia a de 30d numa race. Agora so busca com intervalo definido",
+      "'Consultas agendadas' agora vem do Clinicorp (consultas marcadas no periodo), JA filtrado so pelos leads que vieram da captacao (exclui walk-ins/recorrentes). Antes vinha da coluna 'Agendado' do Kommo (subutilizada), o que deixava agendadas(5) < compareceram(9)",
+      "Funil 'Fecharam procedimento' agora conta CLIENTES (pacientes distintos); o card de cima 'Procedimentos fechados' continua contando procedimentos",
+    ],
+  },
   {
     version: "0.50.1",
     date: "2026-06-01",
