@@ -113,6 +113,16 @@ jobs:
               --with-registry-auth \
               --prune
             docker service ls --filter name=clinifunnel_
+            # [CAP-12.prevent] Limpa imagens/containers antigos pos-deploy pra
+            # evitar o disco encher — causa da queda em 2026-06-01 (33GB de
+            # imagens Docker antigas acumuladas a cada deploy). Seguro numa VPS
+            # compartilhada: `image prune -a` so remove imagens SEM nenhum
+            # container; servicos rodando (clinifunnel, traefik, n8n, evolution,
+            # portainer) tem suas imagens em uso e sao preservados. `|| true`
+            # garante que falha de limpeza nunca derruba o deploy.
+            echo "Limpando imagens/containers antigos (anti disco-cheio)..."
+            docker image prune -af || true
+            docker container prune -f || true
 
       - name: Healthcheck
         run: |
