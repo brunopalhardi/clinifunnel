@@ -11,7 +11,7 @@ export interface ProcedureRow {
   discountAmount: number;
 }
 
-export interface ProcedureRowComDentista extends ProcedureRow {
+export interface ProcedureRowWithDentist extends ProcedureRow {
   dentistName: string | null;
 }
 
@@ -73,14 +73,14 @@ export function classifyPatients(input: {
   return result;
 }
 
-export interface DoutoraTicket {
+export interface DentistTicket {
   dentistName: string;
   patients: number;
   revenue: number;
   ticketMedio: number;
 }
 
-export function ticketPorDoutora(procs: ProcedureRowComDentista[]): DoutoraTicket[] {
+export function ticketByDentist(procs: ProcedureRowWithDentist[]): DentistTicket[] {
   const byDentist = new Map<string, { patients: Set<string>; revenue: number }>();
   for (const p of procs) {
     const keyName = p.dentistName?.trim() || "Sem dentista";

@@ -212,6 +212,17 @@ describe("mapEstimateToProcedures - dentistName", () => {
     }));
     expect(result[0].dentistName).toBe("Dra. Ana");
   });
+
+  it("DentistName ausente ou vazio -> dentistName null", () => {
+    const result = mapEstimateToProcedures(makeEstimate({
+      ProcedureList: [
+        makeProc({ id: 1, DentistName: undefined as unknown as string }),
+        makeProc({ id: 2, DentistName: "   " }),
+      ],
+    }));
+    expect(result[0].dentistName).toBeNull();
+    expect(result[1].dentistName).toBeNull();
+  });
 });
 
 describe("mapEstimateToProcedures - cenario real Caroline (3 mai)", () => {

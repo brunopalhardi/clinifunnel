@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.53.0";
+export const APP_VERSION = "0.54.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.54.0",
+    date: "2026-06-11",
+    type: "minor",
+    changes: [
+      "DASH-13: fundacao do ticket medio por PACIENTE (pedido do Sergio na call de 08/06) — um paciente pode ter varios orcamentos aprovados no mes, entao dividir por orcamento distorce o ticket",
+      "Procedimentos agora guardam a doutora (dentistName vindo do Clinicorp), liberando ticket medio e contagem de pacientes por doutora",
+      "Biblioteca interna de metricas (ticket por paciente, classificacao novo/recorrente por tag de consulta, ticket por doutora) — ainda sem mudanca visual; a aba Painel Principal vem na proxima versao",
+      "Vistoria DASH-12 dos numeros de producao: tipos de consulta com 93% de preenchimento, dentista 100% nos orcamentos (0% nos agendamentos), numeros de junho conferidos com o Clinicorp",
+    ],
+  },
   {
     version: "0.53.0",
     date: "2026-06-01",

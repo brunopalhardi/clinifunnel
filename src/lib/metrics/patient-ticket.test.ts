@@ -3,7 +3,7 @@ import {
   computePatientTicket,
   classifyPatients,
   normalizeCategory,
-  ticketPorDoutora,
+  ticketByDentist,
 } from "./patient-ticket";
 
 describe("computePatientTicket", () => {
@@ -67,9 +67,9 @@ describe("classifyPatients", () => {
   });
 });
 
-describe("ticketPorDoutora", () => {
+describe("ticketByDentist", () => {
   it("agrupa receita e pacientes distintos por dentista", () => {
-    const r = ticketPorDoutora([
+    const r = ticketByDentist([
       { patientId: "p1", value: 1000, discountAmount: 0, dentistName: "Dra. Ana" },
       { patientId: "p2", value: 500, discountAmount: 0, dentistName: "Dra. Ana" },
       { patientId: "p3", value: 300, discountAmount: 0, dentistName: null },

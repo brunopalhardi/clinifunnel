@@ -110,7 +110,7 @@ export function mapEstimateToProcedures(
     return {
       clinicorpProcedureId: String(proc.id),
       name: proc.OperationDescription,
-      dentistName: proc.DentistName ?? null,
+      dentistName: proc.DentistName?.trim() || null,
       value: finalAmount,
       discountAmount: discount,
       status,
