@@ -27,7 +27,7 @@ export function computePatientTicket(procs: ProcedureRow[]): PatientTicket {
     const liquido = p.value - p.discountAmount;
     byPatient.set(p.patientId, (byPatient.get(p.patientId) ?? 0) + liquido);
   }
-  const revenue = [...byPatient.values()].reduce((a, b) => a + b, 0);
+  const revenue = Array.from(byPatient.values()).reduce((a, b) => a + b, 0);
   const patients = byPatient.size;
   return { patients, revenue, ticketMedio: patients > 0 ? revenue / patients : 0 };
 }
@@ -89,7 +89,7 @@ export function ticketPorDoutora(procs: ProcedureRowComDentista[]): DoutoraTicke
     entry.revenue += p.value - p.discountAmount;
     byDentist.set(keyName, entry);
   }
-  return [...byDentist.entries()]
+  return Array.from(byDentist.entries())
     .map(([dentistName, e]) => ({
       dentistName,
       patients: e.patients.size,
