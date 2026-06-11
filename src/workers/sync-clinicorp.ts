@@ -121,6 +121,7 @@ export const syncClinicorpWorker = new Worker(
 
             const procData = {
               name: m.name,
+              dentistName: m.dentistName,
               value: m.value,
               discountAmount: m.discountAmount,
               status: m.status,

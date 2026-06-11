@@ -205,6 +205,15 @@ describe("mapEstimateToProcedures - flags adicionais", () => {
   });
 });
 
+describe("mapEstimateToProcedures - dentistName", () => {
+  it("propaga DentistName do procedure da estimate", () => {
+    const result = mapEstimateToProcedures(makeEstimate({
+      ProcedureList: [makeProc({ DentistName: "Dra. Ana" })],
+    }));
+    expect(result[0].dentistName).toBe("Dra. Ana");
+  });
+});
+
 describe("mapEstimateToProcedures - cenario real Caroline (3 mai)", () => {
   it("1 proc Aprovado FinalAmount=2900, desconto=240 -> liquido=2660", () => {
     // Reproducao exata do caso real do Bruno: estimate Caroline 04/05
