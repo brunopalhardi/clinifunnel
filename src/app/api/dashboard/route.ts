@@ -160,6 +160,7 @@ export async function GET(request: NextRequest) {
     walkInAgg,
     appointmentsByStatus,
     funnelPatientsFecharam,
+    ticketPorCanalRaw,
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
@@ -267,6 +268,24 @@ export async function GET(request: NextRequest) {
       select: { patientId: true },
       distinct: ["patientId"],
     }),
+    // [DASH-16] Ticket médio por canal: receita líquida e pacientes distintos
+    // por canalProspeccao do paciente (canal de aquisição). "O core do dash" — Sérgio.
+    // Prisma groupBy não suporta join em campo de relação, então usa raw query.
+    prisma.$queryRawUnsafe<Array<{ canal: string | null; patients: number; revenue: number }>>(
+      `SELECT pat."canalProspeccao" AS canal,
+              COUNT(DISTINCT pr."patientId")::int AS patients,
+              COALESCE(SUM(pr.value - pr."discountAmount"), 0)::float AS revenue
+       FROM "Procedure" pr
+       JOIN "Patient" pat ON pat.id = pr."patientId"
+       WHERE pr."clinicId" = $1 AND pr."statusDescription" = 'Aprovado' AND pr.deleted = false
+         ${from ? `AND pr."createdAt" >= $2::timestamp` : ""}
+         ${to ? `AND pr."createdAt" <= $${from ? "3" : "2"}::timestamp` : ""}
+       GROUP BY pat."canalProspeccao"
+       ORDER BY revenue DESC`,
+      clinicId,
+      ...(from ? [from] : []),
+      ...(to ? [to] : []),
+    ),
   ]);
 
   const pacientesFecharam = funnelPatientsFecharam.filter((p) => p.patientId).length;
@@ -496,6 +515,14 @@ export async function GET(request: NextRequest) {
         count: c._count.id,
       })),
       sdrPerformance,
+      // [DASH-16] Ticket médio por canal de aquisição do paciente.
+      // "Sem canal" = pacientes sem tagueamento de canal (walk-in/sem origem).
+      ticketPorCanal: ticketPorCanalRaw.map((r) => ({
+        canal: r.canal ?? "Sem canal",
+        patients: r.patients,
+        revenue: r.revenue,
+        ticketMedio: r.patients > 0 ? r.revenue / r.patients : 0,
+      })),
     },
   });
 }
