@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
 import { APPROVED_PROCEDURE_FILTER } from "@/lib/dashboard-filters";
+import { bucketCategoria } from "@/lib/metrics/patient-ticket";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
     topProcedures,
     procedureBreakdown,
     appointmentsByStatus,
+    atendidosPorCategoria,
   ] = await Promise.all([
     prisma.procedure.aggregate({
       where: procFilter,
@@ -93,6 +95,12 @@ export async function GET(request: NextRequest) {
     prisma.appointment.groupBy({
       by: ["statusKey"],
       where: { clinicId, deleted: false, ...appointmentDateFilter },
+      _count: { id: true },
+    }),
+    // [DASH-15] Atendidos por categoryDescription — para breakdown de tipo de consulta.
+    prisma.appointment.groupBy({
+      by: ["categoryDescription"],
+      where: { clinicId, deleted: false, statusKey: "atendido", ...appointmentDateFilter },
       _count: { id: true },
     }),
   ]);
@@ -197,6 +205,12 @@ export async function GET(request: NextRequest) {
         emAtendimento: apptByStatus.em_atendimento ?? 0,
         atrasadas: apptByStatus.atrasado ?? 0,
         taxaNoShow,
+        // [DASH-15] Atendidos por tipo de consulta (tag das SDRs no Clinicorp)
+        atendidosPorTipo: atendidosPorCategoria.reduce<Record<string, number>>((acc, row) => {
+          const bucket = bucketCategoria(row.categoryDescription);
+          acc[bucket] = (acc[bucket] ?? 0) + row._count.id;
+          return acc;
+        }, {}),
       },
     },
   });
