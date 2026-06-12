@@ -39,6 +39,13 @@ interface SdrPerformance {
   conversao: number;
 }
 
+interface TicketPorCanal {
+  canal: string;
+  patients: number;
+  revenue: number;
+  ticketMedio: number;
+}
+
 interface DashboardData {
   totalLeads: number;
   campaignLeads: number;
@@ -65,6 +72,8 @@ interface DashboardData {
   consultas?: ConsultasBreakdown;
   sdrPerformance: SdrPerformance[];
   canalBreakdown: { canal: string; count: number }[];
+  // [DASH-16] Ticket médio por canal de aquisição do paciente
+  ticketPorCanal?: TicketPorCanal[];
 }
 
 const fmt = (v: number) =>
@@ -484,6 +493,59 @@ export default function DashboardPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* [DASH-16] Ticket médio por canal — "o core do dash" (Sérgio).
+          Mostra receita líquida, pacientes e ticket médio por canal de aquisição.
+          "Sem canal" = pacientes sem tagueamento (walk-in/sem origem), fica por último. */}
+      {d.ticketPorCanal && d.ticketPorCanal.length > 0 && (
+        <div className="rounded-xl bg-card p-6 glass-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold">Ticket medio por canal</h2>
+            <span className="text-xs text-muted-foreground">
+              {d.ticketPorCanal.filter((r) => r.canal !== "Sem canal").length} canais tagueados
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <th className="text-left font-medium py-2 pr-3">Canal</th>
+                  <th className="text-right font-medium py-2 px-3">Pacientes</th>
+                  <th className="text-right font-medium py-2 px-3">Receita</th>
+                  <th className="text-right font-medium py-2 pl-3">Ticket medio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ...d.ticketPorCanal.filter((r) => r.canal !== "Sem canal"),
+                  ...d.ticketPorCanal.filter((r) => r.canal === "Sem canal"),
+                ].map((r, idx, arr) => {
+                  const isSemCanal = r.canal === "Sem canal";
+                  const isLast = idx === arr.length - 1;
+                  return (
+                    <tr
+                      key={r.canal}
+                      className={`border-b ${isLast ? "border-0" : "border-border/30"} hover:bg-muted/30 transition-colors ${isSemCanal ? "opacity-60" : ""}`}
+                    >
+                      <td className="py-3 pr-3">
+                        <span className={idx === 0 ? "font-semibold" : "font-medium"}>{r.canal}</span>
+                        {isSemCanal && (
+                          <span className="ml-2 text-[10px] text-muted-foreground">(sem tagueamento)</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right tabular-nums">{r.patients}</td>
+                      <td className="py-3 px-3 text-right tabular-nums">{fmtK(r.revenue)}</td>
+                      <td className="py-3 pl-3 text-right tabular-nums font-semibold text-success">
+                        {r.ticketMedio > 0 ? fmtK(r.ticketMedio) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
