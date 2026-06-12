@@ -20,6 +20,7 @@ interface NavItem {
 // continuam funcionais por URL direta — voltam ao menu quando comecarem os
 // anuncios (so remover a flag).
 const navItems: NavItem[] = [
+  { href: "/dashboard/painel", label: "Painel Principal", icon: "LayoutDashboard" },
   { href: "/dashboard/captacao", label: "Captacao", icon: "BarChart3" },
   { href: "/dashboard/operacao", label: "Operacao", icon: "DollarSign" },
   { href: "/dashboard/leads", label: "Leads", icon: "Users" },
@@ -31,6 +32,7 @@ const navItems: NavItem[] = [
 ];
 
 const iconMap: Record<string, string> = {
+  LayoutDashboard: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
   BarChart3: "M3 3v18h18M9 17V9m4 8V5m4 12v-4",
   Users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
   Megaphone: "m3 11 18-5v12L3 13v-2zm0 0V7a2 2 0 0 1 2-2h2m14 4v6m-4-3h.01",
