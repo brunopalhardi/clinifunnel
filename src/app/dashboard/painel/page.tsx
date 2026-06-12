@@ -66,14 +66,16 @@ export default function PainelPage() {
   if (clinicLoading) return <p className="text-muted-foreground p-8">Carregando...</p>;
 
   const d = data;
-  const noData = d.ticketGlobal.patients === 0 && !loading;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">Painel Principal</h1>
+          <h1 className="font-display text-2xl font-bold">
+            Painel Principal
+            {loading && <span className="ml-3 text-xs font-normal text-muted-foreground">Atualizando…</span>}
+          </h1>
           <p className="text-sm text-muted-foreground">
             {clinic?.name} — Ticket médio por paciente · Origem: Clinicorp (procedimentos aprovados)
           </p>
@@ -121,9 +123,7 @@ export default function PainelPage() {
       {/* Tabela por doutora */}
       <div className="rounded-xl bg-card p-6 glass-border">
         <h2 className="font-display text-lg font-semibold mb-5">Por doutora</h2>
-        {noData ? (
-          <p className="text-sm text-muted-foreground">Sem dados no período.</p>
-        ) : d.porDoutora.length === 0 ? (
+        {d.porDoutora.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sem dados no período.</p>
         ) : (
           <div className="overflow-x-auto">

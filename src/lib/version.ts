@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.54.0";
+export const APP_VERSION = "0.55.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.55.0",
+    date: "2026-06-12",
+    type: "minor",
+    changes: [
+      "DASH-14: nova aba Painel Principal (pedido do Sergio na call de 08/06) — virou a tela inicial do dashboard",
+      "Ticket medio por PACIENTE (nao por orcamento): global, paciente novo e paciente recorrente, cada um com a quantidade de pacientes e a receita embaixo pra conferencia",
+      "Tabela por doutora: pacientes, receita e ticket medio de cada uma (vem dos procedimentos, onde a doutora esta sempre preenchida)",
+    ],
+  },
   {
     version: "0.54.0",
     date: "2026-06-11",

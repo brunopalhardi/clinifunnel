@@ -46,19 +46,31 @@ export async function GET(request: NextRequest) {
   });
   const patientIds = Array.from(new Set(procs.map((p) => p.patientId)));
 
-  // 2. Tags de tipo de consulta desses pacientes no período (classificação).
+  // 2 e 3 são independentes entre si (só dependem de patientIds) — rodam em
+  // paralelo, como o /api/operacao faz com suas queries.
   const appointmentDateFilter = from || to ? {
     date: {
       ...(from ? { gte: new Date(from) } : {}),
       ...(to ? { lte: new Date(to) } : {}),
     },
   } : {};
-  const appts = patientIds.length
-    ? await prisma.appointment.findMany({
-        where: { clinicId, deleted: false, patientId: { in: patientIds }, ...appointmentDateFilter },
-        select: { patientId: true, categoryDescription: true },
-      })
-    : [];
+  const [appts, historyRows] = await Promise.all([
+    // 2. Tags de tipo de consulta desses pacientes no período (classificação).
+    patientIds.length
+      ? prisma.appointment.findMany({
+          where: { clinicId, deleted: false, patientId: { in: patientIds }, ...appointmentDateFilter },
+          select: { patientId: true, categoryDescription: true },
+        })
+      : Promise.resolve([]),
+    // 3. Histórico: pacientes do período com procedure Aprovado ANTES do período.
+    from && patientIds.length
+      ? prisma.procedure.findMany({
+          where: { clinicId, ...APPROVED_PROCEDURE_FILTER, patientId: { in: patientIds }, createdAt: { lt: new Date(from) } },
+          select: { patientId: true },
+          distinct: ["patientId"],
+        })
+      : Promise.resolve([]),
+  ]);
   const categoriesByPatient = new Map<string, string[]>();
   for (const a of appts) {
     if (!a.patientId || !a.categoryDescription) continue;
@@ -66,15 +78,6 @@ export async function GET(request: NextRequest) {
     list.push(a.categoryDescription);
     categoriesByPatient.set(a.patientId, list);
   }
-
-  // 3. Histórico: pacientes do período com procedure Aprovado ANTES do período.
-  const historyRows = from && patientIds.length
-    ? await prisma.procedure.findMany({
-        where: { clinicId, ...APPROVED_PROCEDURE_FILTER, patientId: { in: patientIds }, createdAt: { lt: new Date(from) } },
-        select: { patientId: true },
-        distinct: ["patientId"],
-      })
-    : [];
   const patientsWithHistory = new Set(historyRows.map((r) => r.patientId));
 
   // 4. Classifica e calcula ticket por paciente.
