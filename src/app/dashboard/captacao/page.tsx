@@ -503,7 +503,7 @@ export default function DashboardPage() {
       {d.ticketPorCanal && d.ticketPorCanal.length > 0 && (
         <div className="rounded-xl bg-card p-6 glass-border">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg font-semibold">Ticket medio por canal</h2>
+            <h2 className="font-display text-lg font-semibold">Ticket médio por canal</h2>
             <span className="text-xs text-muted-foreground">
               {d.ticketPorCanal.filter((r) => r.canal !== "Sem canal").length} canais tagueados
             </span>
@@ -515,7 +515,7 @@ export default function DashboardPage() {
                   <th className="text-left font-medium py-2 pr-3">Canal</th>
                   <th className="text-right font-medium py-2 px-3">Pacientes</th>
                   <th className="text-right font-medium py-2 px-3">Receita</th>
-                  <th className="text-right font-medium py-2 pl-3">Ticket medio</th>
+                  <th className="text-right font-medium py-2 pl-3">Ticket médio</th>
                 </tr>
               </thead>
               <tbody>
@@ -527,7 +527,7 @@ export default function DashboardPage() {
                   const isLast = idx === arr.length - 1;
                   return (
                     <tr
-                      key={r.canal}
+                      key={r.canal ?? `canal-${idx}`}
                       className={`border-b ${isLast ? "border-0" : "border-border/30"} hover:bg-muted/30 transition-colors ${isSemCanal ? "opacity-60" : ""}`}
                     >
                       <td className="py-3 pr-3">

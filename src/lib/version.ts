@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.56.0";
+export const APP_VERSION = "0.57.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.57.0",
+    date: "2026-06-12",
+    type: "minor",
+    changes: [
+      "DASH-16: na Captacao, nova tabela de ticket medio por canal de aquisicao (Instagram, indicacao, etc) — pacientes, receita e ticket medio de cada canal. 'O core do dash' segundo o Sergio (call 08/06)",
+    ],
+  },
   {
     version: "0.56.0",
     date: "2026-06-12",

@@ -269,18 +269,29 @@ export async function GET(request: NextRequest) {
       distinct: ["patientId"],
     }),
     // [DASH-16] Ticket médio por canal: receita líquida e pacientes distintos
-    // por canalProspeccao do paciente (canal de aquisição). "O core do dash" — Sérgio.
-    // Prisma groupBy não suporta join em campo de relação, então usa raw query.
+    // por canal de aquisição. "O core do dash" — Sérgio. O canal vive no Lead
+    // (canalProspeccao), NÃO no Patient (vistoria: Patient.canalProspeccao ~1%
+    // preenchido vs Lead ~49%). Como um paciente pode ter vários leads, a CTE
+    // patient_channel escolhe UM canal por paciente (lead mais recente com canal
+    // não-nulo) — assim o JOIN é 1:1 por paciente e a receita não infla (fan-out).
+    // LEFT JOIN: paciente sem lead/canal cai em "Sem canal". groupBy de relação
+    // não é suportado pelo Prisma, daí a raw query.
     prisma.$queryRawUnsafe<Array<{ canal: string | null; patients: number; revenue: number }>>(
-      `SELECT pat."canalProspeccao" AS canal,
+      `WITH patient_channel AS (
+         SELECT DISTINCT ON (l."patientId") l."patientId", l."canalProspeccao"
+         FROM "Lead" l
+         WHERE l."clinicId" = $1 AND l."patientId" IS NOT NULL AND l."canalProspeccao" IS NOT NULL
+         ORDER BY l."patientId", l."kommoCreatedAt" DESC NULLS LAST
+       )
+       SELECT pc."canalProspeccao" AS canal,
               COUNT(DISTINCT pr."patientId")::int AS patients,
               COALESCE(SUM(pr.value - pr."discountAmount"), 0)::float AS revenue
        FROM "Procedure" pr
-       JOIN "Patient" pat ON pat.id = pr."patientId"
+       LEFT JOIN patient_channel pc ON pc."patientId" = pr."patientId"
        WHERE pr."clinicId" = $1 AND pr."statusDescription" = 'Aprovado' AND pr.deleted = false
          ${from ? `AND pr."createdAt" >= $2::timestamp` : ""}
          ${to ? `AND pr."createdAt" <= $${from ? "3" : "2"}::timestamp` : ""}
-       GROUP BY pat."canalProspeccao"
+       GROUP BY pc."canalProspeccao"
        ORDER BY revenue DESC`,
       clinicId,
       ...(from ? [from] : []),
