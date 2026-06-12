@@ -160,6 +160,7 @@ export async function GET(request: NextRequest) {
     walkInAgg,
     appointmentsByStatus,
     funnelPatientsFecharam,
+    ticketPorCanalRaw,
   ] = await Promise.all([
     prisma.lead.count({ where: leadWhere }),
     prisma.lead.count({ where: { ...leadWhere, channel: "campaign" } }),
@@ -267,6 +268,35 @@ export async function GET(request: NextRequest) {
       select: { patientId: true },
       distinct: ["patientId"],
     }),
+    // [DASH-16] Ticket médio por canal: receita líquida e pacientes distintos
+    // por canal de aquisição. "O core do dash" — Sérgio. O canal vive no Lead
+    // (canalProspeccao), NÃO no Patient (vistoria: Patient.canalProspeccao ~1%
+    // preenchido vs Lead ~49%). Como um paciente pode ter vários leads, a CTE
+    // patient_channel escolhe UM canal por paciente (lead mais recente com canal
+    // não-nulo) — assim o JOIN é 1:1 por paciente e a receita não infla (fan-out).
+    // LEFT JOIN: paciente sem lead/canal cai em "Sem canal". groupBy de relação
+    // não é suportado pelo Prisma, daí a raw query.
+    prisma.$queryRawUnsafe<Array<{ canal: string | null; patients: number; revenue: number }>>(
+      `WITH patient_channel AS (
+         SELECT DISTINCT ON (l."patientId") l."patientId", l."canalProspeccao"
+         FROM "Lead" l
+         WHERE l."clinicId" = $1 AND l."patientId" IS NOT NULL AND l."canalProspeccao" IS NOT NULL
+         ORDER BY l."patientId", l."kommoCreatedAt" DESC NULLS LAST
+       )
+       SELECT pc."canalProspeccao" AS canal,
+              COUNT(DISTINCT pr."patientId")::int AS patients,
+              COALESCE(SUM(pr.value - pr."discountAmount"), 0)::float AS revenue
+       FROM "Procedure" pr
+       LEFT JOIN patient_channel pc ON pc."patientId" = pr."patientId"
+       WHERE pr."clinicId" = $1 AND pr."statusDescription" = 'Aprovado' AND pr.deleted = false
+         ${from ? `AND pr."createdAt" >= $2::timestamp` : ""}
+         ${to ? `AND pr."createdAt" <= $${from ? "3" : "2"}::timestamp` : ""}
+       GROUP BY pc."canalProspeccao"
+       ORDER BY revenue DESC`,
+      clinicId,
+      ...(from ? [from] : []),
+      ...(to ? [to] : []),
+    ),
   ]);
 
   const pacientesFecharam = funnelPatientsFecharam.filter((p) => p.patientId).length;
@@ -496,6 +526,14 @@ export async function GET(request: NextRequest) {
         count: c._count.id,
       })),
       sdrPerformance,
+      // [DASH-16] Ticket médio por canal de aquisição do paciente.
+      // "Sem canal" = pacientes sem tagueamento de canal (walk-in/sem origem).
+      ticketPorCanal: ticketPorCanalRaw.map((r) => ({
+        canal: r.canal ?? "Sem canal",
+        patients: r.patients,
+        revenue: r.revenue,
+        ticketMedio: r.patients > 0 ? r.revenue / r.patients : 0,
+      })),
     },
   });
 }

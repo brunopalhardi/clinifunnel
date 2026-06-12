@@ -84,13 +84,12 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
   DASH-9 (v0.46.0) entregou a base: calculo + UI manual de tratamento. Proximo passo: enviar automatico via Z-API/WhatsApp Business quando alerta entra em "Urgente". Depende de [FEAT-1] estar pronto (canal WhatsApp). Marcado como [DASH-9.1] no spec.
   Eixo: feature · Bump: minor
 
-- **[DASH-16] Ticket medio por canal na Captacao**
-  "O core do dash" segundo o Sergio: pacientes, receita e ticket medio por canalProspeccao (Instagram, indicacao, etc). Query cruzando procedures aprovados com o canal do paciente.
-  Eixo: feature · Bump: minor
-
 ---
 
 ## Concluidos
+
+- **[DASH-16] Ticket medio por canal na Captacao** — PR #_TBD_ — v0.57.0
+  "O core do dash" segundo o Sergio (call 08/06): tabela na Captacao com pacientes, receita liquida e ticket medio por canal de aquisicao (Instagram, indicacao, etc). O canal vem do **Lead** (`Lead.canalProspeccao` ~49% preenchido), NAO do Patient (vistoria: `Patient.canalProspeccao` ~1% preenchido). Query raw com CTE `patient_channel` (DISTINCT ON: 1 canal por paciente = lead mais recente com canal nao-nulo) pra evitar fan-out de receita; LEFT JOIN pra cair em "Sem canal" quando sem tag. Dentro do Promise.all do /api/dashboard, placeholders $2/$3 condicionais. Validado com junho: 26 pac / R$115.982 reconcilia com a vistoria; canais reais (Insta Dra Alexia R$29.968, etc). Limitacao: ~49% de fill no Lead — depende de disciplina de tagueamento no CRM (mesma classe do gap de vendedora no CAP-14). Relacionado: [DASH-13], [CAP-14].
 
 - **[DASH-15] Atendimentos por tipo de consulta na Operacao** — PR #_TBD_ — v0.56.0
   Na Operacao, o card "Atendidos" ganhou uma sub-linha dividindo os atendimentos em 1a consulta (Avaliacao) / retorno / recorrente (Consulta), usando a tag das SDRs (`Appointment.categoryDescription`). Helper `bucketCategoria` na lib de metricas + groupBy por categoryDescription (statusKey=atendido) dentro do Promise.all do /api/operacao. Defensivo: sem dado/undefined nao renderiza. Relacionado: [DASH-13].
