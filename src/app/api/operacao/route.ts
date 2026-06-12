@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthorizedClinicId, AuthError } from "@/lib/auth-guard";
 import { APPROVED_PROCEDURE_FILTER } from "@/lib/dashboard-filters";
-import { bucketCategoria } from "@/lib/metrics/patient-ticket";
+import { bucketCategoria, type CategoriaBucket } from "@/lib/metrics/patient-ticket";
 
 export const dynamic = "force-dynamic";
 
@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
         atrasadas: apptByStatus.atrasado ?? 0,
         taxaNoShow,
         // [DASH-15] Atendidos por tipo de consulta (tag das SDRs no Clinicorp)
-        atendidosPorTipo: atendidosPorCategoria.reduce<Record<string, number>>((acc, row) => {
+        atendidosPorTipo: atendidosPorCategoria.reduce<Partial<Record<CategoriaBucket, number>>>((acc, row) => {
           const bucket = bucketCategoria(row.categoryDescription);
           acc[bucket] = (acc[bucket] ?? 0) + row._count.id;
           return acc;
