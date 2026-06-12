@@ -84,10 +84,6 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
   DASH-9 (v0.46.0) entregou a base: calculo + UI manual de tratamento. Proximo passo: enviar automatico via Z-API/WhatsApp Business quando alerta entra em "Urgente". Depende de [FEAT-1] estar pronto (canal WhatsApp). Marcado como [DASH-9.1] no spec.
   Eixo: feature · Bump: minor
 
-- **[DASH-15] Atendimentos por tipo de consulta na Operacao**
-  Sergio quer ver os atendidos divididos em primeira consulta (Avaliacao) / retorno / recorrente (Consulta), usando a tag que as SDRs ja colocam no agendamento. Helper `bucketCategoria` na lib + groupBy por categoryDescription em /api/operacao + sub-linha na UI.
-  Eixo: feature · Bump: minor
-
 - **[DASH-16] Ticket medio por canal na Captacao**
   "O core do dash" segundo o Sergio: pacientes, receita e ticket medio por canalProspeccao (Instagram, indicacao, etc). Query cruzando procedures aprovados com o canal do paciente.
   Eixo: feature · Bump: minor
@@ -95,6 +91,9 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 ---
 
 ## Concluidos
+
+- **[DASH-15] Atendimentos por tipo de consulta na Operacao** — PR #_TBD_ — v0.56.0
+  Na Operacao, o card "Atendidos" ganhou uma sub-linha dividindo os atendimentos em 1a consulta (Avaliacao) / retorno / recorrente (Consulta), usando a tag das SDRs (`Appointment.categoryDescription`). Helper `bucketCategoria` na lib de metricas + groupBy por categoryDescription (statusKey=atendido) dentro do Promise.all do /api/operacao. Defensivo: sem dado/undefined nao renderiza. Relacionado: [DASH-13].
 
 - **[CAP-16] Performance por SDR como funil acumulado (Atendidos->Agendados->...)** — PR #_TBD_ — v0.53.0
   Bruno achou confuso "1 lead / 8 agendados" (CAP-14 era event-time: leads=captados no periodo vs agendados=atividade do periodo). Reformulado pra funil cohort ACUMULADO por SDR (nao filtra periodo): pra cada lead da captacao (agrupado por vendedora), olha a jornada do paciente — `atendidos` (total de leads da SDR) -> `agendados` (paciente agendou consulta no Clinicorp OU lead marcado Agendado no Kommo) -> `compareceram` (consulta atendida) -> `fecharam` (proc aprovado) -> `receita`. Conversao = agendados/atendidos. Query: 1 findMany de leads do pipeline com patient.appointments+procedures, agregacao em memoria (substituiu as 2 queries event-time do CAP-14). UI: header "Leads" -> "Atendidos". Decisao do Bruno: tabela acumulada (total), nao respeita filtro de data. Relacionado: [CAP-14].

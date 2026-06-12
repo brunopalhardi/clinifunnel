@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.55.0";
+export const APP_VERSION = "0.56.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "0.56.0",
+    date: "2026-06-12",
+    type: "minor",
+    changes: [
+      "DASH-15: na Operacao, os atendimentos agora aparecem divididos por tipo de consulta (1a consulta / retorno / recorrente), usando a tag que as SDRs ja colocam no agendamento",
+    ],
+  },
   {
     version: "0.55.0",
     date: "2026-06-12",

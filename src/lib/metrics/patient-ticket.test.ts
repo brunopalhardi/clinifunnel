@@ -4,6 +4,7 @@ import {
   classifyPatients,
   normalizeCategory,
   ticketByDentist,
+  bucketCategoria,
 } from "./patient-ticket";
 
 describe("computePatientTicket", () => {
@@ -64,6 +65,18 @@ describe("classifyPatients", () => {
       patientsWithHistory: new Set(["p1"]),
     });
     expect(r.get("p1")).toBe("recorrente");
+  });
+});
+
+describe("bucketCategoria", () => {
+  it("mapeia categorias nos buckets do Sérgio", () => {
+    expect(bucketCategoria("Avaliação")).toBe("primeira_consulta");
+    expect(bucketCategoria("Consulta")).toBe("recorrente");
+    expect(bucketCategoria("Retorno")).toBe("retorno");
+    expect(bucketCategoria("Procedimento")).toBe("outros");
+    expect(bucketCategoria("Blogueira")).toBe("outros");
+    expect(bucketCategoria(null)).toBe("outros");
+    expect(bucketCategoria("")).toBe("outros");
   });
 });
 

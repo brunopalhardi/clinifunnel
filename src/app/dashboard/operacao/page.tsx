@@ -15,6 +15,13 @@ interface AppointmentsBreakdown {
   emAtendimento: number;
   atrasadas: number;
   taxaNoShow: number;
+  // [DASH-15] Atendidos por tipo de consulta (tag das SDRs no Clinicorp)
+  atendidosPorTipo?: {
+    primeira_consulta?: number;
+    retorno?: number;
+    recorrente?: number;
+    outros?: number;
+  };
 }
 
 interface DiscountsBreakdown {
@@ -183,6 +190,7 @@ export default function OperacaoPage() {
               value={String(d.appointments.atendidos)}
               breakdown={`${d.appointments.total} appointments no periodo`}
               highlight
+              atendidosPorTipo={d.appointments.atendidosPorTipo}
             />
             <KpiCard
               label="Faltas"
@@ -271,14 +279,36 @@ export default function OperacaoPage() {
   );
 }
 
-function KpiCard({ label, value, breakdown, highlight }: {
-  label: string; value: string; breakdown?: string; highlight?: boolean;
+function KpiCard({ label, value, breakdown, highlight, atendidosPorTipo }: {
+  label: string;
+  value: string;
+  breakdown?: string;
+  highlight?: boolean;
+  atendidosPorTipo?: { primeira_consulta?: number; retorno?: number; recorrente?: number; outros?: number };
 }) {
+  const tipoLabel = atendidosPorTipo
+    ? (() => {
+        const pc = atendidosPorTipo.primeira_consulta ?? 0;
+        const ret = atendidosPorTipo.retorno ?? 0;
+        const rec = atendidosPorTipo.recorrente ?? 0;
+        const out = atendidosPorTipo.outros ?? 0;
+        if (pc + ret + rec + out === 0) return null;
+        const parts = [
+          `${pc} 1ª consulta`,
+          `${ret} retorno`,
+          `${rec} recorrente`,
+          ...(out > 0 ? [`${out} outros`] : []),
+        ];
+        return parts.join(" · ");
+      })()
+    : null;
+
   return (
     <div className={`rounded-xl bg-card p-5 glass-border ${highlight ? "ring-1 ring-primary/20" : ""}`}>
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`font-display text-2xl font-bold mt-2 ${highlight ? "text-primary" : ""}`}>{value}</p>
       {breakdown && <p className="text-[11px] text-muted-foreground mt-1">{breakdown}</p>}
+      {tipoLabel && <p className="text-[11px] text-muted-foreground mt-1">{tipoLabel}</p>}
     </div>
   );
 }
