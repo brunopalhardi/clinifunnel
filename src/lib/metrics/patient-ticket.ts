@@ -73,6 +73,19 @@ export function classifyPatients(input: {
   return result;
 }
 
+export type CategoriaBucket = "primeira_consulta" | "retorno" | "recorrente" | "outros";
+
+// Buckets de tipo de consulta pedidos pelo Sérgio (call 08/06). Valores reais
+// confirmados na vistoria DASH-12: Avaliação=primeira consulta, Retorno=retorno,
+// Consulta=recorrente (paciente que ja e da clinica); resto=outros.
+export function bucketCategoria(desc: string | null | undefined): CategoriaBucket {
+  const c = normalizeCategory(desc);
+  if (c === "avaliacao") return "primeira_consulta";
+  if (c === "retorno") return "retorno";
+  if (c === "consulta") return "recorrente";
+  return "outros";
+}
+
 export interface DentistTicket {
   dentistName: string;
   patients: number;
