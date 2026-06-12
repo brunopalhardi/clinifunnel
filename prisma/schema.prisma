@@ -186,6 +186,9 @@ model Procedure {
   patient              Patient   @relation(fields: [patientId], references: [id])
   clinicorpProcedureId String?
   name                 String
+  // [DASH-13] Dentista do procedure (DentistName da API Clinicorp).
+  // Null em procedures sync'ados antes da migration (backfill = re-sync 30d).
+  dentistName          String?
   // value = FinalAmount do Clinicorp (preco bruto do procedure, sem desconto da Estimate)
   value                Float
   // [DASH-3] discountAmount = parcela do Estimate.DiscountAmount rateado proporcional

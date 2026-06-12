@@ -84,6 +84,18 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
   DASH-9 (v0.46.0) entregou a base: calculo + UI manual de tratamento. Proximo passo: enviar automatico via Z-API/WhatsApp Business quando alerta entra em "Urgente". Depende de [FEAT-1] estar pronto (canal WhatsApp). Marcado como [DASH-9.1] no spec.
   Eixo: feature · Bump: minor
 
+- **[DASH-14] Aba Painel Principal (KPIs executivos da call do Sergio)**
+  Aba nova com os 4 KPIs que o Sergio ditou (08/06): ticket medio por paciente global, paciente novo e paciente recorrente + tabela por doutora (ticket medio + pacientes). Consome a lib de [DASH-13] via novo /api/painel. "Por doutora" deriva de procedures (dentista 100% ali), nao de appointments (0%). Vira a home do dashboard. Plano: docs/superpowers/plans/2026-06-11-demandas-sergio-painel.md.
+  Eixo: feature · Bump: minor · Depende de [DASH-13] em prod
+
+- **[DASH-15] Atendimentos por tipo de consulta na Operacao**
+  Sergio quer ver os atendidos divididos em primeira consulta (Avaliacao) / retorno / recorrente (Consulta), usando a tag que as SDRs ja colocam no agendamento. Helper `bucketCategoria` na lib + groupBy por categoryDescription em /api/operacao + sub-linha na UI.
+  Eixo: feature · Bump: minor
+
+- **[DASH-16] Ticket medio por canal na Captacao**
+  "O core do dash" segundo o Sergio: pacientes, receita e ticket medio por canalProspeccao (Instagram, indicacao, etc). Query cruzando procedures aprovados com o canal do paciente.
+  Eixo: feature · Bump: minor
+
 ---
 
 ## Concluidos
@@ -105,6 +117,12 @@ Estrutura por eixo: **Seguranca**, **Qualidade**, **Observabilidade**, **Multi-t
 
 - **[CAP-12] Perda de webhooks Kommo zerava "Consultas agendadas" + funil por data do evento** — PR #95 — v0.50.0
   Bruno reportou que ha ~1 mes "Consultas agendadas" e "Comparecimento" estavam em 0, mesmo com leads agendando. Investigacao (eventos da API do Kommo + webhook logs) confirmou 3 bugs + 1 falha de medicao. **Bug 1 (raiz):** o handler do webhook chamava getLead/getContact de forma sincrona, tomava 429 (rate-limit), engolia o erro e respondia 200 — o Kommo via sucesso e nunca reenviava, perdendo a mudanca de stage (100% das transicoes pra "Agendado" no periodo deram erro). Fix: webhook responde 200 rapido e enfileira; novo worker `process-kommo-lead` faz as chamadas com retry/backoff (attempts:8) que absorve o 429. Logica extraida pra `src/lib/kommo/process-lead.ts` (reusada pelo worker e pelo backfill). **Bug 2:** valor numerico do Kommo (timestamp no campo horario) derrubava o `prisma.lead.upsert` ("Expected String, provided Int") — coercao pra string em `extractAppointmentFields`. **Bug 3 (latente):** parser so lia `leads[status][0]` — agora itera todos os eventos do POST. **Metrica:** "Consultas agendadas" passou a contar por DATA DO EVENTO (`agendamentoAt` no range), nao pela safra de captacao (que zerava porque quem agenda foi captado meses antes); funil "Compareceram" usa a fonte event-time do Clinicorp (igual o card). **Backfill:** `npm run backfill-agendamento` recupera o `agendamentoAt` historico (le eventos do Kommo, `skipPatientCreation` pra nao duplicar agendamento no Clinicorp). Roda no container de workers.
+
+- **[DASH-13] Fundacao do ticket medio por PACIENTE + dentista no procedure** — PR #_TBD_ — v0.54.0
+  Pedido do Sergio na call de 08/06 (Fathom 703358852): ticket medio por PACIENTE, nao por orcamento aprovado (um paciente pode ter 2-3 orcamentos no mes -> dividir por orcamento distorce). Esta PR e so a fundacao (sem UI): (1) migration aditiva `Procedure.dentistName` + mapper/sync passam a persistir o `DentistName` que vinha do Clinicorp e era descartado; (2) lib pura `src/lib/metrics/patient-ticket.ts` — `computePatientTicket` (agrega receita liquida por paciente distinto), `classifyPatients` (novo/recorrente: historico de aprovacao ganha; senao tag "Avaliacao"=novo, "Consulta"/"Retorno"=recorrente; senao novo), `ticketByDentist`, `normalizeCategory`. Backfill do dentista = re-sync de 30d automatico (procedures > 30d ficam null, aceitavel: Painel e mensal). Spec/plano: docs/superpowers/plans/2026-06-11-demandas-sergio-painel.md. A UI vem em [DASH-14]. Relacionado: [DASH-12], [DASH-3].
+
+- **[DASH-12] Vistoria dos numeros de producao (call Sergio 08/06)** — PR #_TBD_ — v0.54.0
+  Vistoria read-only do que o Sergio apontou como divergente na call. Achados: tipos de consulta (`categoryDescription`) com 93% de preenchimento (Avaliacao=novo; Consulta+Retorno=recorrente); **dentista 100% preenchido nos orcamentos/estimates mas 0% nos agendamentos** (decidiu-se derivar "por doutora" de procedures, nao de appointments); numeros de junho conferem com o Clinicorp (faltas/atendidos na faixa; diferenca de procedimentos = granularidade orcamento-vs-linha + acumulo de dias); "Leads captados" e efetivamente contato unico (484 leads / 461 telefones distintos). Pendente externo: detalhe da divergencia de 04/06 (depende da Ingrid). Relatorio: docs/superpowers/plans/2026-06-11-vistoria-dash12-resultado.md.
 
 - **[DASH-11] Lista de leads no Dashboard de Captacao** — [PR #91](https://github.com/brunopalhardi/clinifunnel/pull/91) — v0.48.0
   Lista de leads no final da pagina /dashboard/captacao com 4 tabs (Todos / Agendados / Fecharam / Sem agendar), respeita filtro de data global, pagina 50 por vez. Click no lead abre LeadDetailDrawer (timeline + procedimentos), agora estendido com secao "Alertas ativos" quando o lead virou paciente e tem reminder pendente. Refactor: useReminderActions hook + ReminderRow component extraidos de PatientAlerts pra compartilhar com o drawer. Reusa /api/leads existente (sem mudancas no backend). Spec: docs/superpowers/specs/2026-05-19-dash-11-captacao-leads-list-design.md.
