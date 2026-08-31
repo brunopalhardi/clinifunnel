@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # CLAUDE.md — CliniFunnel
 
 > URL Producao: https://clinifunnel.koaai.com.br
